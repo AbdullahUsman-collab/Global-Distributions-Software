@@ -1,7 +1,7 @@
 /**
  * Brand Selection Page
  * Primary landing view for unauthenticated users.
- * 
+ *
  * Features:
  * - Fetches available brands from ITenantRepository
  * - Displays animated loading skeleton during fetch
@@ -49,7 +49,7 @@ export const BrandSelection: React.FC = () => {
           <h1 style={styles.title}>Select Your Brand</h1>
           <p style={styles.subtitle}>Choose your organization to sign in</p>
         </div>
-        <div style={styles.grid}>
+        <div className="brand-grid-responsive" style={styles.grid}>
           {[1, 2, 3].map((i) => (
             <div
               key={i}
@@ -107,7 +107,7 @@ export const BrandSelection: React.FC = () => {
         <p style={styles.subtitle}>Choose your organization to sign in</p>
       </div>
 
-      <div style={styles.grid}>
+      <div className="brand-grid-responsive" style={styles.grid}>
         {tenants.map((tenant, index) => (
           <div
             key={tenant.id}
@@ -137,46 +137,49 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   header: {
     textAlign: 'center',
-    marginBottom: '48px',
+    marginBottom: '40px',
   },
   title: {
-    fontSize: '36px',
+    fontSize: '32px',
     fontWeight: '700',
     color: '#1e293b',
     marginBottom: '8px',
   },
   subtitle: {
-    fontSize: '18px',
+    fontSize: '16px',
     color: '#64748b',
   },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '24px',
-    maxWidth: '800px',
+    gap: '20px',
+    maxWidth: '700px',
     width: '100%',
   },
   errorContainer: {
     textAlign: 'center',
-    padding: '48px',
+    padding: '40px 24px',
     backgroundColor: '#ffffff',
     borderRadius: '16px',
     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+    maxWidth: '400px',
+    width: '100%',
   },
   errorIcon: {
     fontSize: '48px',
     marginBottom: '16px',
   },
   errorTitle: {
-    fontSize: '24px',
+    fontSize: '22px',
     fontWeight: '600',
     color: '#1e293b',
     marginBottom: '8px',
   },
   errorMessage: {
-    fontSize: '16px',
+    fontSize: '15px',
     color: '#64748b',
     marginBottom: '24px',
+    lineHeight: '1.5',
   },
   retryButton: {
     padding: '12px 24px',
@@ -184,9 +187,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#ffffff',
     border: 'none',
     borderRadius: '8px',
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: '500',
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
+    minHeight: '44px',
   },
 };

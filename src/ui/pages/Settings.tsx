@@ -175,8 +175,8 @@ export const Settings: React.FC = () => {
   }
 
   return (
-    <div className="fade-in" style={styles.container}>
-      <div style={styles.header}>
+    <div className="fade-in page-pad" style={styles.container}>
+      <div className="settings-header-responsive" style={styles.header}>
         <div>
           <h1 style={styles.title}>Settings</h1>
           <p style={styles.subtitle}>{tenant.brandName}</p>
@@ -187,7 +187,7 @@ export const Settings: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div style={styles.tabBar}>
+      <div className="tab-bar-scroll" style={styles.tabBar}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -230,7 +230,7 @@ export const Settings: React.FC = () => {
         )}
       </div>
 
-      <div style={styles.actions}>
+      <div className="settings-actions-responsive" style={styles.actions}>
         <button onClick={handleReset} style={styles.resetButton} disabled={saving}>Reset</button>
         <button onClick={handleSave} style={styles.saveButton} disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
@@ -255,7 +255,7 @@ const ProfileTab: React.FC<{
       <p style={styles.sectionDescription}>
         Company information used across the ERP. NTN and STN are from the master data.
       </p>
-      <div style={styles.formGrid}>
+      <div className="settings-form-grid" style={styles.formGrid}>
         <Field label="Business Name">
           <input value={draft.businessName} onChange={(e) => set('businessName', e.target.value)}
             style={styles.input} placeholder="e.g. Demo Wholesale (Pvt) Ltd" />
@@ -311,7 +311,7 @@ const SalesTaxTab: React.FC<{
         Primary sales tax configuration. Per-item rates auto-fill on bill lines and can be overridden.
         Calculation: GST = To_Amt × (ST% / 100)
       </p>
-      <div style={styles.formGrid}>
+      <div className="settings-form-grid" style={styles.formGrid}>
         <Field label="Sales Tax Enabled">
           <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
         </Field>
@@ -357,7 +357,7 @@ const FurtherTaxTab: React.FC<{
         Additional sales tax layer applied per bill line. Separate from the primary GST.
         Calculation: F.Tax = To_Amt × (F-ST% / 100)
       </p>
-      <div style={styles.formGrid}>
+      <div className="settings-form-grid" style={styles.formGrid}>
         <Field label="Further Tax Enabled">
           <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
         </Field>
@@ -388,7 +388,7 @@ const FedTab: React.FC<{
         Federal excise duty configured per item and applied on bill lines.
         Calculation: FED = To_Amt × (FED% / 100)
       </p>
-      <div style={styles.formGrid}>
+      <div className="settings-form-grid" style={styles.formGrid}>
         <Field label="FED Enabled">
           <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
         </Field>
@@ -419,7 +419,7 @@ const AdvanceTaxTab: React.FC<{
         Advance tax with separate purchase and sale rates per item.
         Calculation: ADV_Tax = To_Amt × (ADV% / 100)
       </p>
-      <div style={styles.formGrid}>
+      <div className="settings-form-grid" style={styles.formGrid}>
         <Field label="Advance Tax Enabled">
           <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
         </Field>
@@ -458,7 +458,7 @@ const TaxAccountsTab: React.FC<{
         optional — no account codes are invented. Leave blank until the chart of accounts
         is implemented.
       </p>
-      <div style={styles.formGrid}>
+      <div className="settings-form-grid" style={styles.formGrid}>
         <Field label="Sales Tax Payable (Output)">
           <input value={draft.salesTaxPayableAccountCode ?? ''}
             onChange={(e) => set('salesTaxPayableAccountCode', e.target.value)}
@@ -509,7 +509,7 @@ const FinancialTab: React.FC<{
       <p style={styles.sectionDescription}>
         Fiscal year and voucher numbering preferences.
       </p>
-      <div style={styles.formGrid}>
+      <div className="settings-form-grid" style={styles.formGrid}>
         <Field label="Fiscal Year Start Month">
           <select value={draft.fiscalYearStartMonth}
             onChange={(e) => set('fiscalYearStartMonth', parseInt(e.target.value, 10))}

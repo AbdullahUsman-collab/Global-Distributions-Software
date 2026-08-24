@@ -103,3 +103,244 @@ input {
 .scale-in {
   animation: scaleIn 0.2s ease-out;
 }
+
+/* ─── Responsive Utilities ────────────────────────────────── */
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Responsive Page Padding ─────────────────────────────── */
+
+@media (max-width: 640px) {
+  .page-pad { padding: 16px !important; }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+  .page-pad { padding: 24px !important; }
+}
+
+/* ─── Responsive Header ───────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .erp-header { padding: 0 12px !important; }
+  .erp-header .brand-name { display: none !important; }
+  .erp-header .search-bar { display: none !important; }
+  .erp-header .header-icon-btn { display: none !important; }
+  .erp-header .profile-name { display: none !important; }
+}
+
+/* ─── Responsive Sidebar ──────────────────────────────────── */
+
+.erp-sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .erp-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    z-index: 60 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.25s ease !important;
+    width: 260px !important;
+  }
+  .erp-sidebar.open {
+    transform: translateX(0) !important;
+  }
+  .erp-sidebar-overlay.active {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.4) !important;
+    z-index: 55 !important;
+  }
+  .erp-header { height: 56px !important; }
+}
+
+@media (min-width: 769px) {
+  .erp-sidebar {
+    position: relative !important;
+    transform: none !important;
+  }
+}
+
+/* ─── Responsive Tab Bars ─────────────────────────────────── */
+
+.tab-bar-scroll {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  gap: 0;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+.tab-bar-scroll::-webkit-scrollbar { display: none; }
+.tab-bar-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+.tab-bar-scroll button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ─── Responsive Modals ───────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .responsive-modal {
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 16px) !important;
+    margin: 8px !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* ─── Responsive Form Rows ────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .responsive-form-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+}
+
+/* ─── Responsive Tables ───────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ─── Responsive Section Header ───────────────────────────── */
+
+@media (max-width: 640px) {
+  .section-header-responsive {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+}
+
+/* ─── Responsive Stats Bar ────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .stats-bar-responsive {
+    gap: 8px !important;
+  }
+  .stats-bar-responsive .stat-chip {
+    font-size: 12px !important;
+  }
+}
+
+/* ─── Responsive Toolbar ──────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .toolbar-responsive {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .toolbar-responsive > * {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ─── Responsive Settings ─────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .settings-header-responsive {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .settings-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .settings-actions-responsive {
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+  .settings-actions-responsive button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* ─── Responsive Login ────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 20px !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* ─── Responsive Dashboard ────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .dashboard-welcome-title {
+    font-size: 22px !important;
+  }
+  .dashboard-modules-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-info-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─── Responsive Module Placeholder ───────────────────────── */
+
+@media (max-width: 640px) {
+  .module-header-responsive {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+}
+
+/* ─── Responsive Brand Selection ──────────────────────────── */
+
+@media (max-width: 480px) {
+  .brand-grid-responsive {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+  .brand-card-responsive {
+    padding: 16px !important;
+    aspect-ratio: auto !important;
+    min-height: 120px !important;
+  }
+  .brand-card-responsive .brand-logo {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  .brand-card-responsive .brand-inner-logo {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+  }
+  .brand-card-responsive .brand-title {
+    font-size: 14px !important;
+  }
+  .brand-card-responsive .brand-subtitle {
+    font-size: 11px !important;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .brand-grid-responsive {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ─── Responsive Ledger Stats ─────────────────────────────── */
+
+@media (max-width: 640px) {
+  .ledger-stats-responsive {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}

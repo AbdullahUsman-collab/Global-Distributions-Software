@@ -1,9 +1,9 @@
 /**
  * Brand Card Component
  * Displays a single brand/tenant as a clickable card for selection.
- * 
+ *
  * Features:
- * - Responsive square card design
+ * - Responsive card design (square on desktop, compact on mobile)
  * - Brand logo and name display
  * - Hover/focus states with brand colors
  * - Keyboard accessible
@@ -46,9 +46,9 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
       aria-label={`Select ${tenant.brandName}`}
+      className="brand-card-responsive"
       style={{
         width: '100%',
-        aspectRatio: '1',
         backgroundColor: '#ffffff',
         borderRadius: '16px',
         border: `2px solid ${isActive ? tenant.primaryColor : '#e2e8f0'}`,
@@ -67,6 +67,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
     >
       {/* Logo Container */}
       <div
+        className="brand-logo"
         style={{
           width: '80px',
           height: '80px',
@@ -80,8 +81,8 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
           transform: isActive ? 'scale(1.05)' : 'scale(1)',
         }}
       >
-        {/* Placeholder logo - will be replaced with actual logo */}
         <div
+          className="brand-inner-logo"
           style={{
             width: '48px',
             height: '48px',
@@ -101,6 +102,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
 
       {/* Brand Name */}
       <div
+        className="brand-title"
         style={{
           fontSize: '18px',
           fontWeight: '600',
@@ -114,6 +116,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
 
       {/* Subtle indicator */}
       <div
+        className="brand-subtitle"
         style={{
           marginTop: '8px',
           fontSize: '12px',

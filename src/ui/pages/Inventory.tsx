@@ -65,7 +65,7 @@ export const Inventory: React.FC = () => {
   const [tab, setTab] = useState<InventoryTab>('stock');
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -76,7 +76,7 @@ export const Inventory: React.FC = () => {
       </div>
 
       {/* Tab Bar */}
-      <div style={styles.tabBar}>
+      <div className="tab-bar-scroll" style={styles.tabBar}>
         {TABS.map(t => (
           <button
             key={t.key}
@@ -162,7 +162,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div style={styles.sectionHeader}>
+      <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           <div style={styles.statChip}>
             <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
@@ -180,7 +180,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Item</button>
       </div>
 
-      <div style={styles.toolbar}>
+      <div className="toolbar-responsive" style={styles.toolbar}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or SKU..." style={styles.searchInput} />
         <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={styles.filterSelect}>
           <option value="">All Categories</option>
@@ -188,7 +188,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         </select>
       </div>
 
-      <div style={styles.card}>
+      <div className="table-wrap" style={styles.card}>
         {loading ? (
           <div style={{ padding: 24 }}><div className="skeleton" style={{ width: '100%', height: 400 }} /></div>
         ) : (
@@ -311,10 +311,10 @@ const ProductModal: React.FC<{
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={{ ...styles.modal, maxWidth: 700 }} onClick={e => e.stopPropagation()}>
+      <div className="responsive-modal" style={{ ...styles.modal, maxWidth: 700 }} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>{isEdit ? 'Edit' : 'Create'} Item</h2>
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>SKU *</label>
               <input value={sku} onChange={e => setSku(e.target.value)} style={styles.input} disabled={isEdit} placeholder="e.g. PROD-009" />
@@ -324,7 +324,7 @@ const ProductModal: React.FC<{
               <input value={name} onChange={e => setName(e.target.value)} style={styles.input} placeholder="e.g. Baby Shampoo 200ml" />
             </div>
           </div>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Category *</label>
               <input value={category} onChange={e => setCategory(e.target.value)} style={styles.input} placeholder="e.g. Shampoo" />
@@ -345,7 +345,7 @@ const ProductModal: React.FC<{
               <input type="number" min={1} value={pcsPerCarton} onChange={e => setPcsPerCarton(parseInt(e.target.value) || 1)} style={styles.input} />
             </div>
           </div>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Sale Rate</label>
               <input type="number" min={0} step={0.01} value={saleRate} onChange={e => setSaleRate(parseFloat(e.target.value) || 0)} style={styles.input} />
@@ -373,7 +373,7 @@ const ProductModal: React.FC<{
               <input type="number" min={0} value={minQuantity} onChange={e => setMinQuantity(parseInt(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>HS Code</label>
               <input value={hsCode} onChange={e => setHsCode(e.target.value)} style={styles.input} placeholder="e.g. 3305.10" />
@@ -391,7 +391,7 @@ const ProductModal: React.FC<{
               <input type="number" min={0} max={100} step={0.1} value={gstPercent} onChange={e => setGstPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>FED %</label>
               <input type="number" min={0} max={100} step={0.1} value={fedPercent} onChange={e => setFedPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
@@ -537,7 +537,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       </div>
 
       {/* Toolbar */}
-      <div style={styles.toolbar}>
+      <div className="toolbar-responsive" style={styles.toolbar}>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -557,7 +557,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       </div>
 
       {/* Stock Table */}
-      <div style={styles.card}>
+      <div className="table-wrap" style={styles.card}>
         {loading ? (
           <div style={{ padding: 24 }}>
             <div className="skeleton" style={{ width: '100%', height: 300 }} />
@@ -698,7 +698,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div style={styles.sectionHeader}>
+      <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           <div style={styles.statChip}>
             <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{warehouses.length}</span>
@@ -711,7 +711,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         </div>
       </div>
 
-      <div style={styles.card}>
+      <div className="table-wrap" style={styles.card}>
         {loading ? (
           <div style={{ padding: 24 }}>
             <div className="skeleton" style={{ width: '100%', height: 200 }} />
@@ -863,7 +863,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   return (
     <>
       {/* Stats */}
-      <div style={styles.sectionHeader}>
+      <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           <div style={styles.statChip}>
             <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
@@ -882,7 +882,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       </div>
 
       {/* Filters */}
-      <div style={styles.toolbar}>
+      <div className="toolbar-responsive" style={styles.toolbar}>
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as StockMovementType | '')} style={styles.filterSelect}>
           <option value="">All Types</option>
           {(Object.keys(STOCK_MOVEMENT_TYPE_LABELS) as StockMovementType[]).map(t => (
@@ -898,7 +898,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       </div>
 
       {/* Movements Table */}
-      <div style={styles.card}>
+      <div className="table-wrap" style={styles.card}>
         {loading ? (
           <div style={{ padding: 24 }}>
             <div className="skeleton" style={{ width: '100%', height: 300 }} />
@@ -1061,11 +1061,11 @@ const CreateMovementModal: React.FC<{
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={{ ...styles.modal, maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+      <div className="responsive-modal" style={{ ...styles.modal, maxWidth: 600 }} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>New Stock Movement</h2>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Movement Type</label>
               <select value={movementType} onChange={e => setMovementType(e.target.value as StockMovementType)} style={styles.select}>
@@ -1114,7 +1114,7 @@ const CreateMovementModal: React.FC<{
             </div>
           )}
 
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Quantity</label>
               <input

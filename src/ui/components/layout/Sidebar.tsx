@@ -1,10 +1,9 @@
 /**
  * Sidebar Component
  * Responsive sidebar navigation for the ERP shell.
- * 
+ *
  * Features:
- * - Collapsible on desktop
- * - Placeholder navigation items
+ * - Overlay on mobile, inline on desktop
  * - Active state highlighting
  * - Smooth transitions
  */
@@ -13,7 +12,8 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
-  collapsed: boolean;
+  open: boolean;
+  onClose: () => void;
 }
 
 interface NavItem {
@@ -71,7 +71,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -82,41 +82,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     return location.pathname.startsWith(path);
   };
 
+  const handleNav = (path: string) => {
+    navigate(path);
+    onClose();
+  };
+
   return (
-    <aside style={{
-      ...styles.sidebar,
-      width: collapsed ? '64px' : '240px',
-    }}>
+    <aside className={`erp-sidebar ${open ? 'open' : ''}`} style={styles.sidebar}>
       <nav style={styles.nav}>
         {navItems.map((item) => (
           <button
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNav(item.path)}
             style={{
               ...styles.navItem,
               backgroundColor: isActive(item.path) ? '#eff6ff' : 'transparent',
               color: isActive(item.path) ? '#2563eb' : '#64748b',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              paddingLeft: collapsed ? '12px' : '16px',
-              paddingRight: collapsed ? '12px' : '16px',
             }}
-            title={collapsed ? item.label : undefined}
-            aria-label={item.label}
           >
             <span style={styles.navIcon}>{item.icon}</span>
-            {!collapsed && (
-              <span style={styles.navLabel}>{item.label}</span>
-            )}
+            <span style={styles.navLabel}>{item.label}</span>
           </button>
         ))}
       </nav>
 
-      {/* Footer hint */}
-      {!collapsed && (
-        <div style={styles.footer}>
-          <p style={styles.footerText}>More modules coming soon</p>
-        </div>
-      )}
+      <div style={styles.footer}>
+        <p style={styles.footerText}>More modules coming soon</p>
+      </div>
     </aside>
   );
 };
@@ -128,30 +120,35 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRight: '1px solid #e2e8f0',
     display: 'flex',
     flexDirection: 'column',
-    transition: 'width 0.2s ease',
+    width: '240px',
+    flexShrink: 0,
     overflow: 'hidden',
   },
   nav: {
     flex: 1,
-    padding: '16px 8px',
+    padding: '12px 8px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px',
+    gap: '2px',
+    overflowY: 'auto',
   },
   navItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '12px 16px',
+    padding: '10px 16px',
     backgroundColor: 'transparent',
     border: 'none',
     borderRadius: '8px',
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    transition: 'all 0.15s ease',
     textDecoration: 'none',
     whiteSpace: 'nowrap',
+    minHeight: '40px',
+    width: '100%',
+    textAlign: 'left',
   },
   navIcon: {
     display: 'flex',
@@ -159,6 +156,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     width: '20px',
     height: '20px',
+    flexShrink: 0,
   },
   navLabel: {
     flex: 1,

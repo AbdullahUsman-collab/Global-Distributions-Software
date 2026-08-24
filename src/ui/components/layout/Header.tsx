@@ -1,7 +1,7 @@
 /**
  * Header Component
  * Top header for the authenticated ERP shell.
- * 
+ *
  * Displays:
  * - Tenant logo and brand name
  * - Search placeholder
@@ -17,10 +17,9 @@ import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   onMenuToggle: () => void;
-  sidebarCollapsed: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuToggle, sidebarCollapsed }) => {
+export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const { user, tenant } = useAuth();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -40,13 +39,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, sidebarCollapsed }
   };
 
   return (
-    <header style={styles.header}>
+    <header className="erp-header" style={styles.header}>
       {/* Left section: Menu toggle + Brand */}
       <div style={styles.leftSection}>
         <button
           onClick={onMenuToggle}
           style={styles.menuToggle}
-          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label="Toggle menu"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -60,12 +59,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, sidebarCollapsed }
           }}>
             {tenant.brandName.charAt(0)}
           </div>
-          <span style={styles.brandName}>{tenant.brandName}</span>
+          <span className="brand-name" style={styles.brandName}>{tenant.brandName}</span>
         </div>
       </div>
 
       {/* Center section: Search */}
-      <div style={styles.centerSection}>
+      <div className="search-bar" style={styles.centerSection}>
         <div style={styles.searchContainer}>
           <svg style={styles.searchIcon} width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path fillRule="evenodd" d="M9.965 11.026a5 5 0 111.06-1.06l2.755 2.754a.75.75 0 11-1.06 1.06l-2.755-2.754zM10.5 7a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z" clipRule="evenodd" />
@@ -82,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, sidebarCollapsed }
       {/* Right section: Notifications + User Profile */}
       <div style={styles.rightSection}>
         {/* Notification bell placeholder */}
-        <button style={styles.iconButton} disabled>
+        <button className="header-icon-btn" style={styles.iconButton} disabled>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 2a6 6 0 00-6 6c0 1.887-.454 3.665-1.257 5.234a.75.75 0 00.515 1.076 32.91 32.91 0 003.256.508 3.5 3.5 0 006.972 0 32.903 32.903 0 003.256-.508.75.75 0 00.515-1.076A11.448 11.448 0 0116 8a6 6 0 00-6-6zm0 14.5a2 2 0 01-1.95-1.557 33.146 33.146 0 003.9 0A2 2 0 0110 16.5z" clipRule="evenodd" />
           </svg>
@@ -99,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, sidebarCollapsed }
             <div style={styles.avatar}>
               {user.displayName.charAt(0).toUpperCase()}
             </div>
-            <span style={styles.userName}>{user.displayName}</span>
+            <span className="profile-name" style={styles.userName}>{user.displayName}</span>
             <svg style={styles.chevron} width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 5.293a1 1 0 011.414 0L8 8.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
@@ -160,11 +159,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   leftSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px',
+    gap: '12px',
   },
   menuToggle: {
-    width: '36px',
-    height: '36px',
+    width: '40px',
+    height: '40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -174,11 +173,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#64748b',
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
+    flexShrink: 0,
   },
   brandContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '10px',
+    minWidth: 0,
   },
   logo: {
     width: '32px',
@@ -190,16 +191,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#ffffff',
     fontSize: '14px',
     fontWeight: 'bold',
+    flexShrink: 0,
   },
   brandName: {
     fontSize: '16px',
     fontWeight: '600',
     color: '#1e293b',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   centerSection: {
     flex: 1,
     maxWidth: '400px',
-    margin: '0 32px',
+    margin: '0 24px',
   },
   searchContainer: {
     position: 'relative',
@@ -223,11 +228,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   rightSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '8px',
   },
   iconButton: {
-    width: '36px',
-    height: '36px',
+    width: '40px',
+    height: '40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -249,6 +254,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: '1px solid #e2e8f0',
     borderRadius: '8px',
     cursor: 'pointer',
+    minHeight: '40px',
   },
   avatar: {
     width: '28px',
@@ -261,6 +267,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     fontSize: '12px',
     fontWeight: '600',
+    flexShrink: 0,
   },
   userName: {
     fontSize: '14px',
@@ -269,6 +276,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   chevron: {
     color: '#94a3b8',
+    flexShrink: 0,
   },
   overlay: {
     position: 'fixed',

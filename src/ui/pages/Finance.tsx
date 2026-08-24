@@ -82,7 +82,7 @@ export const Finance: React.FC = () => {
   const [tab, setTab] = useState<FinanceTab>('coa');
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -93,7 +93,7 @@ export const Finance: React.FC = () => {
       </div>
 
       {/* Tab Bar */}
-      <div style={styles.tabBar}>
+      <div className="tab-bar-scroll" style={styles.tabBar}>
         {TABS.map(t => (
           <button
             key={t.key}
@@ -226,7 +226,7 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div style={styles.sectionHeader}>
+      <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           {ACCOUNT_TYPES.map(t => (
             <div key={t} style={styles.statChip}>
@@ -242,7 +242,7 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         </button>
       </div>
 
-      <div style={styles.toolbar}>
+      <div className="toolbar-responsive" style={styles.toolbar}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or code..." style={styles.searchInput} />
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as AccountType | '')} style={styles.filterSelect}>
           <option value="">All Types</option>
@@ -252,7 +252,7 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         <button onClick={() => setExpanded(new Set())} style={styles.toolBtn}>Collapse All</button>
       </div>
 
-      <div style={styles.card}>
+      <div className="table-wrap" style={styles.card}>
         {loading ? (
           <div style={{ padding: 24 }}>
             <div className="skeleton" style={{ width: 200, height: 20, marginBottom: 8 }} />
@@ -392,7 +392,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
 
   return (
     <>
-      <div style={styles.sectionHeader}>
+      <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           <div style={styles.statChip}>
             <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
@@ -410,7 +410,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
         <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Voucher</button>
       </div>
 
-      <div style={styles.toolbar}>
+      <div className="toolbar-responsive" style={styles.toolbar}>
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as VoucherType | '')} style={styles.filterSelect}>
           <option value="">All Types</option>
           {(Object.keys(VOUCHER_TYPE_LABELS) as VoucherType[]).map(t => (
@@ -424,7 +424,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
         </select>
       </div>
 
-      <div style={styles.card}>
+      <div className="table-wrap" style={styles.card}>
         {loading ? (
           <div style={{ padding: 24 }}>
             <div className="skeleton" style={{ width: '100%', height: 300 }} />
@@ -662,11 +662,11 @@ const VoucherModal: React.FC<{
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={{ ...styles.modal, maxWidth: 800 }} onClick={e => e.stopPropagation()}>
+      <div className="responsive-modal" style={{ ...styles.modal, maxWidth: 800 }} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>{isEdit ? 'Edit' : 'New'} Voucher</h2>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Voucher Type</label>
               <select value={vType} onChange={e => setVType(e.target.value as VoucherType)} style={styles.select} disabled={isEdit}>
@@ -698,7 +698,7 @@ const VoucherModal: React.FC<{
             )}
 
             {lines.map((line, idx) => (
-              <div key={idx} style={styles.lineItemRow}>
+              <div key={idx} className="responsive-form-row" style={styles.lineItemRow}>
                 <div style={{ flex: '0 0 180px' }}>
                   <AccountSelect
                     accounts={postingAccounts}
@@ -862,7 +862,7 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div style={styles.toolbar}>
+      <div className="toolbar-responsive" style={styles.toolbar}>
         <select
           value={accountFilter}
           onChange={e => { setAccountFilter(e.target.value); setLoaded(false); setLedgerEntries([]); }}
@@ -881,7 +881,7 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       </div>
 
       {selectedAccount && loaded && (
-        <div style={styles.statsBar}>
+        <div className="stats-bar-responsive" style={styles.statsBar}>
           <div style={styles.statChip}>
             <span style={styles.statLabel}>Account: {selectedAccount.accountCode} — {selectedAccount.accountName}</span>
           </div>
@@ -905,7 +905,7 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         </div>
       )}
 
-      <div style={styles.card}>
+      <div className="table-wrap" style={styles.card}>
         {!loaded ? (
           <div style={styles.empty}>Select an account and click "Load Ledger" to view entries.</div>
         ) : loading ? (
@@ -1035,11 +1035,11 @@ const CreateAccountModal: React.FC<{
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+      <div className="responsive-modal" style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Create Account — Level {level}</h2>
         {parent && <p style={styles.modalParent}>Parent: {parent.accountCode} {parent.accountName}</p>}
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Account Code (5 digits)</label>
               <input value={code} onChange={e => setCode(e.target.value)} style={styles.input} maxLength={5} placeholder="e.g. 11101" autoFocus />
@@ -1049,7 +1049,7 @@ const CreateAccountModal: React.FC<{
               <input value={name} onChange={e => setName(e.target.value)} style={styles.input} placeholder="e.g. Cash in Hand" />
             </div>
           </div>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Account Type</label>
               <select value={accountType} onChange={e => setAccountType(e.target.value as AccountType)} style={styles.select}>
@@ -1103,7 +1103,7 @@ const EditAccountModal: React.FC<{
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+      <div className="responsive-modal" style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Edit Account</h2>
         <p style={styles.modalParent}>{account.accountCode} — Level {account.level} — {ACCOUNT_TYPE_LABELS[account.accountType]}</p>
         <div style={styles.form}>

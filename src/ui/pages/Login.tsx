@@ -145,7 +145,7 @@ export const Login: React.FC = () => {
 
   return (
     <div style={styles.container}>
-      <div className="fade-in" style={{
+      <div className="fade-in login-card" style={{
         ...styles.card,
         borderColor: tenant.primaryColor,
       }}>

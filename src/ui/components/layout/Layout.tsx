@@ -1,34 +1,45 @@
 /**
  * Layout Component
  * Main layout wrapper for authenticated ERP shell.
- * 
+ *
  * Features:
  * - Header with user profile
- * - Collapsible sidebar
+ * - Collapsible sidebar (overlay on mobile, inline on desktop)
  * - Content area
  * - Responsive design
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
 export const Layout: React.FC = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
 
   return (
-    <div style={styles.container}>
+    <div className="layout-container" style={styles.container}>
       {/* Header */}
-      <Header
-        onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        sidebarCollapsed={sidebarCollapsed}
-      />
+      <Header onMenuToggle={toggleSidebar} />
 
       {/* Main content area */}
       <div style={styles.main}>
+        {/* Sidebar overlay backdrop (mobile) */}
+        <div
+          className={`erp-sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
+          onClick={closeSidebar}
+        />
+
         {/* Sidebar */}
-        <Sidebar collapsed={sidebarCollapsed} />
+        <Sidebar open={sidebarOpen} onClose={closeSidebar} />
 
         {/* Content */}
         <main style={styles.content}>
@@ -49,9 +60,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   main: {
     display: 'flex',
     flex: 1,
+    position: 'relative',
   },
   content: {
     flex: 1,
     overflow: 'auto',
+    minWidth: 0,
   },
 };

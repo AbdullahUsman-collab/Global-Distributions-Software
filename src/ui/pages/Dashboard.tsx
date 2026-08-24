@@ -22,10 +22,10 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="page-pad" style={styles.container}>
       {/* Welcome Section */}
       <div className="fade-in" style={styles.welcomeSection}>
-        <h1 style={styles.welcomeTitle}>Welcome, {user.displayName}</h1>
+        <h1 className="dashboard-welcome-title" style={styles.welcomeTitle}>Welcome, {user.displayName}</h1>
         <p style={styles.welcomeSubtitle}>
           You are signed in to <strong>{tenant.brandName}</strong>
         </p>
@@ -34,7 +34,7 @@ export const Dashboard: React.FC = () => {
       {/* Session Info Card */}
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>Session Information</h2>
-        <div style={styles.infoGrid}>
+        <div className="dashboard-info-grid" style={styles.infoGrid}>
           <div style={styles.infoItem}>
             <span style={styles.infoLabel}>Status</span>
             <span style={styles.infoValue}>
@@ -58,7 +58,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Module Placeholders */}
-      <div style={styles.modulesGrid}>
+      <div className="dashboard-modules-grid" style={styles.modulesGrid}>
         {/* Finance Card */}
         <button onClick={() => navigate('/finance')} style={styles.moduleCard}>
           <div style={{

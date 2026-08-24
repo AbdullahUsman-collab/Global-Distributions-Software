@@ -26,12 +26,12 @@ export const ModulePlaceholder: React.FC<ModulePlaceholderProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div style={styles.container}>
+    <div className="page-pad" style={styles.container}>
       <button onClick={() => navigate('/dashboard')} style={styles.backLink}>
         ← Back to Dashboard
       </button>
 
-      <div style={styles.header}>
+      <div className="module-header-responsive" style={styles.header}>
         <div style={{ ...styles.icon, backgroundColor: iconBg, color: iconColor }}>
           {icon}
         </div>
