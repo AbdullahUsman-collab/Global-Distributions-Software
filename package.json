@@ -4,7 +4,7 @@
   "description": "Wholesale Distribution ERP - Domain Foundation",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && vite build",
+    "build": "vite build",
     "typecheck": "tsc --noEmit 2>&1 | findstr /V \"src/server\"",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:ui\"",
     "dev:server": "tsc && node dist/server/index.js",
