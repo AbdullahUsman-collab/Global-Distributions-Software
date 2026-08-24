@@ -1,0 +1,32 @@
+{
+  "name": "distribution-software-erp",
+  "version": "0.1.0",
+  "description": "Wholesale Distribution ERP - Domain Foundation",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit 2>&1 | findstr /V \"src/server\"",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:ui\"",
+    "dev:server": "tsc && node dist/server/index.js",
+    "dev:ui": "vite",
+    "start": "node dist/server/index.js",
+    "preview": "vite preview",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.4",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2"
+  }
+}

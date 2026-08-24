@@ -1,0 +1,337 @@
+﻿
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head><title>
+
+</title><meta http-equiv="Page-Enter" content="blendTrans(Duration=0)" /><meta http-equiv="Page-Exit" content="blendTrans(Duration=0)" /><link href="Styles/Site.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+        .style1
+        {
+            height: 21px;
+        }
+        .style2
+        {
+            height: 21px;
+            width: 830px;
+            text-align: center;
+        }
+        .style3
+        {
+            text-align: left;
+        }
+        .style4
+        {
+            text-align: left;
+            height: 25px;
+            font-weight: 700;
+        }
+        .style5
+        {
+            height: 25px;
+        }
+    </style>
+
+    <style type="text/css">
+        .style1
+        {
+            color: #FF3300;
+
+        }
+
+
+        .auto-style2 {
+            color: #FFFF00;
+        }
+        .auto-style4 {
+            color: #FF0000;
+            font-size: xx-large;
+        }
+
+
+    </style>
+</head>
+<body>
+    <form method="post" action="./Items.aspx" id="ctl01">
+<div class="aspNetHidden">
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKLTk2ODM2NDAzNA9kFgJmD2QWAgIDD2QWAgIFD2QWBAIFDxAPFgYeDURhdGFUZXh0RmllbGQFEUl0ZW1fTWFpbkhlYWROYW1lHg5EYXRhVmFsdWVGaWVsZAUPSXRlbV9NYWluSGVhZE5vHgtfIURhdGFCb3VuZGdkEBUJBlBvd2RlcgZMb3Rpb24IR2lmdCBCb3gHU2hhbXBvbwVQb3VjaARTb2FwA09JTAVXaXBlcwhORVcgU0tVcxUJATECNTADMTAwAzE1MAMxOTADMjAwAzI1MAMzMDADNDAwFCsDCWdnZ2dnZ2dnZxYBZmQCWQ88KwARAgAPFgQfAmceC18hSXRlbUNvdW50AhJkDBQrABIWCB4ETmFtZQUHSXRlbV9Obx4KSXNSZWFkT25seWgeBFR5cGUZKVlTeXN0ZW0uSW50NjQsIG1zY29ybGliLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49Yjc3YTVjNTYxOTM0ZTA4OR4JRGF0YUZpZWxkBQdJdGVtX05vFggfBAUJSXRlbV9OYW1lHwVoHwYZKwIfBwUJSXRlbV9OYW1lFggfBAUPSXRlbV9NYWluSGVhZE5vHwVoHwYZKwQfBwUPSXRlbV9NYWluSGVhZE5vFggfBAUFVW5pdHMfBWgfBhkrAh8HBQVVbml0cxYIHwQFClBjc19QZXJDdG4fBWgfBhkpWlN5c3RlbS5Eb3VibGUsIG1zY29ybGliLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49Yjc3YTVjNTYxOTM0ZTA4OR8HBQpQY3NfUGVyQ3RuFggfBAUJU2FsZV9SYXRlHwVoHwYZKwUfBwUJU2FsZV9SYXRlFggfBAUNUHVyY2hhc2VfUmF0ZR8FaB8GGSsFHwcFDVB1cmNoYXNlX1JhdGUWCB8EBQxSZXRhaWxfUHJpY2UfBWgfBhkrBR8HBQxSZXRhaWxfUHJpY2UWCB8EBQpUcmFkZV9EaXNjHwVoHwYZKwUfBwUKVHJhZGVfRGlzYxYIHwQFA1RfTx8FaB8GGSsFHwcFA1RfTxYIHwQFB01pbl9RdHkfBWgfBhkrAR8HBQdNaW5fUXR5FggfBAUHaHNfY29kZR8FaB8G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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['ctl01'];
+if (!theForm) {
+    theForm = document.ctl01;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=5n0-3u5iZ1cXxORdyCfi9a2EU_0F-vDBdg4O5gZ9TYI1bv-NdPHYsNesnr-6ETESCSi_fbrT5N7Cvk7L1049oOm2Op1J4Sqmh_NUN3ZGKoY1&amp;t=637033839201221563" type="text/javascript"></script>
+
+
+<script src="/WebResource.axd?d=WSJz-xBRsUPLURPLbRLL09cnVyLfiMM1hCkaRQL2TvWN0SGbl0U9vM1HCZ9FGnUxdhiDwEUK0lp6zLCU_m7j1xABY2IJGB07rcpvH3JJDLg1&amp;t=637033839201221563" type="text/javascript"></script>
+<script src="/WebResource.axd?d=u6aCNoWd7xRfBGDapITqvyOxq_xQ4Vh4VuRB1LRf9_PD58q8MAawX91DFQc0UCMUNvtqOoy1EKazeGP6JBcO-2fVcNvdGIpgS8fE9Z_fR8A1&amp;t=637033839201221563" type="text/javascript"></script>
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="AF588C7E" />
+	<input type="hidden" name="__PREVIOUSPAGE" id="__PREVIOUSPAGE" value="qxTk2Gho05UtBQUR5NCNqskA2KOL4eSoY8BEgE0WVWi1Fh1rFkk51oEyk3l0-PQb-XJgkuS3H3K_e8_hU0Mr3g_AQIE6liLtzCe2ONnSiBo1" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdADrASPWXAEeXh+FWbJ8ydDIi/6wQku9fEbkxBa8SjmDFMGb7wclwtHhoddQ6xHNx9bTA0L1sjDZIysMufb9RtVzQYTu+DVopZexjhTg3/oQ/0OWGF1F2AwF8uXAC69kkDeh3JwA1DRsGCwk2U8VQfTFJ8YNj/yzCjABLb0/ZxULc29o2yiZ7UdPnN/q/tesat9HEB0rjlHP/lKw9ABwNecuG0vEUMS/FYWSDrMjUTIElZQIU/3Yf0o2+aWUlKnVvQRe+ZSBs5AJQE32c8mlb1swJN9+gzYj1inR/H/Ut9jIS7uKJQ6mZu+f4/DZG36jzajMxfWWWDH8CRGUpozEYwLtOwC1o4vxnbdKxtoZDclFi1OSk9SS6SjGUWPYNmwRofFKpzWwEAgwXVpqf9xitj5LYVIo88vJlghuyMkSqol5s2cE6bUqqqpmyVkDoLJwR5jWa7mfZ5ePuBIJLqyhpX49shkgdLu0JXXfc9Ahcg7Jo/jsfxCT5SXgYmnAa3KOr9A0MFQKFSuvNkUg2SadHDeOFANj42TrSyE8xXj6LR8M4v+C2U4RmSsiVaKG5g9+1dn3TF2PVo1qXlxpcbw3Qhj08S33gcnbzXbHlx8zK3cHqYpFLS9W+2b2UHHe029D1M83bNPNOsPmR+DKcbUm6qN01QSEKnqwrDqkfMDKki4DHSpwfGAW261nC5Zmxp+mtx3WCg10Au0qeK82MjoZAlvNxQ3QX6VqQaEts+6mwRPy0VcE7WJQ2XsAqczMZl6GmIytQ4so7MnPY/mwXXrgW6xW92JyK2BXwjMz4v81jAHtcu9mZmBVZERkRJKysxrloXtLJN/9x/5w6SwBLoE3bO3ubIRalLZPGwOwAmeUSA9Rkh9j1R/CvqjEM3olGR4Kt64hascfylnoIBVtwM5a5hbWdDxQ5DNya0zafafO9QPdukYlmX97Tngq/diwvtR9/vxoO0hmAbmysvTeaaW6PlQJ6/sT6x6GCOmK/BHJeCryYj1ujJ46UCdkwL5zcVWbrq7tALZFnfoDqbmWMf1a+sxGngbyax2b7V+cLZxpi0X1mVM6LY9y8OqEWNNAQby9WHXZSA7JGpvLheBxwsYJnGLWP4VeaGGgk5BqdQtOHE3ACFEEmwjtMScE764tbcDbY+dE7+gjstR0XfBOqikWbiyXa62XcOB4tKzQzrqsD9W1Q78u9LS0Q2SrrXx6NOCKD66JWGAVENWXOfp79sVsktHJYhTq6UE4BwkfY/XHMRqd/8wa71E9swN6a70W/mMUXwH8=" />
+</div>
+    <div class="page">
+        <div class="header">
+            <div class="title">
+                <h1 class="auto-style4">
+                 Global distrubution services (MotherCare)</h1>
+            </div>
+            <div class="loginDisplay">
+                
+            </div>
+            <div class="title">
+                <h2 class="auto-style2">
+                    Mothercare Distributors</h2>
+            </div>
+
+            <div class="clear hideSkiplink">
+                <a href="#NavigationMenu_SkipLink"><img alt="Skip Navigation Links" src="/WebResource.axd?d=A4zNzfqziIE4tN3GhqPRngCaUbHREFKjVfl8gzD58R5z4tC-1SIMoShgkOHw0_IdST959y1qILfK71AxzxNykH6mtHR0kIQsja76Ucz6VVs1&amp;t=637033839201221563" width="0" height="0" style="border-width:0px;" /></a><div class="menu" id="NavigationMenu">
+	<ul class="level1">
+		<li><a class="popout level1" href="About.aspx">Add</a><ul class="level2">
+			<li><a class="level2" href="MainHeads.aspx">Accounts Main Head</a></li><li><a class="level2" href="Accounts.aspx">Accounts</a></li><li><a class="level2" href="ItemSuperHead.aspx">Item Super Heads</a></li><li><a class="level2" href="ItemMainHeads.aspx">Items Main Head</a></li><li><a class="level2" href="Items.aspx">Items</a></li><li><a class="level2" href="Sale_Man.aspx">Sale Man</a></li><li><a class="level2" href="DelItem.aspx">Delete Item and Transfer Data to New Item no</a></li><li><a class="level2" href="DelAccount.aspx">Delete A/c and Shift Data to Other A/c </a></li><li><a class="level2" href="AcTransfer.aspx">Change Area of a Party</a></li>
+		</ul></li><li><a class="popout level1" href="#" onclick="__doPostBack(&#39;ctl00$NavigationMenu&#39;,&#39;Entries&#39;)">Entries</a><ul class="level2">
+			<li><a class="level2" href="Journal.aspx">Journal Entry</a></li><li><a class="level2" href="Cash_Book.aspx">Cash Book</a></li><li><a class="level2" href="JournalEntriesList.aspx">Entries List</a></li>
+		</ul></li><li><a class="popout level1" href="#" onclick="__doPostBack(&#39;ctl00$NavigationMenu&#39;,&#39;Reports&#39;)">Reports</a><ul class="level2">
+			<li><a class="level2" href="Ledger.aspx">Ledger</a></li><li><a class="level2" href="TrailBalance.aspx">Trail Balance</a></li><li><a class="level2" href="TrailBWA.aspx">Trail Balance With Activity</a></li><li><a class="level2" href="BalanceSheet.aspx">Balance Sheet / Profit and Loss</a></li><li><a class="level2" href="Aging.aspx">Aging Report</a></li>
+		</ul></li><li><a class="popout level1" href="#" onclick="__doPostBack(&#39;ctl00$NavigationMenu&#39;,&#39;Bills&#39;)">Bills</a><ul class="level2">
+			<li><a class="level2" href="Sale_Purchase.aspx">Sale/Purchase Bill</a></li><li><a class="level2" href="ListofBills.aspx">List of Bills</a></li>
+		</ul></li><li><a class="popout level1" href="#" onclick="__doPostBack(&#39;ctl00$NavigationMenu&#39;,&#39;Stock&#39;)">Stock</a><ul class="level2">
+			<li><a class="level2" href="ItemLedger.aspx">Item Ledger</a></li><li><a class="level2" href="StockBalance.aspx">Stock Balance</a></li><li><a class="level2" href="StockBWA.aspx">Stock Balance With Activity</a></li>
+		</ul></li><li><a class="popout level1" href="#" onclick="__doPostBack(&#39;ctl00$NavigationMenu&#39;,&#39;Utilities&#39;)">Utilities</a><ul class="level2">
+			<li><a class="level2" href="#" onclick="__doPostBack(&#39;ctl00$NavigationMenu&#39;,&#39;Utilities\\Create New User&#39;)">Create New User</a></li><li><a class="level2" href="ChangePassword.aspx">Change Password</a></li><li><a class="level2" href="Default.aspx">Log out</a></li>
+		</ul></li>
+	</ul>
+</div><a id="NavigationMenu_SkipLink"></a>
+            </div>
+        </div>
+        <div class="main">
+            
+    <table style="width:100%;">
+        <tr>
+            <td class="style2">
+                <span id="MainContent_Label1" style="color:#990000;font-weight:bold;">Add Edit Stock Items</span>
+            </td>
+            <td class="style1">
+            </td>
+            <td class="style1">
+            </td>
+        </tr>
+        <tr>
+            <td class="style3">
+                <span id="MainContent_Label3" style="color:Black;font-weight:bold;">Mian Head Name:</span>
+&nbsp;
+                <select name="ctl00$MainContent$CmbItemMHeads" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$MainContent$CmbItemMHeads\&#39;,\&#39;\&#39;)&#39;, 0)" id="MainContent_CmbItemMHeads" style="width:150px;">
+	<option selected="selected" value="1">Powder</option>
+	<option value="50">Lotion</option>
+	<option value="100">Gift Box</option>
+	<option value="150">Shampoo</option>
+	<option value="190">Pouch</option>
+	<option value="200">Soap</option>
+	<option value="250">OIL</option>
+	<option value="300">Wipes</option>
+	<option value="400">NEW SKUs</option>
+
+</select>
+            </td>
+            <td>
+                &nbsp;</td>
+            <td>
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style3">
+                <span id="MainContent_Label2" style="color:Black;font-weight:bold;">Main Head #:</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input name="ctl00$MainContent$txtItemMHNo" type="text" value="1" id="MainContent_txtItemMHNo" style="width:70px;" />
+            </td>
+            <td>
+                &nbsp;</td>
+            <td>
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style3" colspan="2">
+                <hr />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </td>
+            <td>
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style4" colspan="2">
+                <span id="MainContent_Label4" style="color:Black;font-weight:bold;">Item #</span>
+                <input name="ctl00$MainContent$txtIemNo" type="text" value="21" id="MainContent_txtIemNo" style="width:50px;" />
+                <span id="MainContent_Label5" style="color:Black;font-weight:bold;">Name</span>
+                <input name="ctl00$MainContent$txtItemName" type="text" id="MainContent_txtItemName" style="width:250px;" />
+                <span id="MainContent_Label6" style="color:Black;font-weight:bold;">Units</span>
+                <input name="ctl00$MainContent$cmbunits" type="text" id="MainContent_cmbunits" style="width:50px;" />
+                <span id="MainContent_Label11" style="color:Black;font-weight:bold;">Pcs/Ctn</span>
+                <input name="ctl00$MainContent$txtltrperpack" type="text" id="MainContent_txtltrperpack" style="width:50px;" />
+            </td>
+            <td class="style5">
+                </td>
+        </tr>
+        <tr>
+            <td class="style4" colspan="2">
+                <span id="MainContent_Label10" style="color:Black;font-weight:bold;">Retail Price:</span>
+&nbsp;&nbsp;
+                <input name="ctl00$MainContent$txtretailprice" type="text" id="MainContent_txtretailprice" style="width:50px;" />
+                &nbsp;<span id="MainContent_Label7" style="color:Black;font-weight:bold;">Purchase Rate</span>
+&nbsp;&nbsp;
+                <input name="ctl00$MainContent$txtitempurchaserate" type="text" id="MainContent_txtitempurchaserate" style="width:50px;" />
+                &nbsp;&nbsp;
+                <span id="MainContent_Label8" style="color:Black;font-weight:bold;">Sale Rate</span>
+&nbsp;<input name="ctl00$MainContent$txtitemsalerate" type="text" id="MainContent_txtitemsalerate" style="width:50px;" />
+                &nbsp;&nbsp;
+                <span id="MainContent_Label13" style="color:Black;font-weight:bold;">Disc%</span>
+                <input name="ctl00$MainContent$txtDis" type="text" id="MainContent_txtDis" style="width:50px;" />
+                <span id="MainContent_Label12" style="color:Black;font-weight:bold;">TO%</span>
+                <input name="ctl00$MainContent$txtTO" type="text" id="MainContent_txtTO" style="width:50px;" />
+                <span id="MainContent_Label9" style="color:Black;font-weight:bold;">Min Qty:</span>
+                <input name="ctl00$MainContent$txtMinQty" type="text" id="MainContent_txtMinQty" style="width:50px;" />
+            </td>
+            <td class="style5">
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style4" colspan="2">
+                <span id="MainContent_Label19" style="color:Black;font-weight:bold;">HS Code:</span>
+                <input name="ctl00$MainContent$txtHSCode" type="text" id="MainContent_txtHSCode" style="width:50px;" />
+                <span id="MainContent_Label14" style="color:Black;font-weight:bold;">GST Type:</span>
+                <select name="ctl00$MainContent$DDTaxtype" id="MainContent_DDTaxtype">
+	<option value="VAT">VAT</option>
+	<option value="3RD">3RD</option>
+	<option value="8TH">8TH</option>
+
+</select>
+                <span id="MainContent_Label15" style="color:Black;font-weight:bold;">GST%:</span>
+                <input name="ctl00$MainContent$txtGST" type="text" id="MainContent_txtGST" style="width:50px;" />
+                <span id="MainContent_Label16" style="color:Black;font-weight:bold;">FED%:</span>
+                <input name="ctl00$MainContent$txtFED" type="text" id="MainContent_txtFED" style="width:50px;" />
+                <span id="MainContent_Label17" style="color:Black;font-weight:bold;">Adv.Tax%(Purchase):</span>
+                <input name="ctl00$MainContent$txtAdvTax_Pur" type="text" id="MainContent_txtAdvTax_Pur" style="width:50px;" />
+                <span id="MainContent_Label18" style="color:Black;font-weight:bold;">Adv.Tax%(Sale):</span>
+                <input name="ctl00$MainContent$txtAdvTax_Sale" type="text" id="MainContent_txtAdvTax_Sale" style="width:50px;" />
+            </td>
+            <td class="style5">
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style3" colspan="2">
+                              <input type="submit" name="ctl00$MainContent$bttnsave" value="Save" id="MainContent_bttnsave" style="width:75px;height: 26px" />
+                <input type="submit" name="ctl00$MainContent$bttndelete" value="Delete" id="MainContent_bttndelete" style="width:75px;height: 26px" />
+                <input type="submit" name="ctl00$MainContent$bttnback" value="Back" onclick="javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions(&quot;ctl00$MainContent$bttnback&quot;, &quot;&quot;, false, &quot;&quot;, &quot;MainPage.aspx&quot;, false, false))" id="MainContent_bttnback" style="width:75px;height: 26px" />
+                <input type="submit" name="ctl00$MainContent$bttnPrint" value="Print" id="MainContent_bttnPrint" style="width:68px;height: 26px" />
+                    
+                       </td>
+            <td>
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style3" colspan="2">
+                              
+                              
+                              
+                    
+                       </td>
+            <td>
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style3" colspan="2">
+                <hr />
+                <div>
+	<table cellspacing="0" rules="all" border="1" id="MainContent_GridView1" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">&nbsp;</th><th scope="col">Item_No</th><th scope="col">Item_Name</th><th scope="col">Item_MainHeadNo</th><th scope="col">Units</th><th scope="col">Pcs_PerCtn</th><th scope="col">Sale_Rate</th><th scope="col">Purchase_Rate</th><th scope="col">Retail_Price</th><th scope="col">Trade_Disc</th><th scope="col">T_O</th><th scope="col">Min_Qty</th><th scope="col">hs_code</th><th scope="col">gst_type</th><th scope="col">gst</th><th scope="col">fed</th><th scope="col">adv_tax_purchase</th><th scope="col">adv_tax_sale</th><th scope="col">Cost_rate</th>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$0&#39;)">Select</a></td><td>2</td><td>Baby Powder (Pink ) 90 GM</td><td>1</td><td>1</td><td>96</td><td>184.899993896484</td><td>184.899993896484</td><td>203.39</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>190.077197916667</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$1&#39;)">Select</a></td><td>3</td><td>Baby Powder (Pink ) 130 GM</td><td>1</td><td>1</td><td>96</td><td>231.119995117188</td><td>231.119995117188</td><td>254.24</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>237.592802083333</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$2&#39;)">Select</a></td><td>4</td><td>GO RASH POWDER 250 GM</td><td>1</td><td>1</td><td>48</td><td>365.950012207031</td><td>365.950012207031</td><td>402.54</td><td>0</td><td>0</td><td>0</td><td>&amp;amp</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>376.195697916667</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$3&#39;)">Select</a></td><td>5</td><td>GO RASH POWDER 150 GM</td><td>1</td><td>1</td><td>72</td><td>277.350006103516</td><td>277.350006103516</td><td>305.08</td><td>0</td><td>0</td><td>0</td><td>&amp;amp</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>285.114900548697</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$4&#39;)">Select</a></td><td>6</td><td>FRENCH POWDER 90 GM</td><td>1</td><td>1</td><td>96</td><td>184.899993896484</td><td>184.899993896484</td><td>203.39</td><td>0</td><td>0</td><td>0</td><td>&amp;amp</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>190.077208333333</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$5&#39;)">Select</a></td><td>7</td><td>FRENCH POWDER 130 GM</td><td>1</td><td>1</td><td>96</td><td>231.119995117188</td><td>231.119995117188</td><td>254.24</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>237.592791666667</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$6&#39;)">Select</a></td><td>8</td><td>Baby Powder (Pink ) 215 GM</td><td>1</td><td>1</td><td>48</td><td>288.910003662109</td><td>288.910003662109</td><td>317.8</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>296.9993</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$7&#39;)">Select</a></td><td>9</td><td>FRENCH POWDER 215 GM</td><td>1</td><td>1</td><td>48</td><td>288.910003662109</td><td>288.910003662109</td><td>317.8</td><td>0</td><td>0</td><td>0</td><td>&amp;amp</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>296.999270833333</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$8&#39;)">Select</a></td><td>10</td><td>Baby Powder (Pink ) 385 GM</td><td>1</td><td>1</td><td>24</td><td>385.209991455078</td><td>385.209991455078</td><td>423.73</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>395.995694444444</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$9&#39;)">Select</a></td><td>11</td><td>FRENCH POWDER 385 GM</td><td>1</td><td>1</td><td>24</td><td>385.209991455078</td><td>385.209991455078</td><td>423.73</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>395.995625</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$10&#39;)">Select</a></td><td>12</td><td>Prickly Heat Powder 150 GM</td><td>1</td><td>1</td><td>72</td><td>277.350006103516</td><td>277.350006103516</td><td>305.08</td><td>0</td><td>0</td><td>0</td><td>&amp;amp</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>285.114888888889</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$11&#39;)">Select</a></td><td>13</td><td>Prickly Heat Powder 250 GM</td><td>1</td><td>1</td><td>48</td><td>365.950012207031</td><td>365.950012207031</td><td>402.54</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>376.195708333333</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$12&#39;)">Select</a></td><td>15</td><td>GO RASH 150 GM NEW </td><td>1</td><td>1</td><td>72</td><td>308.17</td><td>308.170013427734</td><td>338.98</td><td>0</td><td>0</td><td>0</td><td>&amp;nbs</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>316.7975</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$13&#39;)">Select</a></td><td>16</td><td>MC GO RASH 250 GM NEW</td><td>1</td><td>1</td><td>48</td><td>423.73</td><td>423.730010986328</td><td>466.1</td><td>0</td><td>0</td><td>0</td><td>&nbsp;</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>435.593901041667</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$14&#39;)">Select</a></td><td>17</td><td>MC POWDER PINK 215 GM NEW</td><td>1</td><td>1</td><td>48</td><td>351.48</td><td>351.480010986328</td><td>381.36</td><td>0</td><td>0</td><td>0</td><td>&nbsp;</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>360.373208333333</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$15&#39;)">Select</a></td><td>18</td><td>MC POWDER 130 GM PINK NEW</td><td>1</td><td>1</td><td>96</td><td>269.65</td><td>269.649993896484</td><td>296.61</td><td>0</td><td>0</td><td>0</td><td>&nbsp;</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>277.199302083333</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$16&#39;)">Select</a></td><td>19</td><td>MC POWDER 90 GM PINK NEW</td><td>1</td><td>1</td><td>96</td><td>208.01</td><td>208.009994506836</td><td>228.81</td><td>0</td><td>0</td><td>0</td><td>&amp;amp</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>213.8341</td>
+		</tr><tr>
+			<td><a href="javascript:__doPostBack(&#39;ctl00$MainContent$GridView1&#39;,&#39;Select$17&#39;)">Select</a></td><td>20</td><td>MC POWDER N&amp;M 385GM PINK NEW</td><td>1</td><td>1</td><td>24</td><td>488.17</td><td>488.170013427734</td><td>529.66</td><td>0</td><td>0</td><td>0</td><td>&nbsp;</td><td>3RD</td><td>18</td><td>0</td><td>0</td><td>0</td><td>500.519916666667</td>
+		</tr>
+	</table>
+</div>
+            </td>
+            <td>
+                &nbsp;</td>
+        </tr>
+        <tr>
+            <td class="style3" colspan="2">
+                &nbsp;</td>
+            <td>
+                &nbsp;</td>
+        </tr>
+    </table>
+
+        </div>
+        <div class="clear">
+        </div>
+    </div>
+    <div class="footer">
+        
+    </div>
+    
+<script type='text/javascript'>new Sys.WebForms.Menu({ element: 'NavigationMenu', disappearAfter: 500, orientation: 'horizontal', tabIndex: 0, disabled: false });</script>
+<script type="text/javascript">
+//<![CDATA[
+WebForm_AutoFocus('MainContent_txtItemMHNo');//]]>
+</script>
+</form>
+</body>
+</html>
+
