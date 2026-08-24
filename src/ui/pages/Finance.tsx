@@ -82,30 +82,31 @@ export const Finance: React.FC = () => {
   const [tab, setTab] = useState<FinanceTab>('coa');
 
   return (
-    <div style={styles.page}>
-      {/* Header */}
-      <div style={styles.header}>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
-          <h1 style={styles.title}>Finance</h1>
-          <p style={styles.subtitle}>{tenant.brandName}</p>
+          <button onClick={() => navigate('/dashboard')} className="bg-transparent border-none text-slate-500 text-[13px] cursor-pointer mb-1 p-0">← Dashboard</button>
+          <h1 className="text-[26px] font-bold text-slate-800 mb-1">Finance</h1>
+          <p className="text-sm text-slate-500">{tenant.brandName}</p>
         </div>
       </div>
 
-      {/* Tab Bar */}
-      <div style={styles.tabBar}>
+      <div className="flex overflow-x-auto whitespace-nowrap border-b-2 border-slate-200 hide-scrollbar gap-0 mb-5">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            style={{ ...styles.tab, ...(tab === t.key ? styles.tabActive : {}) }}
+            className={`px-5 py-2.5 bg-transparent border-none border-b-2 text-sm font-medium cursor-pointer whitespace-nowrap transition-colors min-h-[44px] ${
+              tab === t.key
+                ? 'text-blue-600 border-b-blue-600'
+                : 'text-slate-500 border-b-transparent hover:text-slate-700'
+            }`}
           >
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* Tab Content */}
       {tab === 'coa'      && <COATab tenantId={tenant.id} />}
       {tab === 'vouchers' && <VouchersTab tenantId={tenant.id} user={user.username} />}
       {tab === 'ledger'   && <LedgerTab tenantId={tenant.id} />}
@@ -226,65 +227,70 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div style={styles.sectionHeader}>
-        <div style={styles.statsBar}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="flex flex-wrap gap-3">
           {ACCOUNT_TYPES.map(t => (
-            <div key={t} style={styles.statChip}>
-              <span style={{ ...styles.statDot, backgroundColor: TYPE_BADGE_COLORS[t].bg, color: TYPE_BADGE_COLORS[t].fg }}>
+            <div key={t} className="flex items-center gap-1.5 text-[13px] text-slate-600">
+              <span
+                className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs"
+                style={{ backgroundColor: TYPE_BADGE_COLORS[t].bg, color: TYPE_BADGE_COLORS[t].fg }}
+              >
                 {stats.byType[t]}
               </span>
-              <span style={styles.statLabel}>{ACCOUNT_TYPE_LABELS[t]}</span>
+              <span>{ACCOUNT_TYPE_LABELS[t]}</span>
             </div>
           ))}
         </div>
-        <button onClick={() => { setCreateParent(null); setShowCreate(true); }} style={styles.primaryBtn}>
+        <button onClick={() => { setCreateParent(null); setShowCreate(true); }} className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]">
           + New Account
         </button>
       </div>
 
-      <div style={styles.toolbar}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or code..." style={styles.searchInput} />
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as AccountType | '')} style={styles.filterSelect}>
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or code..." className="flex-1 min-w-[200px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as AccountType | '')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
           <option value="">All Types</option>
           {ACCOUNT_TYPES.map(t => <option key={t} value={t}>{ACCOUNT_TYPE_LABELS[t]}</option>)}
         </select>
-        <button onClick={() => setExpanded(new Set(accounts.map(a => a.id)))} style={styles.toolBtn}>Expand All</button>
-        <button onClick={() => setExpanded(new Set())} style={styles.toolBtn}>Collapse All</button>
+        <button onClick={() => setExpanded(new Set(accounts.map(a => a.id)))} className="px-3.5 py-2 border border-slate-200 rounded-lg text-[13px] bg-white cursor-pointer text-slate-600 hover:bg-slate-50 min-h-[44px]">Expand All</button>
+        <button onClick={() => setExpanded(new Set())} className="px-3.5 py-2 border border-slate-200 rounded-lg text-[13px] bg-white cursor-pointer text-slate-600 hover:bg-slate-50 min-h-[44px]">Collapse All</button>
       </div>
 
-      <div style={styles.card}>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
-          <div style={{ padding: 24 }}>
-            <div className="skeleton" style={{ width: 200, height: 20, marginBottom: 8 }} />
-            <div className="skeleton" style={{ width: '100%', height: 300 }} />
+          <div className="p-6">
+            <div className="skeleton w-[200px] h-5 mb-2" />
+            <div className="skeleton w-full h-[300px]" />
           </div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
-              <span style={{ ...styles.col, flex: '0 0 40px' }}></span>
-              <span style={{ ...styles.col, flex: '0 0 80px' }}>Code</span>
-              <span style={{ ...styles.col, flex: '1' }}>Account Name</span>
-              <span style={{ ...styles.col, flex: '0 0 100px' }}>Level</span>
-              <span style={{ ...styles.col, flex: '0 0 120px' }}>Type</span>
-              <span style={{ ...styles.col, flex: '0 0 70px' }}>Balance</span>
-              <span style={{ ...styles.col, flex: '0 0 70px' }}>Status</span>
-              <span style={{ ...styles.col, flex: '0 0 80px' }}>Actions</span>
+            <div className="overflow-x-auto">
+              <div className="flex items-center px-4 py-2.5 bg-slate-50 border-b-2 border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[660px]">
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_40px]"></span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px]">Code</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1">Account Name</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px]">Level</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_120px]">Type</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_70px]">Balance</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_70px]">Status</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px]">Actions</span>
+              </div>
+              {accounts.filter(a => visibleIds.has(a.id)).map(a => (
+                <AccountRow
+                  key={a.id}
+                  account={a}
+                  depth={a.level - 1}
+                  expanded={expanded.has(a.id)}
+                  hasChildren={(tree.children.get(a.id) ?? []).length > 0}
+                  onToggle={() => toggleExpand(a.id)}
+                  onEdit={() => setEditAccount(a)}
+                  onAddChild={() => { setCreateParent(a); setShowCreate(true); }}
+                />
+              ))}
+              {accounts.filter(a => visibleIds.has(a.id)).length === 0 && (
+                <div className="p-10 text-center text-slate-400 text-sm">No accounts match your search.</div>
+              )}
             </div>
-            {accounts.filter(a => visibleIds.has(a.id)).map(a => (
-              <AccountRow
-                key={a.id}
-                account={a}
-                depth={a.level - 1}
-                expanded={expanded.has(a.id)}
-                hasChildren={(tree.children.get(a.id) ?? []).length > 0}
-                onToggle={() => toggleExpand(a.id)}
-                onEdit={() => setEditAccount(a)}
-                onAddChild={() => { setCreateParent(a); setShowCreate(true); }}
-              />
-            ))}
-            {accounts.filter(a => visibleIds.has(a.id)).length === 0 && (
-              <div style={styles.empty}>No accounts match your search.</div>
-            )}
           </>
         )}
       </div>
@@ -392,69 +398,71 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
 
   return (
     <>
-      <div style={styles.sectionHeader}>
-        <div style={styles.statsBar}>
-          <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
-            <span style={styles.statLabel}>Total</span>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs bg-slate-100 text-slate-600">{stats.total}</span>
+            <span>Total</span>
           </div>
-          <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: VOUCHER_STATUS_COLORS.DRAFT.bg, color: VOUCHER_STATUS_COLORS.DRAFT.fg }}>{stats.draft}</span>
-            <span style={styles.statLabel}>Draft</span>
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: VOUCHER_STATUS_COLORS.DRAFT.bg, color: VOUCHER_STATUS_COLORS.DRAFT.fg }}>{stats.draft}</span>
+            <span>Draft</span>
           </div>
-          <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: VOUCHER_STATUS_COLORS.POSTED.bg, color: VOUCHER_STATUS_COLORS.POSTED.fg }}>{stats.posted}</span>
-            <span style={styles.statLabel}>Posted</span>
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: VOUCHER_STATUS_COLORS.POSTED.bg, color: VOUCHER_STATUS_COLORS.POSTED.fg }}>{stats.posted}</span>
+            <span>Posted</span>
           </div>
         </div>
-        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Voucher</button>
+        <button onClick={() => setShowCreate(true)} className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]">+ New Voucher</button>
       </div>
 
-      <div style={styles.toolbar}>
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as VoucherType | '')} style={styles.filterSelect}>
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as VoucherType | '')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
           <option value="">All Types</option>
           {(Object.keys(VOUCHER_TYPE_LABELS) as VoucherType[]).map(t => (
             <option key={t} value={t}>{VOUCHER_TYPE_LABELS[t]}</option>
           ))}
         </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as VoucherStatus | '')} style={styles.filterSelect}>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as VoucherStatus | '')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
           <option value="">All Statuses</option>
           <option value="DRAFT">Draft</option>
           <option value="POSTED">Posted</option>
         </select>
       </div>
 
-      <div style={styles.card}>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
-          <div style={{ padding: 24 }}>
-            <div className="skeleton" style={{ width: '100%', height: 300 }} />
+          <div className="p-6">
+            <div className="skeleton w-full h-[300px]" />
           </div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
-              <span style={{ ...styles.col, flex: '0 0 60px' }}>#</span>
-              <span style={{ ...styles.col, flex: '0 0 110px' }}>Type</span>
-              <span style={{ ...styles.col, flex: '0 0 110px' }}>Date</span>
-              <span style={{ ...styles.col, flex: '1' }}>Narration</span>
-              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Debit</span>
-              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Credit</span>
-              <span style={{ ...styles.col, flex: '0 0 80px' }}>Status</span>
-              <span style={{ ...styles.col, flex: '0 0 100px' }}>Actions</span>
+            <div className="overflow-x-auto">
+              <div className="flex items-center px-4 py-2.5 bg-slate-50 border-b-2 border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[700px]">
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_60px]">#</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_110px]">Type</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_110px]">Date</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1">Narration</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right">Debit</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right">Credit</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px]">Status</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px]">Actions</span>
+              </div>
+              {vouchers.length === 0 && <div className="p-10 text-center text-slate-400 text-sm">No vouchers found.</div>}
+              {vouchers.map(v => (
+                <VoucherRow
+                  key={v.id}
+                  voucher={v}
+                  tenantId={tenantId}
+                  accountMap={accountMap}
+                  expanded={expandedLines.has(v.id)}
+                  onToggleLines={() => toggleLines(v.id)}
+                  onEdit={() => setEditVoucher(v)}
+                  onPost={() => handlePost(v.id)}
+                  onDelete={() => handleDelete(v.id)}
+                />
+              ))}
             </div>
-            {vouchers.length === 0 && <div style={styles.empty}>No vouchers found.</div>}
-            {vouchers.map(v => (
-              <VoucherRow
-                key={v.id}
-                voucher={v}
-                tenantId={tenantId}
-                accountMap={accountMap}
-                expanded={expandedLines.has(v.id)}
-                onToggleLines={() => toggleLines(v.id)}
-                onEdit={() => setEditVoucher(v)}
-                onPost={() => handlePost(v.id)}
-                onDelete={() => handleDelete(v.id)}
-              />
-            ))}
           </>
         )}
       </div>
@@ -507,72 +515,72 @@ const VoucherRow: React.FC<{
 
   return (
     <>
-      <div style={styles.voucherRow}>
-        <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace' }}>
-          <button onClick={onToggleLines} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>
+      <div className="flex items-center px-4 py-2.5 border-b border-slate-100 text-sm hover:bg-slate-50">
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_60px] font-mono text-[13px]">
+          <button onClick={onToggleLines} className="bg-transparent border-none cursor-pointer text-[10px] text-slate-500 px-1 py-0.5">{expanded ? '▼' : '▶'}</button>
           {v.voucherNumber}
         </span>
-        <span style={{ ...styles.col, flex: '0 0 110px' }}>
-          <span style={{ ...styles.typeBadge, backgroundColor: typeBadge.bg, color: typeBadge.fg }}>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_110px]">
+          <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold" style={{ backgroundColor: typeBadge.bg, color: typeBadge.fg }}>
             {v.voucherType}
           </span>
         </span>
-        <span style={{ ...styles.col, flex: '0 0 110px', fontSize: 13 }}>{v.date}</span>
-        <span style={{ ...styles.col, flex: '1' }}>{v.narration}</span>
-        <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_110px] text-[13px]">{v.date}</span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1">{v.narration}</span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right font-mono text-[13px]">
           {lines.length > 0 ? fmt(totalD) : '—'}
         </span>
-        <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right font-mono text-[13px]">
           {lines.length > 0 ? fmt(totalC) : '—'}
         </span>
-        <span style={{ ...styles.col, flex: '0 0 80px' }}>
-          <span style={{ ...styles.typeBadge, backgroundColor: statusBadge.bg, color: statusBadge.fg }}>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px]">
+          <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold" style={{ backgroundColor: statusBadge.bg, color: statusBadge.fg }}>
             {v.status}
           </span>
         </span>
-        <span style={{ ...styles.col, flex: '0 0 100px', gap: 4 }}>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] gap-1">
           {v.status === 'DRAFT' && (
             <>
-              <button onClick={onEdit} style={styles.rowBtn} title="Edit">✎</button>
-              <button onClick={onPost} style={{ ...styles.rowBtn, color: '#16a34a', borderColor: '#bbf7d0' }} title="Post">✓</button>
-              <button onClick={onDelete} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca' }} title="Delete">✕</button>
+              <button onClick={onEdit} className="bg-transparent border border-slate-200 rounded-md w-7 h-7 cursor-pointer text-sm text-slate-500 inline-flex items-center justify-center" title="Edit">✎</button>
+              <button onClick={onPost} className="bg-transparent border border-green-200 rounded-md w-7 h-7 cursor-pointer text-sm text-green-600 inline-flex items-center justify-center" title="Post">✓</button>
+              <button onClick={onDelete} className="bg-transparent border border-red-200 rounded-md w-7 h-7 cursor-pointer text-sm text-red-600 inline-flex items-center justify-center" title="Delete">✕</button>
             </>
           )}
         </span>
       </div>
       {expanded && lines.length > 0 && (
-        <div style={styles.linesContainer}>
-          <div style={styles.linesHeader}>
-            <span style={{ ...styles.col, flex: '0 0 40px' }}>Ln</span>
-            <span style={{ ...styles.col, flex: '0 0 80px' }}>Acct</span>
-            <span style={{ ...styles.col, flex: '1' }}>Description</span>
-            <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Debit</span>
-            <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Credit</span>
+        <div className="bg-slate-50 border-b-2 border-slate-200">
+          <div className="flex px-4 py-1.5 pl-8 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_40px]">Ln</span>
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px]">Acct</span>
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1">Description</span>
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right">Debit</span>
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right">Credit</span>
           </div>
           {lines.map((l, i) => {
             const acct = accountMap.get(l.accountId);
             return (
-              <div key={l.id} style={styles.lineRow}>
-                <span style={{ ...styles.col, flex: '0 0 40px', fontSize: 12, color: '#94a3b8' }}>{i + 1}</span>
-                <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{l.accountId}</span>
-                <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>
+              <div key={l.id} className="flex px-4 py-1.5 pl-8 border-b border-slate-100 text-sm items-center">
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_40px] text-xs text-slate-400">{i + 1}</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px] font-mono text-[13px]">{l.accountId}</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1 text-[13px]">
                   {l.description}
-                  {acct && <span style={{ color: '#94a3b8', marginLeft: 8 }}>({acct.accountName})</span>}
+                  {acct && <span className="text-slate-400 ml-2">({acct.accountName})</span>}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: l.debit > 0 ? '#1d4ed8' : '#94a3b8' }}>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right font-mono text-[13px]" style={{ color: l.debit > 0 ? '#1d4ed8' : '#94a3b8' }}>
                   {l.debit > 0 ? fmt(l.debit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: l.credit > 0 ? '#be185d' : '#94a3b8' }}>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right font-mono text-[13px]" style={{ color: l.credit > 0 ? '#be185d' : '#94a3b8' }}>
                   {l.credit > 0 ? fmt(l.credit) : ''}
                 </span>
               </div>
             );
           })}
-          <div style={styles.linesFooter}>
-            <span style={{ flex: '0 0 120px' }}></span>
-            <span style={{ flex: '1', fontSize: 12, fontWeight: 600, color: '#475569' }}>Totals</span>
-            <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8' }}>{fmt(totalD)}</span>
-            <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#be185d' }}>{fmt(totalC)}</span>
+          <div className="flex px-4 py-2 pl-8 border-t-2 border-slate-200 bg-slate-50 text-[13px]">
+            <span className="flex-[0_0_120px]"></span>
+            <span className="flex-1 text-xs font-semibold text-slate-600">Totals</span>
+            <span className="flex-[0_0_100px] text-right font-mono font-semibold text-blue-700">{fmt(totalD)}</span>
+            <span className="flex-[0_0_100px] text-right font-mono font-semibold text-pink-700">{fmt(totalC)}</span>
           </div>
         </div>
       )}
@@ -599,7 +607,6 @@ const VoucherModal: React.FC<{
   const [saving, setSaving] = useState(false);
   const [accountSearch, setAccountSearch] = useState('');
 
-  // Load existing lines for edit mode
   useEffect(() => {
     if (isEdit && voucher) {
       services.voucherRepository.getVoucherLines(tenantId, voucher.id).then(raw => {
@@ -609,7 +616,6 @@ const VoucherModal: React.FC<{
     }
   }, [isEdit, voucher, tenantId]);
 
-  // Filtered accounts for search dropdown
   const filteredAccounts = useMemo(() => {
     if (!accountSearch) return postingAccounts.slice(0, 10);
     const q = accountSearch.toLowerCase();
@@ -652,54 +658,53 @@ const VoucherModal: React.FC<{
 
   if (loading) {
     return (
-      <div style={styles.overlay} onClick={onClose}>
-        <div style={styles.modal} onClick={e => e.stopPropagation()}>
-          <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40" onClick={onClose}>
+        <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
+          <div className="p-10 text-center">Loading...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={{ ...styles.modal, maxWidth: 800 }} onClick={e => e.stopPropagation()}>
-        <h2 style={styles.modalTitle}>{isEdit ? 'Edit' : 'New'} Voucher</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40" onClick={onClose}>
+      <div className="bg-white w-full max-w-[800px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-800 mb-1">{isEdit ? 'Edit' : 'New'} Voucher</h2>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formRow}>
-            <div style={styles.field}>
-              <label style={styles.label}>Voucher Type</label>
-              <select value={vType} onChange={e => setVType(e.target.value as VoucherType)} style={styles.select} disabled={isEdit}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-gray-700">Voucher Type</label>
+              <select value={vType} onChange={e => setVType(e.target.value as VoucherType)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white" disabled={isEdit}>
                 {(Object.keys(VOUCHER_TYPE_LABELS) as VoucherType[]).map(t => (
                   <option key={t} value={t}>{VOUCHER_TYPE_LABELS[t]}</option>
                 ))}
               </select>
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Date</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={styles.input} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-gray-700">Date</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
             </div>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Narration</label>
-            <input value={narration} onChange={e => setNarration(e.target.value)} style={styles.input} placeholder="Header narration..." />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-gray-700">Narration</label>
+            <input value={narration} onChange={e => setNarration(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="Header narration..." />
           </div>
 
-          {/* Lines */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <label style={styles.label}>Line Items</label>
-              <button type="button" onClick={addLine} style={{ ...styles.toolBtn, fontSize: 12 }}>+ Add Line</button>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-[13px] font-medium text-gray-700">Line Items</label>
+              <button type="button" onClick={addLine} className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs bg-white cursor-pointer text-slate-600 hover:bg-slate-50 min-h-[44px]">+ Add Line</button>
             </div>
 
             {lines.length === 0 && (
-              <div style={{ ...styles.empty, padding: 20 }}>No lines added. Click "+ Add Line" to start.</div>
+              <div className="p-5 text-center text-slate-400 text-sm">No lines added. Click "+ Add Line" to start.</div>
             )}
 
             {lines.map((line, idx) => (
-              <div key={idx} style={styles.lineItemRow}>
-                <div style={{ flex: '0 0 180px' }}>
+              <div key={idx} className="flex gap-2 items-center mb-1.5">
+                <div className="flex-[0_0_180px]">
                   <AccountSelect
                     accounts={postingAccounts}
                     value={line.accountId}
@@ -709,51 +714,57 @@ const VoucherModal: React.FC<{
                     filtered={filteredAccounts}
                   />
                 </div>
-                <div style={{ flex: '1' }}>
+                <div className="flex-1">
                   <input
                     value={line.description}
                     onChange={e => updateLine(idx, 'description', e.target.value)}
-                    style={styles.input}
+                    className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]"
                     placeholder="Description..."
                   />
                 </div>
-                <div style={{ flex: '0 0 110px' }}>
+                <div className="flex-[0_0_110px]">
                   <input
                     type="number"
                     min={0}
                     step={0.01}
                     value={line.debit || ''}
                     onChange={e => updateLine(idx, 'debit', parseFloat(e.target.value) || 0)}
-                    style={{ ...styles.input, textAlign: 'right', color: line.debit > 0 ? '#1d4ed8' : undefined }}
+                    className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] text-right"
+                    style={{ color: line.debit > 0 ? '#1d4ed8' : undefined }}
                     placeholder="0.00"
                   />
                 </div>
-                <div style={{ flex: '0 0 110px' }}>
+                <div className="flex-[0_0_110px]">
                   <input
                     type="number"
                     min={0}
                     step={0.01}
                     value={line.credit || ''}
                     onChange={e => updateLine(idx, 'credit', parseFloat(e.target.value) || 0)}
-                    style={{ ...styles.input, textAlign: 'right', color: line.credit > 0 ? '#be185d' : undefined }}
+                    className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] text-right"
+                    style={{ color: line.credit > 0 ? '#be185d' : undefined }}
                     placeholder="0.00"
                   />
                 </div>
-                <button type="button" onClick={() => removeLine(idx)} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca', flex: '0 0 32px' }}>✕</button>
+                <button type="button" onClick={() => removeLine(idx)} className="bg-transparent border border-red-200 rounded-md w-8 h-8 cursor-pointer text-sm text-red-600 inline-flex items-center justify-center flex-[0_0_32px]">✕</button>
               </div>
             ))}
 
             {lines.length > 0 && (
-              <div style={styles.linesFooter}>
-                <span style={{ flex: '1' }}></span>
-                <span style={{ flex: '0 0 110px', textAlign: 'right', fontWeight: 600, color: '#1d4ed8' }}>{fmt(dTotal)}</span>
-                <span style={{ flex: '0 0 110px', textAlign: 'right', fontWeight: 600, color: '#be185d' }}>{fmt(cTotal)}</span>
-                <span style={{ flex: '0 0 32px' }}></span>
+              <div className="flex px-4 py-2 border-t-2 border-slate-200 bg-slate-50 text-[13px]">
+                <span className="flex-1"></span>
+                <span className="flex-[0_0_110px] text-right font-semibold text-blue-700">{fmt(dTotal)}</span>
+                <span className="flex-[0_0_110px] text-right font-semibold text-pink-700">{fmt(cTotal)}</span>
+                <span className="flex-[0_0_32px]"></span>
               </div>
             )}
 
             {lines.length > 0 && (
-              <div style={{ ...styles.infoNote, marginTop: 8, borderColor: balanced ? '#bbf7d0' : '#fecaca', backgroundColor: balanced ? '#f0fdf4' : '#fef2f2' }}>
+              <div
+                className={`text-[13px] text-slate-500 bg-slate-50 px-3.5 py-2.5 rounded-lg border mt-2 ${
+                  balanced ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                }`}
+              >
                 {balanced
                   ? `Balanced ✓ — Debit: ${fmt(dTotal)} = Credit: ${fmt(cTotal)}`
                   : `NOT BALANCED ✕ — Debit: ${fmt(dTotal)} / Credit: ${fmt(cTotal)} / Diff: ${fmt(Math.abs(dTotal - cTotal))}`
@@ -762,11 +773,11 @@ const VoucherModal: React.FC<{
             )}
           </div>
 
-          {error && <div style={styles.error}>{error}</div>}
+          {error && <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
 
-          <div style={styles.modalActions}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
-            <button type="submit" style={styles.primaryBtn} disabled={saving || (lines.length > 0 && !balanced)}>
+          <div className="flex justify-end gap-2.5 mt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 min-h-[44px]">Cancel</button>
+            <button type="submit" className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]" disabled={saving || (lines.length > 0 && !balanced)}>
               {saving ? 'Saving...' : isEdit ? 'Update Voucher' : 'Create Voucher'}
             </button>
           </div>
@@ -790,27 +801,27 @@ const AccountSelect: React.FC<{
   const selected = accounts.find(a => a.accountCode === value);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <input
         value={open ? search : (selected ? `${selected.accountCode} — ${selected.accountName}` : '')}
         onChange={e => { onSearchChange(e.target.value); setOpen(true); }}
         onFocus={() => { setOpen(true); onSearchChange(''); }}
-        style={{ ...styles.input, fontSize: 13 }}
+        className="px-3 py-2.5 text-[13px] border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] w-full"
         placeholder="Search account..."
       />
       {open && (
-        <div style={styles.dropdown}>
+        <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-10 max-h-[200px] overflow-auto">
           {filtered.map(a => (
             <div
               key={a.id}
-              style={{ ...styles.dropdownItem, backgroundColor: a.accountCode === value ? '#eff6ff' : undefined }}
+              className={`px-3 py-2 text-[13px] cursor-pointer border-b border-slate-100 hover:bg-slate-50 ${a.accountCode === value ? 'bg-blue-50' : ''}`}
               onClick={() => { onChange(a.accountCode); setOpen(false); onSearchChange(''); }}
             >
-              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, color: '#64748b', marginRight: 8 }}>{a.accountCode}</span>
+              <span className="font-mono text-xs text-slate-500 mr-2">{a.accountCode}</span>
               {a.accountName}
             </div>
           ))}
-          {filtered.length === 0 && <div style={{ ...styles.dropdownItem, color: '#94a3b8' }}>No accounts found</div>}
+          {filtered.length === 0 && <div className="px-3 py-2 text-[13px] text-slate-400">No accounts found</div>}
         </div>
       )}
     </div>
@@ -862,41 +873,41 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div style={styles.toolbar}>
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <select
           value={accountFilter}
           onChange={e => { setAccountFilter(e.target.value); setLoaded(false); setLedgerEntries([]); }}
-          style={{ ...styles.filterSelect, flex: '1 1 250px' }}
+          className="flex-1 min-w-[250px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white"
         >
           <option value="">Select an account...</option>
           {postingAccounts.map(a => (
             <option key={a.id} value={a.accountCode}>{a.accountCode} — {a.accountName}</option>
           ))}
         </select>
-        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={styles.input} placeholder="Start date" />
-        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={styles.input} placeholder="End date" />
-        <button onClick={loadLedger} style={styles.primaryBtn} disabled={!accountFilter || loading}>
+        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="Start date" />
+        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="End date" />
+        <button onClick={loadLedger} className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]" disabled={!accountFilter || loading}>
           {loading ? 'Loading...' : 'Load Ledger'}
         </button>
       </div>
 
       {selectedAccount && loaded && (
-        <div style={styles.statsBar}>
-          <div style={styles.statChip}>
-            <span style={styles.statLabel}>Account: {selectedAccount.accountCode} — {selectedAccount.accountName}</span>
+        <div className="flex flex-wrap gap-3 mb-4">
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span>Account: {selectedAccount.accountCode} — {selectedAccount.accountName}</span>
           </div>
-          <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{ledgerEntries.length}</span>
-            <span style={styles.statLabel}>Entries</span>
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs bg-blue-100 text-blue-700">{ledgerEntries.length}</span>
+            <span>Entries</span>
           </div>
-          <div style={styles.statChip}>
-            <span style={styles.statLabel}>Total Dr: <strong style={{ color: '#1d4ed8' }}>{fmt(stats.totalDebit)}</strong></span>
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span>Total Dr: <strong className="text-blue-700">{fmt(stats.totalDebit)}</strong></span>
           </div>
-          <div style={styles.statChip}>
-            <span style={styles.statLabel}>Total Cr: <strong style={{ color: '#be185d' }}>{fmt(stats.totalCredit)}</strong></span>
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span>Total Cr: <strong className="text-pink-700">{fmt(stats.totalCredit)}</strong></span>
           </div>
-          <div style={styles.statChip}>
-            <span style={styles.statLabel}>
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <span>
               Balance: <strong style={{ color: stats.lastBalance >= 0 ? '#1d4ed8' : '#be185d' }}>
                 {fmt(Math.abs(stats.lastBalance))} {stats.lastBalance >= 0 ? 'Dr' : 'Cr'}
               </strong>
@@ -905,45 +916,47 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         </div>
       )}
 
-      <div style={styles.card}>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {!loaded ? (
-          <div style={styles.empty}>Select an account and click "Load Ledger" to view entries.</div>
+          <div className="p-10 text-center text-slate-400 text-sm">Select an account and click "Load Ledger" to view entries.</div>
         ) : loading ? (
-          <div style={{ padding: 24 }}><div className="skeleton" style={{ width: '100%', height: 300 }} /></div>
+          <div className="p-6"><div className="skeleton w-full h-[300px]" /></div>
         ) : ledgerEntries.length === 0 ? (
-          <div style={styles.empty}>No ledger entries found for the selected criteria.</div>
+          <div className="p-10 text-center text-slate-400 text-sm">No ledger entries found for the selected criteria.</div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
-              <span style={{ ...styles.col, flex: '0 0 110px' }}>Date</span>
-              <span style={{ ...styles.col, flex: '0 0 60px' }}>V#</span>
-              <span style={{ ...styles.col, flex: '0 0 50px' }}>Type</span>
-              <span style={{ ...styles.col, flex: '1' }}>Narration</span>
-              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Debit</span>
-              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Credit</span>
-              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Balance</span>
-            </div>
-            {ledgerEntries.map(e => (
-              <div key={e.id} style={styles.voucherRow}>
-                <span style={{ ...styles.col, flex: '0 0 110px', fontSize: 13 }}>{e.entryDate}</span>
-                <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{e.voucherNumber}</span>
-                <span style={{ ...styles.col, flex: '0 0 50px' }}>
-                  <span style={{ ...styles.typeBadge, backgroundColor: VOUCHER_TYPE_COLORS[e.voucherType].bg, color: VOUCHER_TYPE_COLORS[e.voucherType].fg, fontSize: 10 }}>
-                    {e.voucherType}
-                  </span>
-                </span>
-                <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{e.narration}</span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: e.debit > 0 ? '#1d4ed8' : '#cbd5e1' }}>
-                  {e.debit > 0 ? fmt(e.debit) : ''}
-                </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: e.credit > 0 ? '#be185d' : '#cbd5e1' }}>
-                  {e.credit > 0 ? fmt(e.credit) : ''}
-                </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: e.balance >= 0 ? '#1e293b' : '#be185d' }}>
-                  {fmt(Math.abs(e.balance))} {e.balance >= 0 ? 'Dr' : 'Cr'}
-                </span>
+            <div className="overflow-x-auto">
+              <div className="flex items-center px-4 py-2.5 bg-slate-50 border-b-2 border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[620px]">
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_110px]">Date</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_60px]">V#</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_50px]">Type</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1">Narration</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right">Debit</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right">Credit</span>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right">Balance</span>
               </div>
-            ))}
+              {ledgerEntries.map(e => (
+                <div key={e.id} className="flex items-center px-4 py-2.5 border-b border-slate-100 text-sm hover:bg-slate-50">
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_110px] text-[13px]">{e.entryDate}</span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_60px] font-mono text-[13px]">{e.voucherNumber}</span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_50px]">
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold" style={{ backgroundColor: VOUCHER_TYPE_COLORS[e.voucherType].bg, color: VOUCHER_TYPE_COLORS[e.voucherType].fg }}>
+                      {e.voucherType}
+                    </span>
+                  </span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1 text-[13px]">{e.narration}</span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right font-mono text-[13px]" style={{ color: e.debit > 0 ? '#1d4ed8' : '#cbd5e1' }}>
+                    {e.debit > 0 ? fmt(e.debit) : ''}
+                  </span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right font-mono text-[13px]" style={{ color: e.credit > 0 ? '#be185d' : '#cbd5e1' }}>
+                    {e.credit > 0 ? fmt(e.credit) : ''}
+                  </span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-right font-mono text-[13px] font-semibold" style={{ color: e.balance >= 0 ? '#1e293b' : '#be185d' }}>
+                    {fmt(Math.abs(e.balance))} {e.balance >= 0 ? 'Dr' : 'Cr'}
+                  </span>
+                </div>
+              ))}
+            </div>
           </>
         )}
       </div>
@@ -966,33 +979,33 @@ const AccountRow: React.FC<{
 }> = ({ account: a, depth, expanded, hasChildren, onToggle, onEdit, onAddChild }) => {
   const badge = TYPE_BADGE_COLORS[a.accountType];
   return (
-    <div style={{ ...styles.row, opacity: a.isActive ? 1 : 0.5 }}>
-      <span style={{ ...styles.col, flex: '0 0 40px', paddingLeft: depth * 20 }}>
+    <div className={`flex items-center px-4 py-2.5 border-b border-slate-100 text-sm hover:bg-slate-50 ${a.isActive ? '' : 'opacity-50'}`}>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_40px]" style={{ paddingLeft: depth * 20 }}>
         {hasChildren ? (
-          <button onClick={onToggle} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>
+          <button onClick={onToggle} className="bg-transparent border-none cursor-pointer text-[10px] text-slate-500 px-1 py-0.5">{expanded ? '▼' : '▶'}</button>
         ) : (
-          <span style={styles.leafDot}>•</span>
+          <span className="text-slate-300 text-[10px]">•</span>
         )}
       </span>
-      <span style={{ ...styles.col, ...styles.codeCell, flex: '0 0 80px' }}>{a.accountCode}</span>
-      <span style={{ ...styles.col, flex: '1', fontWeight: a.level <= 2 ? 600 : 400, color: LEVEL_COLORS[a.level] }}>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px] font-mono text-[13px] text-slate-600">{a.accountCode}</span>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-1" style={{ fontWeight: a.level <= 2 ? 600 : 400, color: LEVEL_COLORS[a.level] }}>
         {a.accountName}
       </span>
-      <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 12 }}>L{a.level} {a.isPosting ? 'Post' : 'Summ'}</span>
-      <span style={{ ...styles.col, flex: '0 0 120px' }}>
-        <span style={{ ...styles.typeBadge, backgroundColor: badge.bg, color: badge.fg }}>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_100px] text-xs">L{a.level} {a.isPosting ? 'Post' : 'Summ'}</span>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_120px]">
+        <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold" style={{ backgroundColor: badge.bg, color: badge.fg }}>
           {ACCOUNT_TYPE_LABELS[a.accountType]}
         </span>
       </span>
-      <span style={{ ...styles.col, flex: '0 0 70px', fontWeight: 500, color: a.normalBalance === 'DEBIT' ? '#1d4ed8' : '#be185d' }}>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_70px] font-medium" style={{ color: a.normalBalance === 'DEBIT' ? '#1d4ed8' : '#be185d' }}>
         {a.normalBalance}
       </span>
-      <span style={{ ...styles.col, flex: '0 0 70px' }}>
-        <span style={{ ...styles.statusDot, backgroundColor: a.isActive ? '#22c55e' : '#ef4444' }} />
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_70px]">
+        <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: a.isActive ? '#22c55e' : '#ef4444' }} />
       </span>
-      <span style={{ ...styles.col, flex: '0 0 80px', gap: 4 }}>
-        <button onClick={onEdit} style={styles.rowBtn} title="Edit">✎</button>
-        {a.level < 4 && <button onClick={onAddChild} style={styles.rowBtn} title="Add child">+</button>}
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap flex-[0_0_80px] gap-1">
+        <button onClick={onEdit} className="bg-transparent border border-slate-200 rounded-md w-7 h-7 cursor-pointer text-sm text-slate-500 inline-flex items-center justify-center" title="Edit">✎</button>
+        {a.level < 4 && <button onClick={onAddChild} className="bg-transparent border border-slate-200 rounded-md w-7 h-7 cursor-pointer text-sm text-slate-500 inline-flex items-center justify-center" title="Add child">+</button>}
       </span>
     </div>
   );
@@ -1034,31 +1047,31 @@ const CreateAccountModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
-        <h2 style={styles.modalTitle}>Create Account — Level {level}</h2>
-        {parent && <p style={styles.modalParent}>Parent: {parent.accountCode} {parent.accountName}</p>}
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formRow}>
-            <div style={styles.field}>
-              <label style={styles.label}>Account Code (5 digits)</label>
-              <input value={code} onChange={e => setCode(e.target.value)} style={styles.input} maxLength={5} placeholder="e.g. 11101" autoFocus />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40" onClick={onClose}>
+      <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-800 mb-1">Create Account — Level {level}</h2>
+        {parent && <p className="text-[13px] text-slate-500 mb-5">Parent: {parent.accountCode} {parent.accountName}</p>}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-gray-700">Account Code (5 digits)</label>
+              <input value={code} onChange={e => setCode(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" maxLength={5} placeholder="e.g. 11101" autoFocus />
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Account Name</label>
-              <input value={name} onChange={e => setName(e.target.value)} style={styles.input} placeholder="e.g. Cash in Hand" />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-gray-700">Account Name</label>
+              <input value={name} onChange={e => setName(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="e.g. Cash in Hand" />
             </div>
           </div>
-          <div style={styles.formRow}>
-            <div style={styles.field}>
-              <label style={styles.label}>Account Type</label>
-              <select value={accountType} onChange={e => setAccountType(e.target.value as AccountType)} style={styles.select}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-gray-700">Account Type</label>
+              <select value={accountType} onChange={e => setAccountType(e.target.value as AccountType)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
                 {ACCOUNT_TYPES.map(t => <option key={t} value={t}>{ACCOUNT_TYPE_LABELS[t]}</option>)}
               </select>
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Control Category (optional)</label>
-              <select value={controlCategory} onChange={e => setControlCategory(e.target.value as ControlCategory | '')} style={styles.select}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-gray-700">Control Category (optional)</label>
+              <select value={controlCategory} onChange={e => setControlCategory(e.target.value as ControlCategory | '')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
                 <option value="">None</option>
                 {(Object.entries(CONTROL_CATEGORY_LABELS) as [ControlCategory, string][]).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
@@ -1066,13 +1079,13 @@ const CreateAccountModal: React.FC<{
               </select>
             </div>
           </div>
-          <p style={styles.infoNote}>
+          <p className="text-[13px] text-slate-500 bg-slate-50 px-3.5 py-2.5 rounded-lg border border-slate-200">
             This will be a <strong>{level < 4 ? 'Summary' : 'Posting'}</strong> account. Normal balance: <strong>{deriveNormalBalanceLabel(accountType)}</strong>
           </p>
-          {error && <div style={styles.error}>{error}</div>}
-          <div style={styles.modalActions}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
-            <button type="submit" style={styles.primaryBtn} disabled={saving}>{saving ? 'Creating...' : 'Create Account'}</button>
+          {error && <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
+          <div className="flex justify-end gap-2.5 mt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 min-h-[44px]">Cancel</button>
+            <button type="submit" className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]" disabled={saving}>{saving ? 'Creating...' : 'Create Account'}</button>
           </div>
         </form>
       </div>
@@ -1102,37 +1115,37 @@ const EditAccountModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
-        <h2 style={styles.modalTitle}>Edit Account</h2>
-        <p style={styles.modalParent}>{account.accountCode} — Level {account.level} — {ACCOUNT_TYPE_LABELS[account.accountType]}</p>
-        <div style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Account Name</label>
-            <input value={name} onChange={e => setName(e.target.value)} style={styles.input} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40" onClick={onClose}>
+      <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-800 mb-1">Edit Account</h2>
+        <p className="text-[13px] text-slate-500 mb-5">{account.accountCode} — Level {account.level} — {ACCOUNT_TYPE_LABELS[account.accountType]}</p>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-gray-700">Account Name</label>
+            <input value={name} onChange={e => setName(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
           </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Control Category</label>
-            <select value={controlCategory} onChange={e => setControlCategory(e.target.value as ControlCategory | '')} style={styles.select}>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-gray-700">Control Category</label>
+            <select value={controlCategory} onChange={e => setControlCategory(e.target.value as ControlCategory | '')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
               <option value="">None</option>
               {(Object.entries(CONTROL_CATEGORY_LABELS) as [ControlCategory, string][]).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
             </select>
           </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Status</label>
-            <div style={styles.toggleRow}>
-              <button onClick={() => setIsActive(!isActive)} style={{ ...styles.toggle, backgroundColor: isActive ? '#22c55e' : '#cbd5e1' }}>
-                <span style={{ ...styles.toggleKnob, transform: isActive ? 'translateX(20px)' : 'translateX(2px)' }} />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-gray-700">Status</label>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setIsActive(!isActive)} className="relative w-11 h-6 rounded-full border-none cursor-pointer p-0 transition-colors" style={{ backgroundColor: isActive ? '#22c55e' : '#cbd5e1' }}>
+                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform" style={{ transform: isActive ? 'translateX(20px)' : 'translateX(2px)' }} />
               </button>
-              <span style={{ fontSize: 14, color: '#475569' }}>{isActive ? 'Active' : 'Inactive'}</span>
+              <span className="text-sm text-slate-600">{isActive ? 'Active' : 'Inactive'}</span>
             </div>
           </div>
-          <div style={styles.modalActions}>
-            <button onClick={onClose} style={styles.cancelBtn}>Cancel</button>
-            <button onClick={() => onDeactivate(account.id)} style={styles.dangerBtn} disabled={saving}>Deactivate</button>
-            <button onClick={handleSave} style={styles.primaryBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+          <div className="flex justify-end gap-2.5 mt-2">
+            <button onClick={onClose} className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 min-h-[44px]">Cancel</button>
+            <button onClick={() => onDeactivate(account.id)} className="px-4 py-2.5 bg-white text-red-600 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-50 min-h-[44px]" disabled={saving}>Deactivate</button>
+            <button onClick={handleSave} className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
           </div>
         </div>
       </div>
@@ -1145,75 +1158,3 @@ const EditAccountModal: React.FC<{
 function deriveNormalBalanceLabel(type: AccountType): string {
   return (type === 'ASSET' || type === 'COGS' || type === 'EXPENSE') ? 'DEBIT' : 'CREDIT';
 }
-
-/* ─── Styles ───────────────────────────────────────────────── */
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0 },
-  title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#64748b' },
-
-  tabBar: { display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 20 },
-  tab: { padding: '10px 20px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 14, fontWeight: 500, color: '#64748b', cursor: 'pointer', marginBottom: -2 },
-  tabActive: { color: '#2563eb', borderBottomColor: '#2563eb' },
-
-  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  statsBar: { display: 'flex', gap: 12, flexWrap: 'wrap' },
-  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569' },
-  statDot: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, fontWeight: 600, fontSize: 12 },
-  statLabel: {},
-
-  toolbar: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
-  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  filterSelect: { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
-  toolBtn: { padding: '8px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, background: '#fff', cursor: 'pointer', color: '#475569' },
-
-  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)', overflow: 'hidden' },
-
-  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  row: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14, transition: 'background 0.1s' },
-  col: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  codeCell: { fontFamily: 'ui-monospace, monospace', fontSize: 13, color: '#475569' },
-
-  expandBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#64748b', padding: '2px 4px' },
-  leafDot: { color: '#cbd5e1', fontSize: 10 },
-  typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
-  statusDot: { display: 'inline-block', width: 8, height: 8, borderRadius: '50%' },
-  rowBtn: { background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
-
-  primaryBtn: { padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  cancelBtn: { padding: '10px 20px', backgroundColor: '#fff', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
-  dangerBtn: { padding: '10px 20px', backgroundColor: '#fff', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer' },
-
-  empty: { padding: 40, textAlign: 'center' as const, color: '#94a3b8', fontSize: 14 },
-
-  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { backgroundColor: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgb(0 0 0 / 0.2)' },
-  modalTitle: { fontSize: 20, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
-  modalParent: { fontSize: 13, color: '#64748b', marginBottom: 20 },
-  form: { display: 'flex', flexDirection: 'column', gap: 16 },
-  formRow: { display: 'flex', gap: 16 },
-  field: { display: 'flex', flexDirection: 'column', gap: 6, flex: 1 },
-  label: { fontSize: 13, fontWeight: 500, color: '#374151' },
-  input: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  select: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
-  infoNote: { fontSize: 13, color: '#64748b', backgroundColor: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' },
-  error: { padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: 13 },
-  modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
-
-  toggleRow: { display: 'flex', alignItems: 'center', gap: 12 },
-  toggle: { width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', position: 'relative', padding: 0, transition: 'background-color 0.2s' },
-  toggleKnob: { position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#fff', boxShadow: '0 1px 3px rgb(0 0 0 / 0.2)', transition: 'transform 0.2s' },
-
-  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14 },
-  linesContainer: { backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' },
-  linesHeader: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #e2e8f0', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  lineRow: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #f1f5f9', fontSize: 14, alignItems: 'center' },
-  linesFooter: { display: 'flex', padding: '8px 16px 8px 32px', borderTop: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 13 },
-
-  lineItemRow: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 },
-  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', zIndex: 10, maxHeight: 200, overflow: 'auto' },
-  dropdownItem: { padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f1f5f9' },
-};

@@ -1,19 +1,9 @@
-/**
- * Sidebar Component
- * Responsive sidebar navigation for the ERP shell.
- * 
- * Features:
- * - Collapsible on desktop
- * - Placeholder navigation items
- * - Active state highlighting
- * - Smooth transitions
- */
-
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
-  collapsed: boolean;
+  open: boolean;
+  onClose: () => void;
 }
 
 interface NavItem {
@@ -71,106 +61,56 @@ const navItems: NavItem[] = [
   },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') {
-      return location.pathname === '/dashboard';
-    }
+    if (path === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(path);
   };
 
+  const handleNav = (path: string) => {
+    navigate(path);
+    onClose();
+  };
+
   return (
-    <aside style={{
-      ...styles.sidebar,
-      width: collapsed ? '64px' : '240px',
-    }}>
-      <nav style={styles.nav}>
-        {navItems.map((item) => (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            style={{
-              ...styles.navItem,
-              backgroundColor: isActive(item.path) ? '#eff6ff' : 'transparent',
-              color: isActive(item.path) ? '#2563eb' : '#64748b',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              paddingLeft: collapsed ? '12px' : '16px',
-              paddingRight: collapsed ? '12px' : '16px',
-            }}
-            title={collapsed ? item.label : undefined}
-            aria-label={item.label}
-          >
-            <span style={styles.navIcon}>{item.icon}</span>
-            {!collapsed && (
-              <span style={styles.navLabel}>{item.label}</span>
-            )}
-          </button>
-        ))}
-      </nav>
-
-      {/* Footer hint */}
-      {!collapsed && (
-        <div style={styles.footer}>
-          <p style={styles.footerText}>More modules coming soon</p>
-        </div>
+    <>
+      {open && (
+        <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={onClose} />
       )}
-    </aside>
-  );
-};
 
-const styles: { [key: string]: React.CSSProperties } = {
-  sidebar: {
-    height: 'calc(100vh - 64px)',
-    backgroundColor: '#ffffff',
-    borderRight: '1px solid #e2e8f0',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'width 0.2s ease',
-    overflow: 'hidden',
-  },
-  nav: {
-    flex: 1,
-    padding: '16px 8px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  navItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '12px 16px',
-    backgroundColor: 'transparent',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    textDecoration: 'none',
-    whiteSpace: 'nowrap',
-  },
-  navIcon: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '20px',
-    height: '20px',
-  },
-  navLabel: {
-    flex: 1,
-    textAlign: 'left',
-  },
-  footer: {
-    padding: '16px',
-    borderTop: '1px solid #e2e8f0',
-  },
-  footerText: {
-    fontSize: '12px',
-    color: '#94a3b8',
-    textAlign: 'center',
-  },
+      <aside className={`
+        fixed top-16 left-0 z-40 h-[calc(100vh-64px)] w-60 bg-white border-r border-slate-200
+        flex flex-col transition-transform duration-200 ease-in-out
+        md:sticky md:translate-x-0 md:z-0
+        ${open ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
+          {navItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => handleNav(item.path)}
+              className={`
+                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                transition-colors whitespace-nowrap min-h-[44px]
+                ${isActive(item.path)
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                }
+              `}
+            >
+              <span className="flex items-center justify-center w-5 h-5 shrink-0">{item.icon}</span>
+              <span className="flex-1 text-left">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-slate-200">
+          <p className="text-xs text-slate-400 text-center">More modules coming soon</p>
+        </div>
+      </aside>
+    </>
+  );
 };
