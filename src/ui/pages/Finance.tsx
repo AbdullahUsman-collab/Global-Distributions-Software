@@ -640,6 +640,7 @@ const VoucherModal: React.FC<{
   type VoucherLineInput = {
     accountId: string; description: string; debit: number; credit: number;
     contraAccountId?: string; quantity?: number; productId?: string; branch?: string;
+    stInvNo?: string; stRate?: number; stAmount?: number; amtExclStd?: number;
   };
   const [lines, setLines] = useState<VoucherLineInput[]>([]);
   const [loading, setLoading] = useState(isEdit);
@@ -657,6 +658,7 @@ const VoucherModal: React.FC<{
         setLines(raw.map(l => ({
           accountId: l.accountId, description: l.description, debit: l.debit, credit: l.credit,
           contraAccountId: l.contraAccountId, quantity: l.quantity, productId: l.productId, branch: l.branch,
+          stInvNo: l.stInvNo, stRate: l.stRate, stAmount: l.stAmount, amtExclStd: l.amtExclStd,
         })));
         setLoading(false);
       });
@@ -674,7 +676,7 @@ const VoucherModal: React.FC<{
   }, [postingAccounts, accountSearch]);
 
   const addLine = () => {
-    setLines(prev => [...prev, { accountId: '', description: '', debit: 0, credit: 0, contraAccountId: '', quantity: 0, productId: '', branch: '' }]);
+    setLines(prev => [...prev, { accountId: '', description: '', debit: 0, credit: 0, contraAccountId: '', quantity: 0, productId: '', branch: '', stInvNo: '', stRate: 0, stAmount: 0, amtExclStd: 0 }]);
   };
 
   const updateLine = (idx: number, field: string, value: string | number) => {
@@ -706,6 +708,10 @@ const VoucherModal: React.FC<{
           quantity: l.quantity || undefined,
           productId: l.productId || undefined,
           branch: l.branch || undefined,
+          stInvNo: l.stInvNo || undefined,
+          stRate: l.stRate || undefined,
+          stAmount: l.stAmount || undefined,
+          amtExclStd: l.amtExclStd || undefined,
         })),
       });
     } catch (err: any) {
@@ -868,6 +874,9 @@ const VoucherModal: React.FC<{
                         const cogs = calculateCOGS(line.quantity, prod.purchaseRate);
                         const grossProfit = calculateGrossProfit(result.netAmount, cogs);
                         setTaxResults(prev => ({ ...prev, [idx]: { ...result, cogs, grossProfit } }));
+                        updateLine(idx, 'stRate', prod.gstPercent);
+                        updateLine(idx, 'stAmount', result.gstAmount);
+                        updateLine(idx, 'amtExclStd', result.toAmount);
                         if (vType === 'SV' || vType === 'SRV') {
                           updateLine(idx, 'credit', result.netAmount);
                           updateLine(idx, 'debit', 0);

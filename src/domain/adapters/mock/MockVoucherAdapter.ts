@@ -71,6 +71,10 @@ interface SeedLine {
   quantity?: number;
   productId?: string;
   branch?: string;
+  stInvNo?: string;
+  stRate?: number;
+  stAmount?: number;
+  amtExclStd?: number;
 }
 
 interface SeedVoucher {
@@ -355,6 +359,10 @@ export class MockVoucherAdapter implements IVoucherRepository {
       quantity: l.quantity,
       productId: l.productId,
       branch: l.branch,
+      stInvNo: l.stInvNo,
+      stRate: l.stRate,
+      stAmount: l.stAmount,
+      amtExclStd: l.amtExclStd,
     }));
 
     // Persist
@@ -418,6 +426,10 @@ export class MockVoucherAdapter implements IVoucherRepository {
         quantity: l.quantity,
         productId: l.productId,
         branch: l.branch,
+        stInvNo: l.stInvNo,
+        stRate: l.stRate,
+        stAmount: l.stAmount,
+        amtExclStd: l.amtExclStd,
       }));
 
       filtered.push(...newLines);

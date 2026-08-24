@@ -85,6 +85,17 @@ export interface VoucherLine {
   // Source: audit/23_DATA_MODEL.md (Bills.SP_ID — Branch/Store)
   /** Branch / Store code for this line */
   branch?: string;
+
+  // ─── Legacy Voucher_Lines Tax Fields ────────────────────────
+  // Source: audit/23_DATA_MODEL.md (Voucher_Lines.ST_InvNo, ST_Rate, ST_Amount, Amt_Excl_Std)
+  /** Sales Tax Invoice Number */
+  stInvNo?: string;
+  /** Sales Tax Rate (%) */
+  stRate?: number;
+  /** Sales Tax Amount */
+  stAmount?: number;
+  /** Amount Excluding Standard/Sales Tax */
+  amtExclStd?: number;
 }
 
 /** Voucher header — one per journal entry, cash/bank receipt/payment */
@@ -153,6 +164,10 @@ export interface CreateVoucherDTO {
     quantity?: number;
     productId?: string;
     branch?: string;
+    stInvNo?: string;
+    stRate?: number;
+    stAmount?: number;
+    amtExclStd?: number;
   }[];
 }
 
@@ -169,6 +184,10 @@ export interface UpdateVoucherDTO {
     quantity?: number;
     productId?: string;
     branch?: string;
+    stInvNo?: string;
+    stRate?: number;
+    stAmount?: number;
+    amtExclStd?: number;
   }[];
 }
 
