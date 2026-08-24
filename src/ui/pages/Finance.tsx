@@ -260,7 +260,7 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           </div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
+            <div style={{ ...styles.treeHeader, minWidth: 730 }}>
               <span style={{ ...styles.col, flex: '0 0 40px' }}></span>
               <span style={{ ...styles.col, flex: '0 0 80px' }}>Code</span>
               <span style={{ ...styles.col, flex: '1' }}>Account Name</span>
@@ -431,7 +431,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
           </div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
+            <div style={{ ...styles.treeHeader, minWidth: 860 }}>
               <span style={{ ...styles.col, flex: '0 0 60px' }}>#</span>
               <span style={{ ...styles.col, flex: '0 0 110px' }}>Type</span>
               <span style={{ ...styles.col, flex: '0 0 110px' }}>Date</span>
@@ -507,7 +507,7 @@ const VoucherRow: React.FC<{
 
   return (
     <>
-      <div style={styles.voucherRow}>
+      <div style={{ ...styles.voucherRow, minWidth: 860 }}>
         <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace' }}>
           <button onClick={onToggleLines} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>
           {v.voucherNumber}
@@ -542,7 +542,7 @@ const VoucherRow: React.FC<{
       </div>
       {expanded && lines.length > 0 && (
         <div style={styles.linesContainer}>
-          <div style={styles.linesHeader}>
+          <div style={{ ...styles.linesHeader, minWidth: 860 }}>
             <span style={{ ...styles.col, flex: '0 0 40px' }}>Ln</span>
             <span style={{ ...styles.col, flex: '0 0 80px' }}>Acct</span>
             <span style={{ ...styles.col, flex: '1' }}>Description</span>
@@ -552,7 +552,7 @@ const VoucherRow: React.FC<{
           {lines.map((l, i) => {
             const acct = accountMap.get(l.accountId);
             return (
-              <div key={l.id} style={styles.lineRow}>
+              <div key={l.id} style={{ ...styles.lineRow, minWidth: 860 }}>
                 <span style={{ ...styles.col, flex: '0 0 40px', fontSize: 12, color: '#94a3b8' }}>{i + 1}</span>
                 <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{l.accountId}</span>
                 <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>
@@ -568,7 +568,7 @@ const VoucherRow: React.FC<{
               </div>
             );
           })}
-          <div style={styles.linesFooter}>
+          <div style={{ ...styles.linesFooter, minWidth: 860 }}>
             <span style={{ flex: '0 0 120px' }}></span>
             <span style={{ flex: '1', fontSize: 12, fontWeight: 600, color: '#475569' }}>Totals</span>
             <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8' }}>{fmt(totalD)}</span>
@@ -914,7 +914,7 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           <div style={styles.empty}>No ledger entries found for the selected criteria.</div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
+            <div style={{ ...styles.treeHeader, minWidth: 620 }}>
               <span style={{ ...styles.col, flex: '0 0 110px' }}>Date</span>
               <span style={{ ...styles.col, flex: '0 0 60px' }}>V#</span>
               <span style={{ ...styles.col, flex: '0 0 50px' }}>Type</span>
@@ -924,7 +924,7 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Balance</span>
             </div>
             {ledgerEntries.map(e => (
-              <div key={e.id} style={styles.voucherRow}>
+              <div key={e.id} style={{ ...styles.voucherRow, minWidth: 620 }}>
                 <span style={{ ...styles.col, flex: '0 0 110px', fontSize: 13 }}>{e.entryDate}</span>
                 <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{e.voucherNumber}</span>
                 <span style={{ ...styles.col, flex: '0 0 50px' }}>
@@ -966,7 +966,7 @@ const AccountRow: React.FC<{
 }> = ({ account: a, depth, expanded, hasChildren, onToggle, onEdit, onAddChild }) => {
   const badge = TYPE_BADGE_COLORS[a.accountType];
   return (
-    <div style={{ ...styles.row, opacity: a.isActive ? 1 : 0.5 }}>
+    <div style={{ ...styles.row, minWidth: 730, opacity: a.isActive ? 1 : 0.5 }}>
       <span style={{ ...styles.col, flex: '0 0 40px', paddingLeft: depth * 20 }}>
         {hasChildren ? (
           <button onClick={onToggle} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>

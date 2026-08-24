@@ -193,7 +193,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           <div style={{ padding: 24 }}><div className="skeleton" style={{ width: '100%', height: 400 }} /></div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
+            <div style={{ ...styles.treeHeader, minWidth: 760 }}>
               <span style={{ ...styles.col, flex: '0 0 90px' }}>SKU</span>
               <span style={{ ...styles.col, flex: '1' }}>Product Name</span>
               <span style={{ ...styles.col, flex: '0 0 100px' }}>Category</span>
@@ -207,7 +207,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             </div>
             {filtered.length === 0 && <div style={styles.empty}>No items found.</div>}
             {filtered.map(p => (
-              <div key={p.id} style={{ ...styles.voucherRow, opacity: p.isActive ? 1 : 0.5 }}>
+              <div key={p.id} style={{ ...styles.voucherRow, minWidth: 760, opacity: p.isActive ? 1 : 0.5 }}>
                 <span style={{ ...styles.col, flex: '0 0 90px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{p.sku}</span>
                 <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{p.name}</span>
                 <span style={{ ...styles.col, flex: '0 0 100px' }}>
@@ -564,7 +564,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           </div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
+            <div style={{ ...styles.treeHeader, minWidth: 640 }}>
               <span style={{ ...styles.col, flex: '0 0 100px' }}>SKU</span>
               <span style={{ ...styles.col, flex: '1' }}>Product Name</span>
               <span style={{ ...styles.col, flex: '0 0 100px' }}>Category</span>
@@ -581,7 +581,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               if (!prod) return null;
               return (
                 <React.Fragment key={productId}>
-                  <div style={styles.voucherRow}>
+                  <div style={{ ...styles.voucherRow, minWidth: 640 }}>
                     <span style={{ ...styles.col, flex: '0 0 100px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{prod.sku}</span>
                     <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{prod.name}</span>
                     <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 13 }}>{prod.category}</span>
@@ -604,7 +604,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   {/* Expanded details per warehouse */}
                   {expandedProduct === productId && (
                     <div style={styles.linesContainer}>
-                      <div style={styles.linesHeader}>
+                      <div style={{ ...styles.linesHeader, minWidth: 640 }}>
                         <span style={{ ...styles.col, flex: '0 0 100px' }}>Warehouse</span>
                         <span style={{ ...styles.col, flex: '1' }}>Location</span>
                         <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Qty</span>
@@ -614,7 +614,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                       {agg.levels.map(l => {
                         const wh = warehouseMap.get(l.warehouseId);
                         return (
-                          <div key={l.id} style={styles.lineRow}>
+                          <div key={l.id} style={{ ...styles.lineRow, minWidth: 640 }}>
                             <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 13 }}>{wh?.code ?? '—'}</span>
                             <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{wh?.name ?? '—'}</span>
                             <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmtInt(l.quantityOnHand)}</span>
@@ -718,7 +718,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           </div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
+            <div style={{ ...styles.treeHeader, minWidth: 380 }}>
               <span style={{ ...styles.col, flex: '0 0 80px' }}>Code</span>
               <span style={{ ...styles.col, flex: '1' }}>Warehouse Name</span>
               <span style={{ ...styles.col, flex: '0 0 80px' }}>Status</span>
@@ -732,7 +732,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               const locs = locationsByWarehouse.get(wh.id) ?? [];
               return (
                 <React.Fragment key={wh.id}>
-                  <div style={styles.voucherRow}>
+                  <div style={{ ...styles.voucherRow, minWidth: 380 }}>
                     <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600 }}>{wh.code}</span>
                     <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{wh.name}</span>
                     <span style={{ ...styles.col, flex: '0 0 80px' }}>
@@ -752,7 +752,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   </div>
                   {expandedWh === wh.id && locs.length > 0 && (
                     <div style={styles.linesContainer}>
-                      <div style={styles.linesHeader}>
+                      <div style={{ ...styles.linesHeader, minWidth: 380 }}>
                         <span style={{ ...styles.col, flex: '0 0 120px' }}>Code</span>
                         <span style={{ ...styles.col, flex: '1' }}>Name</span>
                         <span style={{ ...styles.col, flex: '0 0 60px' }}>Rack</span>
@@ -760,7 +760,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                         <span style={{ ...styles.col, flex: '0 0 60px' }}>Bin</span>
                       </div>
                       {locs.map(loc => (
-                        <div key={loc.id} style={styles.lineRow}>
+                        <div key={loc.id} style={{ ...styles.lineRow, minWidth: 380 }}>
                           <span style={{ ...styles.col, flex: '0 0 120px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{loc.code}</span>
                           <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{loc.name}</span>
                           <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{loc.rack ?? '—'}</span>
@@ -905,7 +905,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           </div>
         ) : (
           <>
-            <div style={styles.treeHeader}>
+            <div style={{ ...styles.treeHeader, minWidth: 1070 }}>
               <span style={{ ...styles.col, flex: '0 0 110px' }}>Date</span>
               <span style={{ ...styles.col, flex: '0 0 100px' }}>Type</span>
               <span style={{ ...styles.col, flex: '1' }}>Product</span>
@@ -928,7 +928,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               const statusColor = MOVEMENT_STATUS_COLORS[m.status];
 
               return (
-                <div key={m.id} style={styles.voucherRow}>
+                <div key={m.id} style={{ ...styles.voucherRow, minWidth: 1070 }}>
                   <span style={{ ...styles.col, flex: '0 0 110px', fontSize: 13 }}>{m.movementDate}</span>
                   <span style={{ ...styles.col, flex: '0 0 100px' }}>
                     <span style={{ ...styles.typeBadge, backgroundColor: typeColor.bg, color: typeColor.fg }}>
