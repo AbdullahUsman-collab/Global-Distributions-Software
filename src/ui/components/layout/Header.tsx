@@ -1,3 +1,14 @@
+/**
+ * Header Component
+ * Top header for the authenticated ERP shell.
+ * 
+ * Displays:
+ * - Tenant logo and brand name
+ * - Search placeholder
+ * - Notification placeholder
+ * - User profile trigger
+ */
+
 import React, { useState } from 'react';
 import { useAuth } from '../auth/ProtectedRoute';
 import { clearSession } from '../../lib/session';
@@ -6,9 +17,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   onMenuToggle: () => void;
+  sidebarCollapsed: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
+export const Header: React.FC<HeaderProps> = ({ onMenuToggle, sidebarCollapsed }) => {
   const { user, tenant } = useAuth();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -16,7 +28,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const handleLogout = async () => {
     try {
       const sessionId = localStorage.getItem('erp_session_id');
-      if (sessionId) await services.authService.logout(sessionId);
+      if (sessionId) {
+        await services.authService.logout(sessionId);
+      }
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
@@ -26,63 +40,95 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6">
-      <div className="flex items-center gap-3">
-        <button onClick={onMenuToggle} className="md:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Toggle menu">
+    <header style={styles.header}>
+      {/* Left section: Menu toggle + Brand */}
+      <div style={styles.leftSection}>
+        <button
+          onClick={onMenuToggle}
+          style={styles.menuToggle}
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
           </svg>
         </button>
 
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: tenant.primaryColor }}>
+        <div style={styles.brandContainer}>
+          <div style={{
+            ...styles.logo,
+            backgroundColor: tenant.primaryColor,
+          }}>
             {tenant.brandName.charAt(0)}
           </div>
-          <span className="text-base font-semibold text-slate-800 hidden sm:block">{tenant.brandName}</span>
+          <span style={styles.brandName}>{tenant.brandName}</span>
         </div>
       </div>
 
-      <div className="hidden md:flex flex-1 max-w-xs mx-6">
-        <div className="relative w-full">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      {/* Center section: Search */}
+      <div style={styles.centerSection}>
+        <div style={styles.searchContainer}>
+          <svg style={styles.searchIcon} width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path fillRule="evenodd" d="M9.965 11.026a5 5 0 111.06-1.06l2.755 2.754a.75.75 0 11-1.06 1.06l-2.755-2.754zM10.5 7a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z" clipRule="evenodd" />
           </svg>
-          <input type="text" placeholder="Search..." className="w-full py-2 pl-10 pr-3 text-sm border border-slate-200 rounded-lg bg-slate-50 outline-none" disabled />
+          <input
+            type="text"
+            placeholder="Search..."
+            style={styles.searchInput}
+            disabled
+          />
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="relative">
-          <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg min-h-[44px]" aria-expanded={showProfileMenu}>
-            <div className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold shrink-0">
+      {/* Right section: Notifications + User Profile */}
+      <div style={styles.rightSection}>
+        {/* Notification bell placeholder */}
+        <button style={styles.iconButton} disabled>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 2a6 6 0 00-6 6c0 1.887-.454 3.665-1.257 5.234a.75.75 0 00.515 1.076 32.91 32.91 0 003.256.508 3.5 3.5 0 006.972 0 32.903 32.903 0 003.256-.508.75.75 0 00.515-1.076A11.448 11.448 0 0116 8a6 6 0 00-6-6zm0 14.5a2 2 0 01-1.95-1.557 33.146 33.146 0 003.9 0A2 2 0 0110 16.5z" clipRule="evenodd" />
+          </svg>
+        </button>
+
+        {/* User Profile Button */}
+        <div style={styles.profileContainer}>
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            style={styles.profileButton}
+            aria-expanded={showProfileMenu}
+            aria-haspopup="true"
+          >
+            <div style={styles.avatar}>
               {user.displayName.charAt(0).toUpperCase()}
             </div>
-            <span className="text-sm font-medium text-slate-700 hidden sm:block">{user.displayName}</span>
-            <svg className="text-slate-400" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <span style={styles.userName}>{user.displayName}</span>
+            <svg style={styles.chevron} width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 5.293a1 1 0 011.414 0L8 8.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </button>
 
+          {/* Profile Dropdown */}
           {showProfileMenu && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-50">
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center text-base font-semibold shrink-0">
+              <div
+                style={styles.overlay}
+                onClick={() => setShowProfileMenu(false)}
+              />
+              <div style={styles.dropdown}>
+                <div style={styles.dropdownHeader}>
+                  <div style={styles.dropdownAvatar}>
                     {user.displayName.charAt(0).toUpperCase()}
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-800 truncate">{user.displayName}</div>
-                    <div className="text-xs text-slate-500 truncate">@{user.username}</div>
+                  <div>
+                    <div style={styles.dropdownName}>{user.displayName}</div>
+                    <div style={styles.dropdownUsername}>@{user.username}</div>
                   </div>
                 </div>
-                <div className="border-t border-slate-100 mx-4" />
-                <div className="flex justify-between px-4 py-3">
-                  <span className="text-xs text-slate-500">Brand</span>
-                  <span className="text-xs font-medium text-slate-700">{tenant.brandName}</span>
+                <div style={styles.dropdownDivider} />
+                <div style={styles.dropdownInfo}>
+                  <span style={styles.dropdownLabel}>Brand</span>
+                  <span style={styles.dropdownValue}>{tenant.brandName}</span>
                 </div>
-                <div className="border-t border-slate-100 mx-4" />
-                <button onClick={handleLogout} className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 min-h-[44px]">
+                <div style={styles.dropdownDivider} />
+                <button onClick={handleLogout} style={styles.logoutButton}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path fillRule="evenodd" d="M2 2.75A.75.75 0 012.75 2h4.5a.75.75 0 010 1.5h-4.5v9h4.5a.75.75 0 010 1.5h-4.5A.75.75 0 012 13.25V2.75z" />
                     <path fillRule="evenodd" d="M10.947 8.679a.75.75 0 00-1.06-1.06l-3.72 3.72-1.06-1.06a.75.75 0 00-1.06 1.06l4.25 4.25a.75.75 0 001.06 0l4.25-4.25z" />
@@ -96,4 +142,211 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       </div>
     </header>
   );
+};
+
+const styles: { [key: string]: React.CSSProperties } = {
+  header: {
+    height: '64px',
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
+    position: 'sticky',
+    top: 0,
+    zIndex: 40,
+  },
+  leftSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+  },
+  menuToggle: {
+    width: '36px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#64748b',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+  },
+  brandContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  logo: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#ffffff',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  },
+  brandName: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  centerSection: {
+    flex: 1,
+    maxWidth: '400px',
+    margin: '0 32px',
+  },
+  searchContainer: {
+    position: 'relative',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#94a3b8',
+  },
+  searchInput: {
+    width: '100%',
+    padding: '10px 12px 10px 36px',
+    fontSize: '14px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    backgroundColor: '#f8fafc',
+    outline: 'none',
+  },
+  rightSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  iconButton: {
+    width: '36px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#64748b',
+    cursor: 'pointer',
+  },
+  profileContainer: {
+    position: 'relative',
+  },
+  profileButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 12px',
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+  avatar: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    backgroundColor: '#3b82f6',
+    color: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: '600',
+  },
+  userName: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#1e293b',
+  },
+  chevron: {
+    color: '#94a3b8',
+  },
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 50,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: '8px',
+    width: '240px',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    boxShadow: '0 10px 40px -10px rgb(0 0 0 / 0.15)',
+    border: '1px solid #e2e8f0',
+    zIndex: 51,
+  },
+  dropdownHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px',
+  },
+  dropdownAvatar: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    backgroundColor: '#3b82f6',
+    color: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '16px',
+    fontWeight: '600',
+  },
+  dropdownName: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  dropdownUsername: {
+    fontSize: '12px',
+    color: '#64748b',
+  },
+  dropdownDivider: {
+    height: '1px',
+    backgroundColor: '#e2e8f0',
+    margin: '0 16px',
+  },
+  dropdownInfo: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+  },
+  dropdownLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+  },
+  dropdownValue: {
+    fontSize: '12px',
+    fontWeight: '500',
+    color: '#1e293b',
+  },
+  logoutButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    width: '100%',
+    padding: '12px 16px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: '#dc2626',
+    fontSize: '14px',
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
 };

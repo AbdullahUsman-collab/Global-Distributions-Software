@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/**
+ * Global Styles
+ * Base styles for the ERP application.
+ */
 
 * {
   margin: 0;
@@ -19,21 +22,33 @@ html, body {
   min-height: 100vh;
 }
 
+/* Focus styles for accessibility */
 :focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
-button { font-family: inherit; cursor: pointer; }
-input { font-family: inherit; }
-
-.hide-scrollbar::-webkit-scrollbar { display: none; }
-.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Button base styles */
+button {
+  font-family: inherit;
+  cursor: pointer;
 }
+
+/* Input base styles */
+input {
+  font-family: inherit;
+}
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .skeleton {
   background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
   background-size: 200% 100%;
@@ -41,14 +56,50 @@ input { font-family: inherit; }
   border-radius: 8px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
-.fade-in { animation: fadeIn 0.3s ease-out; }
 
-@keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
-.scale-in { animation: scaleIn 0.2s ease-out; }
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scale animation for cards */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}

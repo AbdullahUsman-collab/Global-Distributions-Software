@@ -65,31 +65,30 @@ export const Inventory: React.FC = () => {
   const [tab, setTab] = useState<InventoryTab>('stock');
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div style={styles.page}>
+      {/* Header */}
+      <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/dashboard')} className="text-slate-500 text-sm cursor-pointer mb-1 p-0 bg-transparent border-none hover:text-slate-700">← Dashboard</button>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">Inventory</h1>
-          <p className="text-sm text-slate-500">{tenant.brandName}</p>
+          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+          <h1 style={styles.title}>Inventory</h1>
+          <p style={styles.subtitle}>{tenant.brandName}</p>
         </div>
       </div>
 
-      <div className="flex overflow-x-auto whitespace-nowrap border-b border-slate-200 hide-scrollbar gap-0 mb-5">
+      {/* Tab Bar */}
+      <div style={styles.tabBar}>
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer bg-transparent ${
-              tab === t.key
-                ? 'text-blue-600 border-blue-600'
-                : 'text-slate-500 border-transparent hover:text-slate-700'
-            }`}
+            style={{ ...styles.tab, ...(tab === t.key ? styles.tabActive : {}) }}
           >
             {t.label}
           </button>
         ))}
       </div>
 
+      {/* Tab Content */}
       {tab === 'items'      && <ItemsTab tenantId={tenant.id} />}
       {tab === 'stock'      && <StockBalancesTab tenantId={tenant.id} />}
       {tab === 'warehouses' && <WarehousesTab tenantId={tenant.id} />}
@@ -163,69 +162,67 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
-            <span>Total</span>
+      <div style={styles.sectionHeader}>
+        <div style={styles.statsBar}>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
+            <span style={styles.statLabel}>Total</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>{stats.active}</span>
-            <span>Active</span>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: '#dcfce7', color: '#166534' }}>{stats.active}</span>
+            <span style={styles.statLabel}>Active</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}>{stats.inactive}</span>
-            <span>Inactive</span>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: '#fee2e2', color: '#991b1b' }}>{stats.inactive}</span>
+            <span style={styles.statLabel}>Inactive</span>
           </div>
         </div>
-        <button onClick={() => setShowCreate(true)} className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]">+ New Item</button>
+        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Item</button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or SKU..." className="flex-1 min-w-[200px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
-        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+      <div style={styles.toolbar}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or SKU..." style={styles.searchInput} />
+        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={styles.filterSelect}>
           <option value="">All Categories</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div style={styles.card}>
         {loading ? (
-          <div className="p-6"><div className="skeleton w-full h-[400px]" /></div>
+          <div style={{ padding: 24 }}><div className="skeleton" style={{ width: '100%', height: 400 }} /></div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <div className="flex items-center px-4 py-2.5 bg-slate-50 border-b-2 border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 90px' }}>SKU</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '1' }}>Product Name</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>Category</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}>Unit</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 70px' }}>Carton</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 80px' }}>Sale</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 80px' }}>Purchase</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 50px' }}>GST</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 50px' }}>Status</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 80px' }}>Actions</span>
-              </div>
+            <div style={styles.treeHeader}>
+              <span style={{ ...styles.col, flex: '0 0 90px' }}>SKU</span>
+              <span style={{ ...styles.col, flex: '1' }}>Product Name</span>
+              <span style={{ ...styles.col, flex: '0 0 100px' }}>Category</span>
+              <span style={{ ...styles.col, flex: '0 0 60px' }}>Unit</span>
+              <span style={{ ...styles.col, flex: '0 0 70px' }}>Carton</span>
+              <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Sale</span>
+              <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Purchase</span>
+              <span style={{ ...styles.col, flex: '0 0 50px' }}>GST</span>
+              <span style={{ ...styles.col, flex: '0 0 50px' }}>Status</span>
+              <span style={{ ...styles.col, flex: '0 0 80px' }}>Actions</span>
             </div>
-            {filtered.length === 0 && <div className="p-10 text-center text-slate-400 text-sm">No items found.</div>}
+            {filtered.length === 0 && <div style={styles.empty}>No items found.</div>}
             {filtered.map(p => (
-              <div key={p.id} className={`flex items-center px-4 py-2.5 border-b border-slate-100 text-sm hover:bg-slate-50 ${p.isActive ? '' : 'opacity-50'}`}>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[13px]" style={{ flex: '0 0 90px' }}>{p.sku}</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap font-medium" style={{ flex: '1' }}>{p.name}</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>
-                  <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold" style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{p.category}</span>
+              <div key={p.id} style={{ ...styles.voucherRow, opacity: p.isActive ? 1 : 0.5 }}>
+                <span style={{ ...styles.col, flex: '0 0 90px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{p.sku}</span>
+                <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{p.name}</span>
+                <span style={{ ...styles.col, flex: '0 0 100px' }}>
+                  <span style={{ ...styles.typeBadge, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{p.category}</span>
                 </span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 60px' }}>{p.unit}</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 70px' }}>{p.pcsPerCarton}</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 80px' }}>{fmt(p.saleRate)}</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 80px' }}>{fmt(p.purchaseRate)}</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 50px' }}>{p.gstPercent}%</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 50px' }}>
-                  <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: p.isActive ? '#22c55e' : '#ef4444' }} />
+                <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{p.unit}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', fontSize: 13 }}>{p.pcsPerCarton}</span>
+                <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(p.saleRate)}</span>
+                <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(p.purchaseRate)}</span>
+                <span style={{ ...styles.col, flex: '0 0 50px', fontSize: 13 }}>{p.gstPercent}%</span>
+                <span style={{ ...styles.col, flex: '0 0 50px' }}>
+                  <span style={{ ...styles.statusDot, backgroundColor: p.isActive ? '#22c55e' : '#ef4444' }} />
                 </span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap flex gap-1" style={{ flex: '0 0 80px' }}>
-                  <button onClick={() => setEditProduct(p)} className="bg-transparent border border-slate-200 rounded-md w-7 h-7 cursor-pointer text-sm text-slate-500 inline-flex items-center justify-center hover:bg-slate-50" title="Edit">✎</button>
+                <span style={{ ...styles.col, flex: '0 0 80px', gap: 4 }}>
+                  <button onClick={() => setEditProduct(p)} style={styles.rowBtn} title="Edit">✎</button>
                 </span>
               </div>
             ))}
@@ -313,28 +310,28 @@ const ProductModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40" onClick={onClose}>
-      <div className="bg-white w-full max-w-[700px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-slate-800 mb-4">{isEdit ? 'Edit' : 'Create'} Item</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">SKU *</label>
-              <input value={sku} onChange={e => setSku(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" disabled={isEdit} placeholder="e.g. PROD-009" />
+    <div style={styles.overlay} onClick={onClose}>
+      <div style={{ ...styles.modal, maxWidth: 700 }} onClick={e => e.stopPropagation()}>
+        <h2 style={styles.modalTitle}>{isEdit ? 'Edit' : 'Create'} Item</h2>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>SKU *</label>
+              <input value={sku} onChange={e => setSku(e.target.value)} style={styles.input} disabled={isEdit} placeholder="e.g. PROD-009" />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Product Name *</label>
-              <input value={name} onChange={e => setName(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="e.g. Baby Shampoo 200ml" />
+            <div style={styles.field}>
+              <label style={styles.label}>Product Name *</label>
+              <input value={name} onChange={e => setName(e.target.value)} style={styles.input} placeholder="e.g. Baby Shampoo 200ml" />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Category *</label>
-              <input value={category} onChange={e => setCategory(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="e.g. Shampoo" />
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Category *</label>
+              <input value={category} onChange={e => setCategory(e.target.value)} style={styles.input} placeholder="e.g. Shampoo" />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Unit</label>
-              <select value={unit} onChange={e => setUnit(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+            <div style={styles.field}>
+              <label style={styles.label}>Unit</label>
+              <select value={unit} onChange={e => setUnit(e.target.value)} style={styles.select}>
                 <option value="Pcs">Pcs</option>
                 <option value="Pack">Pack</option>
                 <option value="Set">Set</option>
@@ -343,74 +340,74 @@ const ProductModal: React.FC<{
                 <option value="Kg">Kg</option>
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Pcs/Carton</label>
-              <input type="number" min={1} value={pcsPerCarton} onChange={e => setPcsPerCarton(parseInt(e.target.value) || 1)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+            <div style={styles.field}>
+              <label style={styles.label}>Pcs/Carton</label>
+              <input type="number" min={1} value={pcsPerCarton} onChange={e => setPcsPerCarton(parseInt(e.target.value) || 1)} style={styles.input} />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Sale Rate</label>
-              <input type="number" min={0} step={0.01} value={saleRate} onChange={e => setSaleRate(parseFloat(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Sale Rate</label>
+              <input type="number" min={0} step={0.01} value={saleRate} onChange={e => setSaleRate(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Purchase Rate</label>
-              <input type="number" min={0} step={0.01} value={purchaseRate} onChange={e => setPurchaseRate(parseFloat(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+            <div style={styles.field}>
+              <label style={styles.label}>Purchase Rate</label>
+              <input type="number" min={0} step={0.01} value={purchaseRate} onChange={e => setPurchaseRate(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Retail Price</label>
-              <input type="number" min={0} step={0.01} value={retailPrice} onChange={e => setRetailPrice(parseFloat(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Trade Disc %</label>
-              <input type="number" min={0} max={100} step={0.1} value={tradeDiscount} onChange={e => setTradeDiscount(parseFloat(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Trade Offer</label>
-              <input value={tradeOffer} onChange={e => setTradeOffer(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="e.g. Buy 10 Get 1" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Min Qty</label>
-              <input type="number" min={0} value={minQuantity} onChange={e => setMinQuantity(parseInt(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+            <div style={styles.field}>
+              <label style={styles.label}>Retail Price</label>
+              <input type="number" min={0} step={0.01} value={retailPrice} onChange={e => setRetailPrice(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">HS Code</label>
-              <input value={hsCode} onChange={e => setHsCode(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" placeholder="e.g. 3305.10" />
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Trade Disc %</label>
+              <input type="number" min={0} max={100} step={0.1} value={tradeDiscount} onChange={e => setTradeDiscount(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">GST Type</label>
-              <select value={gstType} onChange={e => setGstType(e.target.value as 'VAT' | '3RD' | '8TH')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+            <div style={styles.field}>
+              <label style={styles.label}>Trade Offer</label>
+              <input value={tradeOffer} onChange={e => setTradeOffer(e.target.value)} style={styles.input} placeholder="e.g. Buy 10 Get 1" />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Min Qty</label>
+              <input type="number" min={0} value={minQuantity} onChange={e => setMinQuantity(parseInt(e.target.value) || 0)} style={styles.input} />
+            </div>
+          </div>
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>HS Code</label>
+              <input value={hsCode} onChange={e => setHsCode(e.target.value)} style={styles.input} placeholder="e.g. 3305.10" />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>GST Type</label>
+              <select value={gstType} onChange={e => setGstType(e.target.value as 'VAT' | '3RD' | '8TH')} style={styles.select}>
                 <option value="VAT">Standard VAT</option>
                 <option value="3RD">3rd Schedule</option>
                 <option value="8TH">8th Schedule</option>
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">GST %</label>
-              <input type="number" min={0} max={100} step={0.1} value={gstPercent} onChange={e => setGstPercent(parseFloat(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+            <div style={styles.field}>
+              <label style={styles.label}>GST %</label>
+              <input type="number" min={0} max={100} step={0.1} value={gstPercent} onChange={e => setGstPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">FED %</label>
-              <input type="number" min={0} max={100} step={0.1} value={fedPercent} onChange={e => setFedPercent(parseFloat(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>FED %</label>
+              <input type="number" min={0} max={100} step={0.1} value={fedPercent} onChange={e => setFedPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Advance Tax %</label>
-              <input type="number" min={0} max={100} step={0.1} value={advanceTaxPercent} onChange={e => setAdvanceTaxPercent(parseFloat(e.target.value) || 0)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+            <div style={styles.field}>
+              <label style={styles.label}>Advance Tax %</label>
+              <input type="number" min={0} max={100} step={0.1} value={advanceTaxPercent} onChange={e => setAdvanceTaxPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
-          {error && <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
-          <div className="flex justify-end gap-2.5 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 min-h-[44px]">Cancel</button>
+          {error && <div style={styles.error}>{error}</div>}
+          <div style={styles.modalActions}>
+            <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
             {isEdit && onDeactivate && (
-              <button type="button" onClick={onDeactivate} className="px-4 py-2.5 bg-white text-red-600 border border-red-200 rounded-lg text-sm hover:bg-red-50 min-h-[44px]">Deactivate</button>
+              <button type="button" onClick={onDeactivate} style={{ ...styles.cancelBtn, color: '#dc2626', borderColor: '#fecaca' }}>Deactivate</button>
             )}
-            <button type="submit" className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]" disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Update Item' : 'Create Item'}</button>
+            <button type="submit" style={styles.primaryBtn} disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Update Item' : 'Create Item'}</button>
           </div>
         </form>
       </div>
@@ -451,6 +448,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   useEffect(() => { load(); }, [load]);
 
+  // Lookup maps
   const productMap = useMemo(() => {
     const m = new Map<string, Product>();
     for (const p of products) m.set(p.id, p);
@@ -463,6 +461,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     return m;
   }, [warehouses]);
 
+  // Filtered stock levels
   const filteredLevels = useMemo(() => {
     let result = stockLevels;
     if (warehouseFilter) {
@@ -478,6 +477,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     return result;
   }, [stockLevels, warehouseFilter, search, productMap]);
 
+  // Aggregate by product
   const productAggregates = useMemo(() => {
     const agg = new Map<string, { totalQty: number; totalValue: number; levels: StockLevel[] }>();
     for (const l of filteredLevels) {
@@ -490,6 +490,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     return agg;
   }, [filteredLevels]);
 
+  // Stats
   const stats = useMemo(() => {
     let totalProducts = 0;
     let totalQty = 0;
@@ -520,31 +521,33 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div className="flex flex-wrap gap-3 mb-4">
-        <div className="flex items-center gap-1.5 text-sm text-slate-600">
-          <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{stats.totalProducts}</span>
-          <span>Products</span>
+      {/* Stats */}
+      <div style={styles.statsBar}>
+        <div style={styles.statChip}>
+          <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{stats.totalProducts}</span>
+          <span style={styles.statLabel}>Products</span>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-slate-600">
-          <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>{fmtInt(stats.totalQty)}</span>
-          <span>Total Qty</span>
+        <div style={styles.statChip}>
+          <span style={{ ...styles.statDot, backgroundColor: '#dcfce7', color: '#15803d' }}>{fmtInt(stats.totalQty)}</span>
+          <span style={styles.statLabel}>Total Qty</span>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-slate-600">
-          <span>Total Value: <strong style={{ color: '#1d4ed8' }}>PKR {fmt(stats.totalValue)}</strong></span>
+        <div style={styles.statChip}>
+          <span style={styles.statLabel}>Total Value: <strong style={{ color: '#1d4ed8' }}>PKR {fmt(stats.totalValue)}</strong></span>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      {/* Toolbar */}
+      <div style={styles.toolbar}>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or SKU..."
-          className="flex-1 min-w-[200px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]"
+          style={styles.searchInput}
         />
         <select
           value={warehouseFilter}
           onChange={e => setWarehouseFilter(e.target.value)}
-          className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white"
+          style={styles.filterSelect}
         >
           <option value="">All Warehouses</option>
           {warehouses.map(w => (
@@ -553,90 +556,90 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         </select>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Stock Table */}
+      <div style={styles.card}>
         {loading ? (
-          <div className="p-6">
-            <div className="skeleton w-full h-[300px]" />
+          <div style={{ padding: 24 }}>
+            <div className="skeleton" style={{ width: '100%', height: 300 }} />
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <div className="flex items-center px-4 py-2.5 bg-slate-50 border-b-2 border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>SKU</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '1' }}>Product Name</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>Category</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 80px' }}>Qty On Hand</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 100px' }}>Unit Cost</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 100px' }}>Total Value</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}>Details</span>
-              </div>
+            <div style={styles.treeHeader}>
+              <span style={{ ...styles.col, flex: '0 0 100px' }}>SKU</span>
+              <span style={{ ...styles.col, flex: '1' }}>Product Name</span>
+              <span style={{ ...styles.col, flex: '0 0 100px' }}>Category</span>
+              <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Qty On Hand</span>
+              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Unit Cost</span>
+              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Total Value</span>
+              <span style={{ ...styles.col, flex: '0 0 60px' }}>Details</span>
             </div>
             {productAggregates.size === 0 && (
-              <div className="p-10 text-center text-slate-400 text-sm">No stock records found.</div>
+              <div style={styles.empty}>No stock records found.</div>
             )}
             {Array.from(productAggregates.entries()).map(([productId, agg]) => {
               const prod = productMap.get(productId);
               if (!prod) return null;
               return (
                 <React.Fragment key={productId}>
-                  <div className="flex items-center px-4 py-2.5 border-b border-slate-100 text-sm hover:bg-slate-50">
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[13px]" style={{ flex: '0 0 100px' }}>{prod.sku}</span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap font-medium" style={{ flex: '1' }}>{prod.name}</span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 100px' }}>{prod.category}</span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 80px' }}>{fmtInt(agg.totalQty)}</span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 100px' }}>
+                  <div style={styles.voucherRow}>
+                    <span style={{ ...styles.col, flex: '0 0 100px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{prod.sku}</span>
+                    <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{prod.name}</span>
+                    <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 13 }}>{prod.category}</span>
+                    <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmtInt(agg.totalQty)}</span>
+                    <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
                       {agg.levels.length > 0 ? fmt(agg.levels[0].unitCost) : '—'}
                     </span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px] font-semibold" style={{ flex: '0 0 100px', color: '#1d4ed8' }}>
+                    <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: '#1d4ed8' }}>
                       {fmt(agg.totalValue)}
                     </span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}>
+                    <span style={{ ...styles.col, flex: '0 0 60px' }}>
                       <button
                         onClick={() => toggleExpand(productId)}
-                        className="bg-transparent border-none cursor-pointer text-[10px] text-slate-500 px-1 py-0.5 hover:text-slate-700"
+                        style={styles.expandBtn}
                       >
                         {expandedProduct === productId ? '▼' : '▶'}
                       </button>
                     </span>
                   </div>
+                  {/* Expanded details per warehouse */}
                   {expandedProduct === productId && (
-                    <div className="bg-slate-50 border-b-2 border-slate-200">
-                      <div className="flex items-center px-4 py-1.5 pl-8 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>Warehouse</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '1' }}>Location</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 80px' }}>Qty</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 100px' }}>Unit Cost</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 100px' }}>Value</span>
+                    <div style={styles.linesContainer}>
+                      <div style={styles.linesHeader}>
+                        <span style={{ ...styles.col, flex: '0 0 100px' }}>Warehouse</span>
+                        <span style={{ ...styles.col, flex: '1' }}>Location</span>
+                        <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Qty</span>
+                        <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Unit Cost</span>
+                        <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Value</span>
                       </div>
                       {agg.levels.map(l => {
                         const wh = warehouseMap.get(l.warehouseId);
                         return (
-                          <div key={l.id} className="flex items-center px-4 py-1.5 pl-8 border-b border-slate-100 text-sm">
-                            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 100px' }}>{wh?.code ?? '—'}</span>
-                            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '1' }}>{wh?.name ?? '—'}</span>
-                            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 80px' }}>{fmtInt(l.quantityOnHand)}</span>
-                            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 100px' }}>{fmt(l.unitCost)}</span>
-                            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px] font-medium" style={{ flex: '0 0 100px' }}>
+                          <div key={l.id} style={styles.lineRow}>
+                            <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 13 }}>{wh?.code ?? '—'}</span>
+                            <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{wh?.name ?? '—'}</span>
+                            <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmtInt(l.quantityOnHand)}</span>
+                            <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(l.unitCost)}</span>
+                            <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 500 }}>
                               {fmt(calculateStockValue(l.quantityOnHand, l.unitCost))}
                             </span>
                           </div>
                         );
                       })}
                       {batches.length > 0 && (
-                        <div className="px-4 py-2 pl-8 border-t border-slate-200">
-                          <span className="text-xs font-semibold text-slate-500">Batches:</span>
+                        <div style={{ padding: '8px 16px', borderTop: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Batches:</span>
                           {batches.map(b => (
-                            <span key={b.id} className="ml-2 text-xs text-slate-600">
+                            <span key={b.id} style={{ marginLeft: 8, fontSize: 12, color: '#475569' }}>
                               {b.batchNumber} ({b.quantityOnHand})
                             </span>
                           ))}
                         </div>
                       )}
                       {serials.length > 0 && (
-                        <div className="px-4 py-2 pl-8 border-t border-slate-200">
-                          <span className="text-xs font-semibold text-slate-500">Serials:</span>
+                        <div style={{ padding: '8px 16px', borderTop: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Serials:</span>
                           {serials.map(s => (
-                            <span key={s.id} className="ml-2 text-xs text-slate-600">
+                            <span key={s.id} style={{ marginLeft: 8, fontSize: 12, color: '#475569' }}>
                               {s.serialNumber} ({s.status})
                             </span>
                           ))}
@@ -669,6 +672,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     try {
       const w = await services.inventoryRepository.getWarehouses(tenantId);
       setWarehouses(w);
+      // Load locations for all warehouses
       const allLocs: WarehouseLocation[] = [];
       for (const wh of w) {
         const locs = await services.inventoryRepository.getWarehouseLocations(tenantId, wh.id);
@@ -694,76 +698,74 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{warehouses.length}</span>
-            <span>Warehouses</span>
+      <div style={styles.sectionHeader}>
+        <div style={styles.statsBar}>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{warehouses.length}</span>
+            <span style={styles.statLabel}>Warehouses</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>{locations.length}</span>
-            <span>Locations</span>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: '#dcfce7', color: '#15803d' }}>{locations.length}</span>
+            <span style={styles.statLabel}>Locations</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div style={styles.card}>
         {loading ? (
-          <div className="p-6">
-            <div className="skeleton w-full h-[200px]" />
+          <div style={{ padding: 24 }}>
+            <div className="skeleton" style={{ width: '100%', height: 200 }} />
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <div className="flex items-center px-4 py-2.5 bg-slate-50 border-b-2 border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 80px' }}>Code</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '1' }}>Warehouse Name</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 80px' }}>Status</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 80px' }}>Locations</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}></span>
-              </div>
+            <div style={styles.treeHeader}>
+              <span style={{ ...styles.col, flex: '0 0 80px' }}>Code</span>
+              <span style={{ ...styles.col, flex: '1' }}>Warehouse Name</span>
+              <span style={{ ...styles.col, flex: '0 0 80px' }}>Status</span>
+              <span style={{ ...styles.col, flex: '0 0 80px' }}>Locations</span>
+              <span style={{ ...styles.col, flex: '0 0 60px' }}></span>
             </div>
             {warehouses.length === 0 && (
-              <div className="p-10 text-center text-slate-400 text-sm">No warehouses found.</div>
+              <div style={styles.empty}>No warehouses found.</div>
             )}
             {warehouses.map(wh => {
               const locs = locationsByWarehouse.get(wh.id) ?? [];
               return (
                 <React.Fragment key={wh.id}>
-                  <div className="flex items-center px-4 py-2.5 border-b border-slate-100 text-sm hover:bg-slate-50">
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[13px] font-semibold" style={{ flex: '0 0 80px' }}>{wh.code}</span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap font-medium" style={{ flex: '1' }}>{wh.name}</span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 80px' }}>
-                      <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold" style={{ backgroundColor: wh.isActive ? '#dcfce7' : '#fee2e2', color: wh.isActive ? '#166534' : '#991b1b' }}>
+                  <div style={styles.voucherRow}>
+                    <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600 }}>{wh.code}</span>
+                    <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{wh.name}</span>
+                    <span style={{ ...styles.col, flex: '0 0 80px' }}>
+                      <span style={{ ...styles.typeBadge, backgroundColor: wh.isActive ? '#dcfce7' : '#fee2e2', color: wh.isActive ? '#166534' : '#991b1b' }}>
                         {wh.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap text-center text-[13px]" style={{ flex: '0 0 80px' }}>{locs.length}</span>
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}>
+                    <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'center', fontSize: 13 }}>{locs.length}</span>
+                    <span style={{ ...styles.col, flex: '0 0 60px' }}>
                       <button
                         onClick={() => setExpandedWh(expandedWh === wh.id ? null : wh.id)}
-                        className="bg-transparent border-none cursor-pointer text-[10px] text-slate-500 px-1 py-0.5 hover:text-slate-700"
+                        style={styles.expandBtn}
                       >
                         {expandedWh === wh.id ? '▼' : '▶'}
                       </button>
                     </span>
                   </div>
                   {expandedWh === wh.id && locs.length > 0 && (
-                    <div className="bg-slate-50 border-b-2 border-slate-200">
-                      <div className="flex items-center px-4 py-1.5 pl-8 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 120px' }}>Code</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '1' }}>Name</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}>Rack</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}>Shelf</span>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 60px' }}>Bin</span>
+                    <div style={styles.linesContainer}>
+                      <div style={styles.linesHeader}>
+                        <span style={{ ...styles.col, flex: '0 0 120px' }}>Code</span>
+                        <span style={{ ...styles.col, flex: '1' }}>Name</span>
+                        <span style={{ ...styles.col, flex: '0 0 60px' }}>Rack</span>
+                        <span style={{ ...styles.col, flex: '0 0 60px' }}>Shelf</span>
+                        <span style={{ ...styles.col, flex: '0 0 60px' }}>Bin</span>
                       </div>
                       {locs.map(loc => (
-                        <div key={loc.id} className="flex items-center px-4 py-1.5 pl-8 border-b border-slate-100 text-sm">
-                          <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[13px]" style={{ flex: '0 0 120px' }}>{loc.code}</span>
-                          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '1' }}>{loc.name}</span>
-                          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 60px' }}>{loc.rack ?? '—'}</span>
-                          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 60px' }}>{loc.shelf ?? '—'}</span>
-                          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 60px' }}>{loc.bin ?? '—'}</span>
+                        <div key={loc.id} style={styles.lineRow}>
+                          <span style={{ ...styles.col, flex: '0 0 120px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{loc.code}</span>
+                          <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{loc.name}</span>
+                          <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{loc.rack ?? '—'}</span>
+                          <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{loc.shelf ?? '—'}</span>
+                          <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{loc.bin ?? '—'}</span>
                         </div>
                       ))}
                     </div>
@@ -860,32 +862,34 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
-            <span>Total</span>
+      {/* Stats */}
+      <div style={styles.sectionHeader}>
+        <div style={styles.statsBar}>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
+            <span style={styles.statLabel}>Total</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: MOVEMENT_STATUS_COLORS.DRAFT.bg, color: MOVEMENT_STATUS_COLORS.DRAFT.fg }}>{stats.draft}</span>
-            <span>Draft</span>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: MOVEMENT_STATUS_COLORS.DRAFT.bg, color: MOVEMENT_STATUS_COLORS.DRAFT.fg }}>{stats.draft}</span>
+            <span style={styles.statLabel}>Draft</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-md font-semibold text-xs" style={{ backgroundColor: MOVEMENT_STATUS_COLORS.POSTED.bg, color: MOVEMENT_STATUS_COLORS.POSTED.fg }}>{stats.posted}</span>
-            <span>Posted</span>
+          <div style={styles.statChip}>
+            <span style={{ ...styles.statDot, backgroundColor: MOVEMENT_STATUS_COLORS.POSTED.bg, color: MOVEMENT_STATUS_COLORS.POSTED.fg }}>{stats.posted}</span>
+            <span style={styles.statLabel}>Posted</span>
           </div>
         </div>
-        <button onClick={() => setShowCreate(true)} className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]">+ New Movement</button>
+        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Movement</button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as StockMovementType | '')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+      {/* Filters */}
+      <div style={styles.toolbar}>
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as StockMovementType | '')} style={styles.filterSelect}>
           <option value="">All Types</option>
           {(Object.keys(STOCK_MOVEMENT_TYPE_LABELS) as StockMovementType[]).map(t => (
             <option key={t} value={t}>{STOCK_MOVEMENT_TYPE_LABELS[t]}</option>
           ))}
         </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StockMovementStatus | '')} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StockMovementStatus | '')} style={styles.filterSelect}>
           <option value="">All Statuses</option>
           <option value="DRAFT">Draft</option>
           <option value="POSTED">Posted</option>
@@ -893,29 +897,28 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         </select>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Movements Table */}
+      <div style={styles.card}>
         {loading ? (
-          <div className="p-6">
-            <div className="skeleton w-full h-[300px]" />
+          <div style={{ padding: 24 }}>
+            <div className="skeleton" style={{ width: '100%', height: 300 }} />
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <div className="flex items-center px-4 py-2.5 bg-slate-50 border-b-2 border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 110px' }}>Date</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>Type</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '1' }}>Product</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>From</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>To</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 80px' }}>Qty</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 100px' }}>Unit Cost</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right" style={{ flex: '0 0 100px' }}>Total</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 80px' }}>Status</span>
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>Actions</span>
-              </div>
+            <div style={styles.treeHeader}>
+              <span style={{ ...styles.col, flex: '0 0 110px' }}>Date</span>
+              <span style={{ ...styles.col, flex: '0 0 100px' }}>Type</span>
+              <span style={{ ...styles.col, flex: '1' }}>Product</span>
+              <span style={{ ...styles.col, flex: '0 0 100px' }}>From</span>
+              <span style={{ ...styles.col, flex: '0 0 100px' }}>To</span>
+              <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Qty</span>
+              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Unit Cost</span>
+              <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Total</span>
+              <span style={{ ...styles.col, flex: '0 0 80px' }}>Status</span>
+              <span style={{ ...styles.col, flex: '0 0 100px' }}>Actions</span>
             </div>
             {filteredMovements.length === 0 && (
-              <div className="p-10 text-center text-slate-400 text-sm">No stock movements found.</div>
+              <div style={styles.empty}>No stock movements found.</div>
             )}
             {filteredMovements.map(m => {
               const prod = productMap.get(m.productId);
@@ -925,37 +928,35 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               const statusColor = MOVEMENT_STATUS_COLORS[m.status];
 
               return (
-                <div key={m.id} className="flex items-center px-4 py-2.5 border-b border-slate-100 text-sm hover:bg-slate-50">
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '0 0 110px' }}>{m.movementDate}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 100px' }}>
-                    <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold" style={{ backgroundColor: typeColor.bg, color: typeColor.fg }}>
+                <div key={m.id} style={styles.voucherRow}>
+                  <span style={{ ...styles.col, flex: '0 0 110px', fontSize: 13 }}>{m.movementDate}</span>
+                  <span style={{ ...styles.col, flex: '0 0 100px' }}>
+                    <span style={{ ...styles.typeBadge, backgroundColor: typeColor.bg, color: typeColor.fg }}>
                       {m.movementType}
                     </span>
                   </span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px]" style={{ flex: '1' }}>{prod?.name ?? '—'}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500" style={{ flex: '0 0 100px' }}>{fromWh?.code ?? '—'}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500" style={{ flex: '0 0 100px' }}>{toWh?.code ?? '—'}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 80px' }}>{fmtInt(m.quantity)}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px]" style={{ flex: '0 0 100px' }}>{fmt(m.unitCost)}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-right font-mono text-[13px] font-medium" style={{ flex: '0 0 100px' }}>{fmt(m.totalCost)}</span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: '0 0 80px' }}>
-                    <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold" style={{ backgroundColor: statusColor.bg, color: statusColor.fg }}>
+                  <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{prod?.name ?? '—'}</span>
+                  <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 12, color: '#64748b' }}>{fromWh?.code ?? '—'}</span>
+                  <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 12, color: '#64748b' }}>{toWh?.code ?? '—'}</span>
+                  <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmtInt(m.quantity)}</span>
+                  <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(m.unitCost)}</span>
+                  <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 500 }}>{fmt(m.totalCost)}</span>
+                  <span style={{ ...styles.col, flex: '0 0 80px' }}>
+                    <span style={{ ...styles.typeBadge, backgroundColor: statusColor.bg, color: statusColor.fg }}>
                       {m.status}
                     </span>
                   </span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap flex gap-1" style={{ flex: '0 0 100px' }}>
+                  <span style={{ ...styles.col, flex: '0 0 100px', gap: 4 }}>
                     {m.status === 'DRAFT' && (
                       <>
                         <button
                           onClick={() => handlePost(m.id)}
-                          className="bg-transparent border border-green-200 rounded-md w-7 h-7 cursor-pointer text-sm inline-flex items-center justify-center hover:bg-green-50"
-                          style={{ color: '#16a34a' }}
+                          style={{ ...styles.rowBtn, color: '#16a34a', borderColor: '#bbf7d0' }}
                           title="Post"
                         >✓</button>
                         <button
                           onClick={() => handleCancel(m.id)}
-                          className="bg-transparent border border-red-200 rounded-md w-7 h-7 cursor-pointer text-sm inline-flex items-center justify-center hover:bg-red-50"
-                          style={{ color: '#dc2626' }}
+                          style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca' }}
                           title="Cancel"
                         >✕</button>
                       </>
@@ -968,6 +969,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         )}
       </div>
 
+      {/* Create Movement Modal */}
       {showCreate && (
         <CreateMovementModal
           tenantId={tenantId}
@@ -1011,6 +1013,7 @@ const CreateMovementModal: React.FC<{
     if (quantity <= 0) { setError('Quantity must be greater than 0.'); return; }
     if (unitCost < 0) { setError('Unit cost cannot be negative.'); return; }
 
+    // Validate warehouse requirements
     if (['GRN', 'RETURN'].includes(movementType) && !toWarehouseId && !fromWarehouseId) {
       setError('Target warehouse is required for GRN/RETURN.'); return;
     }
@@ -1046,6 +1049,7 @@ const CreateMovementModal: React.FC<{
     }
   };
 
+  // Auto-fill unit cost from product purchase rate
   const handleProductChange = (pid: string) => {
     setProductId(pid);
     const prod = products.find(p => p.id === pid);
@@ -1056,29 +1060,29 @@ const CreateMovementModal: React.FC<{
   const needsToWarehouse = ['GRN', 'RETURN', 'TRANSFER', 'ADJUSTMENT'].includes(movementType);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40" onClick={onClose}>
-      <div className="bg-white w-full max-w-[600px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-slate-800 mb-4">New Stock Movement</h2>
+    <div style={styles.overlay} onClick={onClose}>
+      <div style={{ ...styles.modal, maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+        <h2 style={styles.modalTitle}>New Stock Movement</h2>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Movement Type</label>
-              <select value={movementType} onChange={e => setMovementType(e.target.value as StockMovementType)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Movement Type</label>
+              <select value={movementType} onChange={e => setMovementType(e.target.value as StockMovementType)} style={styles.select}>
                 {(Object.keys(STOCK_MOVEMENT_TYPE_LABELS) as StockMovementType[]).map(t => (
                   <option key={t} value={t}>{STOCK_MOVEMENT_TYPE_LABELS[t]}</option>
                 ))}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Date</label>
-              <input type="date" value={movementDate} onChange={e => setMovementDate(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]" />
+            <div style={styles.field}>
+              <label style={styles.label}>Date</label>
+              <input type="date" value={movementDate} onChange={e => setMovementDate(e.target.value)} style={styles.input} />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Product</label>
-            <select value={productId} onChange={e => handleProductChange(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+          <div style={styles.field}>
+            <label style={styles.label}>Product</label>
+            <select value={productId} onChange={e => handleProductChange(e.target.value)} style={styles.select}>
               <option value="">Select product...</option>
               {products.filter(p => p.isActive).map(p => (
                 <option key={p.id} value={p.id}>{p.sku} — {p.name}</option>
@@ -1087,9 +1091,9 @@ const CreateMovementModal: React.FC<{
           </div>
 
           {needsFromWarehouse && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Source Warehouse</label>
-              <select value={fromWarehouseId} onChange={e => setFromWarehouseId(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+            <div style={styles.field}>
+              <label style={styles.label}>Source Warehouse</label>
+              <select value={fromWarehouseId} onChange={e => setFromWarehouseId(e.target.value)} style={styles.select}>
                 <option value="">Select warehouse...</option>
                 {warehouses.filter(w => w.isActive).map(w => (
                   <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
@@ -1099,9 +1103,9 @@ const CreateMovementModal: React.FC<{
           )}
 
           {needsToWarehouse && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Destination Warehouse</label>
-              <select value={toWarehouseId} onChange={e => setToWarehouseId(e.target.value)} className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px] bg-white">
+            <div style={styles.field}>
+              <label style={styles.label}>Destination Warehouse</label>
+              <select value={toWarehouseId} onChange={e => setToWarehouseId(e.target.value)} style={styles.select}>
                 <option value="">Select warehouse...</option>
                 {warehouses.filter(w => w.isActive).map(w => (
                   <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
@@ -1110,56 +1114,56 @@ const CreateMovementModal: React.FC<{
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Quantity</label>
+          <div style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Quantity</label>
               <input
                 type="number"
                 min={1}
                 value={quantity || ''}
                 onChange={e => setQuantity(parseInt(e.target.value) || 0)}
-                className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]"
+                style={styles.input}
                 placeholder="0"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Unit Cost (PKR)</label>
+            <div style={styles.field}>
+              <label style={styles.label}>Unit Cost (PKR)</label>
               <input
                 type="number"
                 min={0}
                 step={0.01}
                 value={unitCost || ''}
                 onChange={e => setUnitCost(parseFloat(e.target.value) || 0)}
-                className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]"
+                style={styles.input}
                 placeholder="0.00"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Total Cost</label>
+            <div style={styles.field}>
+              <label style={styles.label}>Total Cost</label>
               <input
                 type="text"
                 value={`PKR ${fmt(totalCost)}`}
-                className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none min-h-[44px] bg-slate-50"
+                style={{ ...styles.input, backgroundColor: '#f8fafc' }}
                 readOnly
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Narration (optional)</label>
+          <div style={styles.field}>
+            <label style={styles.label}>Narration (optional)</label>
             <input
               value={narration}
               onChange={e => setNarration(e.target.value)}
-              className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-500 min-h-[44px]"
+              style={styles.input}
               placeholder="Description..."
             />
           </div>
 
-          {error && <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
+          {error && <div style={styles.error}>{error}</div>}
 
-          <div className="flex justify-end gap-2.5 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 min-h-[44px]">Cancel</button>
-            <button type="submit" className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 min-h-[44px]" disabled={saving}>
+          <div style={styles.modalActions}>
+            <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
+            <button type="submit" style={styles.primaryBtn} disabled={saving}>
               {saving ? 'Creating...' : 'Create Movement'}
             </button>
           </div>
@@ -1167,4 +1171,58 @@ const CreateMovementModal: React.FC<{
       </div>
     </div>
   );
+};
+
+/* ─── Styles ───────────────────────────────────────────────── */
+
+const styles: Record<string, React.CSSProperties> = {
+  page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0 },
+  title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: '#64748b' },
+
+  tabBar: { display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 20 },
+  tab: { padding: '10px 20px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 14, fontWeight: 500, color: '#64748b', cursor: 'pointer', marginBottom: -2 },
+  tabActive: { color: '#2563eb', borderBottomColor: '#2563eb' },
+
+  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  statsBar: { display: 'flex', gap: 12, flexWrap: 'wrap' },
+  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569' },
+  statDot: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, fontWeight: 600, fontSize: 12 },
+
+  toolbar: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
+  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
+  filterSelect: { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
+
+  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)', overflow: 'hidden' },
+
+  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14 },
+  col: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+
+  expandBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#64748b', padding: '2px 4px' },
+  typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
+  rowBtn: { background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+
+  primaryBtn: { padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  cancelBtn: { padding: '10px 20px', backgroundColor: '#fff', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
+
+  empty: { padding: 40, textAlign: 'center' as const, color: '#94a3b8', fontSize: 14 },
+
+  linesContainer: { backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' },
+  linesHeader: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #e2e8f0', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  lineRow: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #f1f5f9', fontSize: 14, alignItems: 'center' },
+
+  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  modal: { backgroundColor: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgb(0 0 0 / 0.2)' },
+  modalTitle: { fontSize: 20, fontWeight: 700, color: '#1e293b', marginBottom: 16 },
+  form: { display: 'flex', flexDirection: 'column', gap: 16 },
+  formRow: { display: 'flex', gap: 16 },
+  field: { display: 'flex', flexDirection: 'column', gap: 6, flex: 1 },
+  label: { fontSize: 13, fontWeight: 500, color: '#374151' },
+  input: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
+  select: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
+  error: { padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: 13 },
+  modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
 };

@@ -1,3 +1,8 @@
+/**
+ * ModulePlaceholder Component
+ * Reusable layout for ERP module foundation pages.
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,39 +15,152 @@ interface ModulePlaceholderProps {
   features: string[];
 }
 
-export const ModulePlaceholder: React.FC<ModulePlaceholderProps> = ({ title, description, icon, iconBg, iconColor, features }) => {
+export const ModulePlaceholder: React.FC<ModulePlaceholderProps> = ({
+  title,
+  description,
+  icon,
+  iconBg,
+  iconColor,
+  features,
+}) => {
   const navigate = useNavigate();
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/dashboard')} className="inline-block mb-6 text-sm text-slate-500 hover:text-slate-700 min-h-[44px]">← Back to Dashboard</button>
+    <div style={styles.container}>
+      <button onClick={() => navigate('/dashboard')} style={styles.backLink}>
+        ← Back to Dashboard
+      </button>
 
-      <div className="flex items-center gap-4 md:gap-5 mb-6">
-        <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: iconBg, color: iconColor }}>{icon}</div>
+      <div style={styles.header}>
+        <div style={{ ...styles.icon, backgroundColor: iconBg, color: iconColor }}>
+          {icon}
+        </div>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-1">{title}</h1>
-          <p className="text-sm md:text-base text-slate-500">{description}</p>
+          <h1 style={styles.title}>{title}</h1>
+          <p style={styles.description}>{description}</p>
         </div>
       </div>
 
-      <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg mb-6">
-        <span className="w-2 h-2 rounded-full bg-green-500" />
-        <span className="text-xs md:text-sm font-medium text-green-700">Module Foundation</span>
+      <div style={styles.statusBar}>
+        <span style={styles.statusDot} />
+        <span style={styles.statusText}>Module Foundation</span>
       </div>
 
-      <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-slate-200 mb-5">
-        <h2 className="text-base font-semibold text-slate-800 mb-4">Planned Functionality</h2>
-        <ul className="flex flex-col gap-2.5">
-          {features.map((f, i) => (
-            <li key={i} className="text-sm text-slate-600 pl-5 relative before:content-['•'] before:absolute before:left-0 before:text-slate-400">{f}</li>
+      <div style={styles.card}>
+        <h2 style={styles.cardTitle}>Planned Functionality</h2>
+        <ul style={styles.featureList}>
+          {features.map((feature, i) => (
+            <li key={i} style={styles.featureItem}>{feature}</li>
           ))}
         </ul>
       </div>
 
-      <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-slate-200">
-        <h2 className="text-base font-semibold text-slate-800 mb-4">Implementation Status</h2>
-        <p className="text-sm text-slate-500 leading-relaxed">This module is a structural placeholder. Business logic, data models, and transaction processing will be implemented in later steps according to the reverse-engineered specifications.</p>
+      <div style={styles.card}>
+        <h2 style={styles.cardTitle}>Implementation Status</h2>
+        <p style={styles.statusMessage}>
+          This module is a structural placeholder. Business logic, data models, and
+          transaction processing will be implemented in later steps according to the
+          reverse-engineered specifications.
+        </p>
       </div>
     </div>
   );
+};
+
+const styles: { [key: string]: React.CSSProperties } = {
+  container: {
+    padding: '32px',
+    maxWidth: '960px',
+    margin: '0 auto',
+  },
+  backLink: {
+    display: 'inline-block',
+    marginBottom: '24px',
+    padding: '0',
+    fontSize: '14px',
+    color: '#64748b',
+    textDecoration: 'none',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+    marginBottom: '24px',
+  },
+  icon: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  title: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '4px',
+  },
+  description: {
+    fontSize: '15px',
+    color: '#64748b',
+  },
+  statusBar: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #bbf7d0',
+    borderRadius: '8px',
+    marginBottom: '24px',
+  },
+  statusDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    backgroundColor: '#22c55e',
+  },
+  statusText: {
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#166534',
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    padding: '24px',
+    boxShadow: '0 1px 3px rgb(0 0 0 / 0.1)',
+    border: '1px solid #e2e8f0',
+    marginBottom: '20px',
+  },
+  cardTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '16px',
+  },
+  featureList: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  featureItem: {
+    fontSize: '14px',
+    color: '#475569',
+    paddingLeft: '20px',
+    position: 'relative',
+  },
+  statusMessage: {
+    fontSize: '14px',
+    color: '#64748b',
+    lineHeight: '1.6',
+  },
 };

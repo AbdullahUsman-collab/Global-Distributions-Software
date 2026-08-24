@@ -1,22 +1,57 @@
+/**
+ * Layout Component
+ * Main layout wrapper for authenticated ERP shell.
+ * 
+ * Features:
+ * - Header with user profile
+ * - Collapsible sidebar
+ * - Content area
+ * - Responsive design
+ */
+
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
 export const Layout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
-      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+    <div style={styles.container}>
+      {/* Header */}
+      <Header
+        onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        sidebarCollapsed={sidebarCollapsed}
+      />
 
-      <div className="flex flex-1">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* Main content area */}
+      <div style={styles.main}>
+        {/* Sidebar */}
+        <Sidebar collapsed={sidebarCollapsed} />
 
-        <main className="flex-1 overflow-auto">
+        {/* Content */}
+        <main style={styles.content}>
           <Outlet />
         </main>
       </div>
     </div>
   );
+};
+
+const styles: { [key: string]: React.CSSProperties } = {
+  container: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#f8fafc',
+  },
+  main: {
+    display: 'flex',
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    overflow: 'auto',
+  },
 };
