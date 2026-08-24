@@ -67,7 +67,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Powder', unit: 'Pcs', pcsPerCarton: 24,
       saleRate: 850, purchaseRate: 680, retailPrice: 900,
       tradeDiscount: 5, tradeOffer: 'Buy 10 Get 1', minQuantity: 5,
-      hsCode: '3304.99', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 1,
+      hsCode: '3304.99', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
       isActive: true,
     },
     {
@@ -76,7 +77,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Lotion', unit: 'Pcs', pcsPerCarton: 36,
       saleRate: 450, purchaseRate: 320, retailPrice: 500,
       tradeDiscount: 3, tradeOffer: '', minQuantity: 10,
-      hsCode: '3304.99', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 1,
+      hsCode: '3304.99', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
       isActive: true,
     },
     {
@@ -85,7 +87,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Gift Box', unit: 'Set', pcsPerCarton: 12,
       saleRate: 1200, purchaseRate: 850, retailPrice: 1350,
       tradeDiscount: 8, tradeOffer: 'Buy 5 Get 1', minQuantity: 3,
-      hsCode: '4819.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 0,
+      hsCode: '4819.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
       isActive: true,
     },
     {
@@ -94,7 +97,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Shampoo', unit: 'Pcs', pcsPerCarton: 30,
       saleRate: 380, purchaseRate: 270, retailPrice: 420,
       tradeDiscount: 4, tradeOffer: '', minQuantity: 10,
-      hsCode: '3305.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 1,
+      hsCode: '3305.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
       isActive: true,
     },
     {
@@ -103,7 +107,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Wipes', unit: 'Pack', pcsPerCarton: 48,
       saleRate: 220, purchaseRate: 150, retailPrice: 250,
       tradeDiscount: 2, tradeOffer: '', minQuantity: 20,
-      hsCode: '3401.19', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 0,
+      hsCode: '3401.19', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
       isActive: true,
     },
     {
@@ -112,7 +117,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Oil', unit: 'Btl', pcsPerCarton: 20,
       saleRate: 650, purchaseRate: 480, retailPrice: 700,
       tradeDiscount: 5, tradeOffer: 'Buy 12 Get 2', minQuantity: 6,
-      hsCode: '1509.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 1,
+      hsCode: '1509.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
       isActive: true,
     },
     {
@@ -121,7 +127,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Soap', unit: 'Pcs', pcsPerCarton: 60,
       saleRate: 120, purchaseRate: 80, retailPrice: 140,
       tradeDiscount: 3, tradeOffer: '', minQuantity: 30,
-      hsCode: '3401.11', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 0,
+      hsCode: '3401.11', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
       isActive: true,
     },
     {
@@ -130,7 +137,8 @@ function buildSeedProducts(tenantId: string): Product[] {
       category: 'Pouch', unit: 'Pcs', pcsPerCarton: 40,
       saleRate: 320, purchaseRate: 240, retailPrice: 350,
       tradeDiscount: 4, tradeOffer: 'Buy 20 Get 3', minQuantity: 10,
-      hsCode: '1905.90', gstType: 'VAT', gstPercent: 17, fedPercent: 0, advanceTaxPercent: 0,
+      hsCode: '1905.90', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
+      advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
       isActive: true,
     },
   ];
@@ -326,7 +334,8 @@ export class MockInventoryAdapter implements IInventoryRepository {
       gstType: dto.gstType ?? 'VAT',
       gstPercent: dto.gstPercent ?? 0,
       fedPercent: dto.fedPercent ?? 0,
-      advanceTaxPercent: dto.advanceTaxPercent ?? 0,
+      advanceTaxSalePercent: dto.advanceTaxSalePercent ?? 0,
+      advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? 0,
       isActive: dto.isActive ?? true,
     };
 
@@ -357,7 +366,8 @@ export class MockInventoryAdapter implements IInventoryRepository {
       gstType: dto.gstType ?? existing.gstType,
       gstPercent: dto.gstPercent ?? existing.gstPercent,
       fedPercent: dto.fedPercent ?? existing.fedPercent,
-      advanceTaxPercent: dto.advanceTaxPercent ?? existing.advanceTaxPercent,
+      advanceTaxSalePercent: dto.advanceTaxSalePercent ?? existing.advanceTaxSalePercent,
+      advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? existing.advanceTaxPurchasePercent,
       isActive: dto.isActive ?? existing.isActive,
     };
 

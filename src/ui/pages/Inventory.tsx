@@ -272,7 +272,8 @@ const ProductModal: React.FC<{
   const [gstType, setGstType] = useState<'VAT' | '3RD' | '8TH'>(product?.gstType ?? 'VAT');
   const [gstPercent, setGstPercent] = useState(product?.gstPercent ?? 17);
   const [fedPercent, setFedPercent] = useState(product?.fedPercent ?? 0);
-  const [advanceTaxPercent, setAdvanceTaxPercent] = useState(product?.advanceTaxPercent ?? 0);
+  const [advanceTaxSalePercent, setAdvanceTaxSalePercent] = useState(product?.advanceTaxSalePercent ?? 0);
+  const [advanceTaxPurchasePercent, setAdvanceTaxPurchasePercent] = useState(product?.advanceTaxPurchasePercent ?? 0);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -301,7 +302,8 @@ const ProductModal: React.FC<{
         gstType: gstType as any,
         gstPercent,
         fedPercent,
-        advanceTaxPercent,
+        advanceTaxSalePercent,
+        advanceTaxPurchasePercent,
       });
     } catch (err: any) {
       setError(err.message || 'Failed to save product.');
@@ -397,8 +399,12 @@ const ProductModal: React.FC<{
               <input type="number" min={0} max={100} step={0.1} value={fedPercent} onChange={e => setFedPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
             <div style={styles.field}>
-              <label style={styles.label}>Advance Tax %</label>
-              <input type="number" min={0} max={100} step={0.1} value={advanceTaxPercent} onChange={e => setAdvanceTaxPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
+              <label style={styles.label}>Adv Tax (Sale) %</label>
+              <input type="number" min={0} max={100} step={0.1} value={advanceTaxSalePercent} onChange={e => setAdvanceTaxSalePercent(parseFloat(e.target.value) || 0)} style={styles.input} />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Adv Tax (Purchase) %</label>
+              <input type="number" min={0} max={100} step={0.1} value={advanceTaxPurchasePercent} onChange={e => setAdvanceTaxPurchasePercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
           {error && <div style={styles.error}>{error}</div>}

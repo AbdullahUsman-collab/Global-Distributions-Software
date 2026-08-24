@@ -95,6 +95,7 @@ export function deriveNormalBalance(accountType: AccountType): NormalBalance {
 /**
  * Account Head entity.
  * Source: audit/23_DATA_MODEL.md (account_heads table)
+ * Extended with verified legacy fields from audit/03_MASTER_DATA.md (Accounts table)
  */
 export interface AccountHead {
   /** Unique identifier (UUID) */
@@ -121,6 +122,29 @@ export interface AccountHead {
   isActive: boolean;
   /** Optional sub-ledger integration category */
   controlCategory?: ControlCategory;
+
+  // ─── Verified Legacy Compatibility Fields ──────────────────
+  // Source: audit/03_MASTER_DATA.md (Main_Heads.Main_Head_No)
+  /** Legacy Main Head number for backward-compatibility mapping */
+  legacyMainHeadNo?: number;
+  // Source: audit/03_MASTER_DATA.md (Main_Heads.Effect)
+  /** Balance Sheet / Profit and Loss classification from legacy Main_Heads.Effect */
+  accountEffect?: 'Balance Sheet' | 'Profit and Loss' | 'Both';
+
+  // ─── Verified Account Metadata (Level 4 posting accounts) ─
+  // Source: audit/23_DATA_MODEL.md (Accounts table fields)
+  /** Physical address (for party/customer/supplier accounts) */
+  address?: string;
+  /** Owner / contact person name */
+  ownerName?: string;
+  /** Phone number */
+  phone?: string;
+  /** Sales Tax Number (STN) */
+  stn?: string;
+  /** National Tax Number (NTN) */
+  ntn?: string;
+  /** Computerized National Identity Card number */
+  cnic?: string;
 }
 
 /* ─── DTOs ─────────────────────────────────────────────────── */
@@ -137,6 +161,14 @@ export interface CreateAccountHeadDTO {
   accountType: AccountType;
   isActive?: boolean;
   controlCategory?: ControlCategory;
+  legacyMainHeadNo?: number;
+  accountEffect?: 'Balance Sheet' | 'Profit and Loss' | 'Both';
+  address?: string;
+  ownerName?: string;
+  phone?: string;
+  stn?: string;
+  ntn?: string;
+  cnic?: string;
 }
 
 /**
@@ -147,4 +179,12 @@ export interface UpdateAccountHeadDTO {
   accountName?: string;
   isActive?: boolean;
   controlCategory?: ControlCategory | null;
+  legacyMainHeadNo?: number;
+  accountEffect?: 'Balance Sheet' | 'Profit and Loss' | 'Both' | null;
+  address?: string;
+  ownerName?: string;
+  phone?: string;
+  stn?: string;
+  ntn?: string;
+  cnic?: string;
 }

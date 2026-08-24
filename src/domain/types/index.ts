@@ -25,6 +25,11 @@ export {
   ItemSerial,
   CreateProductDTO,
   UpdateProductDTO,
+  BillLineTaxInput,
+  BillLineTaxResult,
   calculateStockValue,
   calculateAVCO,
+  calculateCOGS,
+  calculateGrossProfit,
+  calculateBillLineTax,
 } from './inventory';

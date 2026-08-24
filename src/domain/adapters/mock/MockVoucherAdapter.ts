@@ -67,6 +67,10 @@ interface SeedLine {
   description: string;
   debit: number;
   credit: number;
+  contraAccountId?: string;
+  quantity?: number;
+  productId?: string;
+  branch?: string;
 }
 
 interface SeedVoucher {
@@ -87,57 +91,101 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
       posted: true,
       lines: [
         { accountId: '61101', description: 'August office rent', debit: 50000, credit: 0 },
-        { accountId: '11101', description: 'Cash paid for rent',   debit: 0,    credit: 50000 },
+        { accountId: '11101', description: 'Cash paid for rent',   debit: 0,    credit: 50000, contraAccountId: '61101' },
       ],
     },
-    // CRV — Cash received from customer
+    // CV — Cash voucher (Cash ↔ Any) per audit/04_ACCOUNTING_ENGINE.md
     {
-      voucherType: 'CRV',
+      voucherType: 'CV',
+      date: '2026-08-03',
+      narration: 'Cash received from walk-in customer',
+      posted: true,
+      lines: [
+        { accountId: '11101', description: 'Cash received',       debit: 25000,  credit: 0 },
+        { accountId: '41102', description: 'Retail sale income',  debit: 0,      credit: 25000, contraAccountId: '11101' },
+      ],
+    },
+    // CR — Cash receipt (Cash ↔ Income/Party) per audit/04_ACCOUNTING_ENGINE.md
+    {
+      voucherType: 'CR',
       date: '2026-08-05',
-      narration: 'Cash received from wholesale sale',
+      narration: 'Cash received from wholesale customer',
       posted: true,
       lines: [
         { accountId: '11101', description: 'Cash received',       debit: 120000, credit: 0 },
-        { accountId: '41101', description: 'Wholesale sale income', debit: 0,     credit: 120000 },
+        { accountId: '41101', description: 'Wholesale sale income', debit: 0,     credit: 120000, contraAccountId: '11101' },
       ],
     },
-    // CPV — Cash payment for purchases
+    // CP — Cash payment (Expense/Party ↔ Cash) per audit/04_ACCOUNTING_ENGINE.md
+    {
+      voucherType: 'CP',
+      date: '2026-08-07',
+      narration: 'Cash payment for office supplies',
+      posted: true,
+      lines: [
+        { accountId: '61102', description: 'Office supplies',     debit: 15000, credit: 0 },
+        { accountId: '11101', description: 'Cash paid',            debit: 0,     credit: 15000, contraAccountId: '61102' },
+      ],
+    },
+    // CPV — Legacy compatibility alias for CP
     {
       voucherType: 'CPV',
       date: '2026-08-10',
-      narration: 'Cash purchase of inventory',
+      narration: 'Cash purchase of inventory (legacy compat)',
       posted: true,
       lines: [
         { accountId: '11301', description: 'Inventory received',   debit: 80000, credit: 0 },
-        { accountId: '11101', description: 'Cash paid',            debit: 0,     credit: 80000 },
+        { accountId: '11101', description: 'Cash paid',            debit: 0,     credit: 80000, contraAccountId: '11301' },
       ],
     },
-    // BRV — Bank receipt
+    // PV — Payment Voucher (Any ↔ Bank) per audit/04_ACCOUNTING_ENGINE.md
     {
-      voucherType: 'BRV',
+      voucherType: 'PV',
+      date: '2026-08-12',
+      narration: 'Bank payment to supplier for July purchases',
+      posted: true,
+      lines: [
+        { accountId: '21100', description: 'Supplier payment',     debit: 350000, credit: 0 },
+        { accountId: '11102', description: 'Bank transfer paid',   debit: 0,      credit: 350000, contraAccountId: '21100' },
+      ],
+    },
+    // CRV — Legacy compatibility alias for CR
+    {
+      voucherType: 'CRV',
       date: '2026-08-15',
-      narration: 'Bank transfer received from Apex Trading',
+      narration: 'Bank transfer received from Apex Trading (legacy compat)',
       posted: true,
       lines: [
         { accountId: '11102', description: 'Bank transfer received', debit: 250000, credit: 0 },
-        { accountId: '41101', description: 'Wholesale sale income',  debit: 0,      credit: 250000 },
+        { accountId: '41101', description: 'Wholesale sale income',  debit: 0,      credit: 250000, contraAccountId: '11102' },
       ],
     },
-    // BPV — Bank payment for salaries
+    // BPV — Legacy compatibility alias for PV
     {
       voucherType: 'BPV',
       date: '2026-08-20',
-      narration: 'Monthly salaries via bank transfer',
+      narration: 'Monthly salaries via bank transfer (legacy compat)',
       posted: true,
       lines: [
         { accountId: '61103', description: 'Office salaries August', debit: 180000, credit: 0 },
-        { accountId: '11102', description: 'Bank transfer paid',     debit: 0,      credit: 180000 },
+        { accountId: '11102', description: 'Bank transfer paid',     debit: 0,      credit: 180000, contraAccountId: '61103' },
+      ],
+    },
+    // BRV — Legacy compatibility alias (preserved, not in authoritative source)
+    {
+      voucherType: 'BRV',
+      date: '2026-08-22',
+      narration: 'Bank receipt from distributor (legacy compat)',
+      posted: true,
+      lines: [
+        { accountId: '11102', description: 'Bank receipt',          debit: 95000, credit: 0 },
+        { accountId: '41101', description: 'Wholesale sale income', debit: 0,     credit: 95000, contraAccountId: '11102' },
       ],
     },
     // JV — Unposted draft voucher
     {
       voucherType: 'JV',
-      date: '2026-08-22',
+      date: '2026-08-24',
       narration: 'Adjustment entry — pending approval',
       posted: false,
       lines: [
@@ -187,6 +235,10 @@ for (const tid of TENANT_IDS) {
         debit: sl.debit,
         credit: sl.credit,
         lineOrder: lineOrder++,
+        contraAccountId: sl.contraAccountId,
+        quantity: sl.quantity,
+        productId: sl.productId,
+        branch: sl.branch,
       };
       lines.push(vline);
 
@@ -299,6 +351,10 @@ export class MockVoucherAdapter implements IVoucherRepository {
       debit: l.debit,
       credit: l.credit,
       lineOrder: i,
+      contraAccountId: l.contraAccountId,
+      quantity: l.quantity,
+      productId: l.productId,
+      branch: l.branch,
     }));
 
     // Persist
@@ -358,6 +414,10 @@ export class MockVoucherAdapter implements IVoucherRepository {
         debit: l.debit,
         credit: l.credit,
         lineOrder: i,
+        contraAccountId: l.contraAccountId,
+        quantity: l.quantity,
+        productId: l.productId,
+        branch: l.branch,
       }));
 
       filtered.push(...newLines);

@@ -59,6 +59,13 @@ const TYPE_BADGE_COLORS: Record<AccountType, { bg: string; fg: string }> = {
 
 const VOUCHER_TYPE_COLORS: Record<VoucherType, { bg: string; fg: string }> = {
   JV:  { bg: '#e0e7ff', fg: '#4338ca' },
+  CV:  { bg: '#fef3c7', fg: '#b45309' },
+  CP:  { bg: '#fce7f3', fg: '#be185d' },
+  CR:  { bg: '#dcfce7', fg: '#15803d' },
+  PV:  { bg: '#e0e7ff', fg: '#4338ca' },
+  SV:  { bg: '#dbeafe', fg: '#1d4ed8' },
+  SRV: { bg: '#fee2e2', fg: '#991b1b' },
+  PRV: { bg: '#fef3c7', fg: '#b45309' },
   CPV: { bg: '#fce7f3', fg: '#be185d' },
   CRV: { bg: '#dcfce7', fg: '#15803d' },
   BPV: { bg: '#fef3c7', fg: '#b45309' },

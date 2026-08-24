@@ -54,7 +54,12 @@ export const STOCK_MOVEMENT_STATUS_LABELS: Record<StockMovementStatus, string> =
  * Source: audit/23_DATA_MODEL.md (Items table)
  * Maps legacy fields: Item_No, Item_MainHeadNo, Units, Pcs_PerCtn,
  *   Sale_Rate, Purchase_Rate, Retail_Price, Trade_Disc, TO,
- *   Min_Qty, Cost_rate, hs_code, gst_type, gst, fed, adv_tax
+ *   Min_Qty, Cost_rate, hs_code, gst_type, gst, fed,
+ *   adv_tax_purchase, adv_tax_sale
+ *
+ * CRITICAL: Legacy has SEPARATE adv_tax_purchase and adv_tax_sale fields
+ * (audit/15_TAX_DISCOUNT.md, audit/23_DATA_MODEL.md).
+ * These must NOT be merged into a single advanceTaxPercent.
  */
 export interface Product {
   /** Unique identifier (UUID) */
@@ -91,8 +96,10 @@ export interface Product {
   gstPercent: number;
   /** Federal Excise Duty percentage (maps to fed in legacy) */
   fedPercent: number;
-  /** Advance income tax percentage (maps to adv_tax in legacy) */
-  advanceTaxPercent: number;
+  /** Advance income tax on SALES percentage (maps to adv_tax_sale in legacy) */
+  advanceTaxSalePercent: number;
+  /** Advance income tax on PURCHASES percentage (maps to adv_tax_purchase in legacy) */
+  advanceTaxPurchasePercent: number;
   /** Active status toggle */
   isActive: boolean;
 }
@@ -100,6 +107,9 @@ export interface Product {
 /**
  * DTO for creating a new Product.
  * Derived fields (id, tenantId) are set by the adapter.
+ *
+ * CRITICAL: Legacy has SEPARATE adv_tax_purchase and adv_tax_sale fields.
+ * advanceTaxSalePercent and advanceTaxPurchasePercent are distinct.
  */
 export interface CreateProductDTO {
   sku: string;
@@ -117,7 +127,8 @@ export interface CreateProductDTO {
   gstType?: GstType;
   gstPercent?: number;
   fedPercent?: number;
-  advanceTaxPercent?: number;
+  advanceTaxSalePercent?: number;
+  advanceTaxPurchasePercent?: number;
   isActive?: boolean;
 }
 
@@ -139,7 +150,8 @@ export interface UpdateProductDTO {
   gstType?: GstType;
   gstPercent?: number;
   fedPercent?: number;
-  advanceTaxPercent?: number;
+  advanceTaxSalePercent?: number;
+  advanceTaxPurchasePercent?: number;
   isActive?: boolean;
 }
 
@@ -318,7 +330,7 @@ export function calculateStockValue(quantity: number, unitCost: number): number 
 
 /**
  * Calculate AVCO (Average Cost) for incoming stock.
- * Source: audit/16_CALCULATIONS.md #24 — "Likely calculated as weighted average or moving average cost"
+ * Source: audit/16_CALCULATIONS.md #24
  * Formula: New Cost = (Current Qty x Current Cost + Incoming Qty x Incoming Cost) / (Current Qty + Incoming Qty)
  */
 export function calculateAVCO(
@@ -330,4 +342,97 @@ export function calculateAVCO(
   const totalQty = currentQty + incomingQty;
   if (totalQty === 0) return 0;
   return (currentQty * currentCost + incomingQty * incomingCost) / totalQty;
+}
+
+/**
+ * Calculate COGS (Cost of Goods Sold).
+ * Source: audit/16_CALCULATIONS.md #22
+ * Formula: COGS = Quantity_Sold x Cost_Rate
+ */
+export function calculateCOGS(quantitySold: number, costRate: number): number {
+  return quantitySold * costRate;
+}
+
+/**
+ * Calculate Gross Profit.
+ * Source: audit/16_CALCULATIONS.md #23
+ * Formula: Profit = Sale_Amount - COGS
+ */
+export function calculateGrossProfit(saleAmount: number, cogs: number): number {
+  return saleAmount - cogs;
+}
+
+/* ─── Bill-Line Tax Calculations ───────────────────────────── */
+
+/**
+ * Verified bill-line tax calculation inputs.
+ * Source: audit/15_TAX_DISCOUNT.md, audit/16_CALCULATIONS.md
+ */
+export interface BillLineTaxInput {
+  quantity: number;
+  rate: number;
+  tradeDiscountPercent: number;
+  gstPercent: number;
+  furtherTaxPercent: number;
+  fedPercent: number;
+  advanceTaxPercent: number;
+}
+
+/**
+ * Verified bill-line tax calculation result.
+ * Source: audit/16_CALCULATIONS.md #1-9
+ */
+export interface BillLineTaxResult {
+  /** Base amount = Quantity x Rate */
+  amount: number;
+  /** Trade discount amount = Amount x (Trade_Disc / 100) */
+  discountAmount: number;
+  /** Amount after discount = Amount - Discount */
+  toAmount: number;
+  /** GST = To_Amt x (ST% / 100) */
+  gstAmount: number;
+  /** Further Tax = To_Amt x (F-ST% / 100) */
+  furtherTaxAmount: number;
+  /** FED = To_Amt x (FED% / 100) */
+  fedAmount: number;
+  /** Advance Tax = To_Amt x (ADV% / 100) */
+  advanceTaxAmount: number;
+  /** Net = To_Amt + GST + F.Tax + FED + ADV_Tax */
+  netAmount: number;
+}
+
+/**
+ * Calculate complete bill-line tax breakdown.
+ * Source: audit/16_CALCULATIONS.md #1-9
+ *
+ * Formulas verified against audit/15_TAX_DISCOUNT.md:
+ *   Amount = Qty × Rate
+ *   Disc = Amount × (Trade_Disc% / 100)
+ *   To_Amt = Amount - Disc
+ *   GST = To_Amt × (ST% / 100)
+ *   F.Tax = To_Amt × (F-ST% / 100)
+ *   FED = To_Amt × (FED% / 100)
+ *   ADV_Tax = To_Amt × (ADV% / 100)
+ *   Net = To_Amt + GST + F.Tax + FED + ADV_Tax
+ */
+export function calculateBillLineTax(input: BillLineTaxInput): BillLineTaxResult {
+  const amount = input.quantity * input.rate;
+  const discountAmount = amount * (input.tradeDiscountPercent / 100);
+  const toAmount = amount - discountAmount;
+  const gstAmount = toAmount * (input.gstPercent / 100);
+  const furtherTaxAmount = toAmount * (input.furtherTaxPercent / 100);
+  const fedAmount = toAmount * (input.fedPercent / 100);
+  const advanceTaxAmount = toAmount * (input.advanceTaxPercent / 100);
+  const netAmount = toAmount + gstAmount + furtherTaxAmount + fedAmount + advanceTaxAmount;
+
+  return {
+    amount,
+    discountAmount,
+    toAmount,
+    gstAmount,
+    furtherTaxAmount,
+    fedAmount,
+    advanceTaxAmount,
+    netAmount,
+  };
 }

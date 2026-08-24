@@ -7,8 +7,25 @@
 
 /* ─── Enums ────────────────────────────────────────────────── */
 
-/** Voucher types — all support debit ANY / credit ANY per spec */
-export type VoucherType = 'JV' | 'CPV' | 'CRV' | 'BPV' | 'BRV';
+/**
+ * Voucher types.
+ * Source: audit/04_ACCOUNTING_ENGINE.md, audit/MASTER_REVERSE_ENGINEERED_SPEC.md
+ *
+ * Verified legacy types:
+ *   JV  — Journal Voucher (Any ↔ Any)
+ *   CV  — Cash Voucher (Cash ↔ Any)
+ *   CP  — Cash Payment (Expense/Party ↔ Cash)
+ *   CR  — Cash Receipt (Cash ↔ Income/Party)
+ *   PV  — Payment Voucher (Any ↔ Bank)
+ *   SV  — Sale Voucher (Customer ↔ Sales + Tax + Stock)
+ *   SRV — Sale Return Voucher (reverse of SV)
+ *   PRV — Purchase Return Voucher (reverse of PV/CP)
+ *
+ * Compatibility aliases (existing ERP codes mapped to legacy):
+ *   CPV → CP, CRV → CR, BPV → PV
+ *   BRV → preserved for backward compatibility (not in authoritative source)
+ */
+export type VoucherType = 'JV' | 'CV' | 'CP' | 'CR' | 'PV' | 'SV' | 'SRV' | 'PRV' | 'CPV' | 'CRV' | 'BPV' | 'BRV';
 
 /** Voucher lifecycle status */
 export type VoucherStatus = 'DRAFT' | 'POSTED';
@@ -17,10 +34,17 @@ export type VoucherStatus = 'DRAFT' | 'POSTED';
 
 export const VOUCHER_TYPE_LABELS: Record<VoucherType, string> = {
   JV:  'Journal Voucher',
-  CPV: 'Cash Payment Voucher',
-  CRV: 'Cash Receipt Voucher',
-  BPV: 'Bank Payment Voucher',
-  BRV: 'Bank Receipt Voucher',
+  CV:  'Cash Voucher',
+  CP:  'Cash Payment',
+  CR:  'Cash Receipt',
+  PV:  'Payment Voucher',
+  SV:  'Sale Voucher',
+  SRV: 'Sale Return Voucher',
+  PRV: 'Purchase Return Voucher',
+  CPV: 'Cash Payment (Compat)',
+  CRV: 'Cash Receipt (Compat)',
+  BPV: 'Bank Payment (Compat)',
+  BRV: 'Bank Receipt (Compat)',
 };
 
 export const VOUCHER_STATUS_LABELS: Record<VoucherStatus, string> = {
@@ -48,6 +72,19 @@ export interface VoucherLine {
   credit: number;
   /** Display order within voucher */
   lineOrder: number;
+
+  // ─── Verified Legacy Fields ────────────────────────────────
+  // Source: audit/23_DATA_MODEL.md (Voucher_Lines.Acc_No2)
+  /** Contra / reference account code (Acc_No2 in legacy) */
+  contraAccountId?: string;
+  // Source: audit/23_DATA_MODEL.md (Bill_Lines.Packs, Bill_Lines.Item_No)
+  /** Quantity (for SV/PV/SRV/PRV bill-line vouchers) */
+  quantity?: number;
+  /** Product reference ID (for SV/PV/SRV/PRV bill-line vouchers) */
+  productId?: string;
+  // Source: audit/23_DATA_MODEL.md (Bills.SP_ID — Branch/Store)
+  /** Branch / Store code for this line */
+  branch?: string;
 }
 
 /** Voucher header — one per journal entry, cash/bank receipt/payment */
@@ -112,6 +149,10 @@ export interface CreateVoucherDTO {
     description: string;
     debit: number;
     credit: number;
+    contraAccountId?: string;
+    quantity?: number;
+    productId?: string;
+    branch?: string;
   }[];
 }
 
@@ -124,6 +165,10 @@ export interface UpdateVoucherDTO {
     description: string;
     debit: number;
     credit: number;
+    contraAccountId?: string;
+    quantity?: number;
+    productId?: string;
+    branch?: string;
   }[];
 }
 
