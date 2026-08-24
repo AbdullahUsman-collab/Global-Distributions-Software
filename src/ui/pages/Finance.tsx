@@ -25,12 +25,21 @@ import {
   VoucherStatus,
   LedgerEntry,
   CreateVoucherDTO,
+  UpdateVoucherDTO,
   VOUCHER_TYPE_LABELS,
   VOUCHER_STATUS_LABELS,
   totalDebit,
   totalCredit,
   isBalanced,
 } from '../../domain/types/voucher';
+import {
+  Product,
+  calculateBillLineTax,
+  calculateCOGS,
+  calculateGrossProfit,
+  BillLineTaxInput,
+  BillLineTaxResult,
+} from '../../domain/types/inventory';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
@@ -45,7 +54,10 @@ const TABS: { key: FinanceTab; label: string }[] = [
 /* ─── Constants ────────────────────────────────────────────── */
 
 const ACCOUNT_TYPES: AccountType[] = ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'COGS', 'EXPENSE'];
-type UpdateAccountDTO = { accountName?: string; isActive?: boolean; controlCategory?: ControlCategory | null };
+type UpdateAccountDTO = {
+  accountName?: string; isActive?: boolean; controlCategory?: ControlCategory | null;
+  address?: string; ownerName?: string; phone?: string; stn?: string; ntn?: string; cnic?: string;
+};
 
 const LEVEL_COLORS: Record<AccountLevel, string> = { 1: '#1e293b', 2: '#334155', 3: '#475569', 4: '#64748b' };
 const TYPE_BADGE_COLORS: Record<AccountType, { bg: string; fg: string }> = {
@@ -133,6 +145,7 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [editAccount, setEditAccount] = useState<AccountHead | null>(null);
   const [createParent, setCreateParent] = useState<AccountHead | null>(null);
+  const [metaExpanded, setMetaExpanded] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,6 +212,14 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   const toggleExpand = (id: string) => {
     setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleMeta = (id: string) => {
+    setMetaExpanded(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
@@ -284,7 +305,9 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                 depth={a.level - 1}
                 expanded={expanded.has(a.id)}
                 hasChildren={(tree.children.get(a.id) ?? []).length > 0}
+                metaExpanded={metaExpanded.has(a.id)}
                 onToggle={() => toggleExpand(a.id)}
+                onToggleMeta={() => toggleMeta(a.id)}
                 onEdit={() => setEditAccount(a)}
                 onAddChild={() => { setCreateParent(a); setShowCreate(true); }}
               />
@@ -383,7 +406,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
     await load();
   };
 
-  const handleUpdate = async (id: string, dto: CreateVoucherDTO) => {
+  const handleUpdate = async (id: string, dto: UpdateVoucherDTO) => {
     await services.voucherRepository.updateVoucher(tenantId, id, dto);
     setEditVoucher(null);
     await load();
@@ -553,11 +576,18 @@ const VoucherRow: React.FC<{
             <span style={{ ...styles.col, flex: '0 0 40px' }}>Ln</span>
             <span style={{ ...styles.col, flex: '0 0 80px' }}>Acct</span>
             <span style={{ ...styles.col, flex: '1' }}>Description</span>
+            {v.voucherType === 'SV' || v.voucherType === 'SRV' || v.voucherType === 'PRV' ? (
+              <>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right' }}>Qty</span>
+                <span style={{ ...styles.col, flex: '0 0 70px' }}>Branch</span>
+              </>
+            ) : null}
             <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Debit</span>
             <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Credit</span>
           </div>
           {lines.map((l, i) => {
             const acct = accountMap.get(l.accountId);
+            const contraAcct = l.contraAccountId ? accountMap.get(l.contraAccountId) : null;
             return (
               <div key={l.id} style={{ ...styles.lineRow, minWidth: 860 }}>
                 <span style={{ ...styles.col, flex: '0 0 40px', fontSize: 12, color: '#94a3b8' }}>{i + 1}</span>
@@ -565,7 +595,14 @@ const VoucherRow: React.FC<{
                 <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>
                   {l.description}
                   {acct && <span style={{ color: '#94a3b8', marginLeft: 8 }}>({acct.accountName})</span>}
+                  {contraAcct && <span style={{ color: '#94a3b8', marginLeft: 4, fontSize: 11 }}>↔ {l.contraAccountId} {contraAcct.accountName}</span>}
                 </span>
+                {v.voucherType === 'SV' || v.voucherType === 'SRV' || v.voucherType === 'PRV' ? (
+                  <>
+                    <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{l.quantity ?? ''}</span>
+                    <span style={{ ...styles.col, flex: '0 0 70px', fontSize: 12, color: '#94a3b8' }}>{l.branch ?? ''}</span>
+                  </>
+                ) : null}
                 <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: l.debit > 0 ? '#1d4ed8' : '#94a3b8' }}>
                   {l.debit > 0 ? fmt(l.debit) : ''}
                 </span>
@@ -600,20 +637,31 @@ const VoucherModal: React.FC<{
   const [vType, setVType] = useState<VoucherType>(voucher?.voucherType ?? 'JV');
   const [date, setDate] = useState(voucher?.date ?? new Date().toISOString().slice(0, 10));
   const [narration, setNarration] = useState(voucher?.narration ?? '');
-  const [lines, setLines] = useState<{ accountId: string; description: string; debit: number; credit: number }[]>([]);
+  type VoucherLineInput = {
+    accountId: string; description: string; debit: number; credit: number;
+    contraAccountId?: string; quantity?: number; productId?: string; branch?: string;
+  };
+  const [lines, setLines] = useState<VoucherLineInput[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [accountSearch, setAccountSearch] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [taxResults, setTaxResults] = useState<Record<number, BillLineTaxResult & { cogs: number; grossProfit: number }>>({});
+  const isProductType = vType === 'SV' || vType === 'SRV' || vType === 'PRV';
 
-  // Load existing lines for edit mode
+  // Load existing lines for edit mode + products
   useEffect(() => {
     if (isEdit && voucher) {
       services.voucherRepository.getVoucherLines(tenantId, voucher.id).then(raw => {
-        setLines(raw.map(l => ({ accountId: l.accountId, description: l.description, debit: l.debit, credit: l.credit })));
+        setLines(raw.map(l => ({
+          accountId: l.accountId, description: l.description, debit: l.debit, credit: l.credit,
+          contraAccountId: l.contraAccountId, quantity: l.quantity, productId: l.productId, branch: l.branch,
+        })));
         setLoading(false);
       });
     }
+    services.inventoryRepository.getProducts(tenantId).then(setProducts);
   }, [isEdit, voucher, tenantId]);
 
   // Filtered accounts for search dropdown
@@ -626,7 +674,7 @@ const VoucherModal: React.FC<{
   }, [postingAccounts, accountSearch]);
 
   const addLine = () => {
-    setLines(prev => [...prev, { accountId: '', description: '', debit: 0, credit: 0 }]);
+    setLines(prev => [...prev, { accountId: '', description: '', debit: 0, credit: 0, contraAccountId: '', quantity: 0, productId: '', branch: '' }]);
   };
 
   const updateLine = (idx: number, field: string, value: string | number) => {
@@ -650,7 +698,16 @@ const VoucherModal: React.FC<{
     if (invalid) { setError('All lines must have an account selected.'); return; }
     setSaving(true);
     try {
-      await onSave({ voucherType: vType, date, narration, lines });
+      await onSave({
+        voucherType: vType, date, narration,
+        lines: lines.map(l => ({
+          accountId: l.accountId, description: l.description, debit: l.debit, credit: l.credit,
+          contraAccountId: l.contraAccountId || undefined,
+          quantity: l.quantity || undefined,
+          productId: l.productId || undefined,
+          branch: l.branch || undefined,
+        })),
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to save voucher.');
       setSaving(false);
@@ -705,48 +762,146 @@ const VoucherModal: React.FC<{
             )}
 
             {lines.map((line, idx) => (
-              <div key={idx} className="responsive-form-row" style={styles.lineItemRow}>
-                <div style={{ flex: '0 0 180px' }}>
-                  <AccountSelect
-                    accounts={postingAccounts}
-                    value={line.accountId}
-                    onChange={accountId => updateLine(idx, 'accountId', accountId)}
-                    search={accountSearch}
-                    onSearchChange={setAccountSearch}
-                    filtered={filteredAccounts}
-                  />
+              <div key={idx} style={{ ...styles.lineItemRow, flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
+                  <div style={{ flex: '0 0 180px' }}>
+                    <AccountSelect
+                      accounts={postingAccounts}
+                      value={line.accountId}
+                      onChange={accountId => updateLine(idx, 'accountId', accountId)}
+                      search={accountSearch}
+                      onSearchChange={setAccountSearch}
+                      filtered={filteredAccounts}
+                    />
+                  </div>
+                  <div style={{ flex: '1' }}>
+                    <input
+                      value={line.description}
+                      onChange={e => updateLine(idx, 'description', e.target.value)}
+                      style={styles.input}
+                      placeholder="Description..."
+                    />
+                  </div>
+                  <div style={{ flex: '0 0 110px' }}>
+                    <input
+                      type="number" min={0} step={0.01}
+                      value={line.debit || ''}
+                      onChange={e => updateLine(idx, 'debit', parseFloat(e.target.value) || 0)}
+                      style={{ ...styles.input, textAlign: 'right', color: line.debit > 0 ? '#1d4ed8' : undefined }}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div style={{ flex: '0 0 110px' }}>
+                    <input
+                      type="number" min={0} step={0.01}
+                      value={line.credit || ''}
+                      onChange={e => updateLine(idx, 'credit', parseFloat(e.target.value) || 0)}
+                      style={{ ...styles.input, textAlign: 'right', color: line.credit > 0 ? '#be185d' : undefined }}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <button type="button" onClick={() => removeLine(idx)} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca', flex: '0 0 32px' }}>✕</button>
                 </div>
-                <div style={{ flex: '1' }}>
-                  <input
-                    value={line.description}
-                    onChange={e => updateLine(idx, 'description', e.target.value)}
-                    style={styles.input}
-                    placeholder="Description..."
-                  />
+                {/* Extended fields row: contraAccountId for all types; productId/quantity/branch for SV/SRV/PRV */}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%', paddingLeft: 4 }}>
+                  <div style={{ flex: '0 0 180px' }}>
+                    <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Contra Account</label>
+                    <AccountSelect
+                      accounts={postingAccounts}
+                      value={line.contraAccountId || ''}
+                      onChange={v => updateLine(idx, 'contraAccountId', v)}
+                      search={accountSearch}
+                      onSearchChange={setAccountSearch}
+                      filtered={filteredAccounts}
+                    />
+                  </div>
+                  {isProductType && (
+                    <>
+                      <div style={{ flex: '0 0 160px' }}>
+                        <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Product</label>
+                        <select value={line.productId || ''} onChange={e => {
+                          const pid = e.target.value;
+                          updateLine(idx, 'productId', pid);
+                          const prod = products.find(p => p.id === pid);
+                          if (prod) updateLine(idx, 'description', prod.name);
+                        }} style={{ ...styles.select, fontSize: 12, padding: '4px 6px' }}>
+                          <option value="">— Select —</option>
+                          {products.filter(p => p.isActive).map(p => (
+                            <option key={p.id} value={p.id}>{p.sku} — {p.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ flex: '0 0 80px' }}>
+                        <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Qty</label>
+                        <input type="number" min={0} step={1}
+                          value={line.quantity || ''}
+                          onChange={e => updateLine(idx, 'quantity', parseInt(e.target.value) || 0)}
+                          style={{ ...styles.input, fontSize: 12, padding: '4px 6px', textAlign: 'right' }}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div style={{ flex: '0 0 80px' }}>
+                        <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Branch</label>
+                        <input value={line.branch || ''}
+                          onChange={e => updateLine(idx, 'branch', e.target.value)}
+                          style={{ ...styles.input, fontSize: 12, padding: '4px 6px' }}
+                          placeholder="WH-01"
+                        />
+                      </div>
+                    </>
+                  )}
+                  {line.productId && (
+                    <div style={{ flex: '0 0 70px', alignSelf: 'flex-end' }}>
+                      <button type="button" onClick={() => {
+                        const prod = products.find(p => p.id === line.productId);
+                        if (!prod || !line.quantity) return;
+                        const input: BillLineTaxInput = {
+                          quantity: line.quantity,
+                          rate: vType === 'PRV' ? prod.purchaseRate : prod.saleRate,
+                          tradeDiscountPercent: prod.tradeDiscount,
+                          gstPercent: prod.gstPercent,
+                          furtherTaxPercent: 0,
+                          fedPercent: prod.fedPercent,
+                          advanceTaxPercent: vType === 'PRV' ? prod.advanceTaxPurchasePercent : prod.advanceTaxSalePercent,
+                        };
+                        const result = calculateBillLineTax(input);
+                        const cogs = calculateCOGS(line.quantity, prod.purchaseRate);
+                        const grossProfit = calculateGrossProfit(result.netAmount, cogs);
+                        setTaxResults(prev => ({ ...prev, [idx]: { ...result, cogs, grossProfit } }));
+                        if (vType === 'SV' || vType === 'SRV') {
+                          updateLine(idx, 'credit', result.netAmount);
+                          updateLine(idx, 'debit', 0);
+                        } else {
+                          updateLine(idx, 'debit', result.netAmount);
+                          updateLine(idx, 'credit', 0);
+                        }
+                      }} style={{ ...styles.toolBtn, fontSize: 10, padding: '3px 6px', color: '#2563eb' }} title="Calculate tax and fill amount">
+                        Tax
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div style={{ flex: '0 0 110px' }}>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={line.debit || ''}
-                    onChange={e => updateLine(idx, 'debit', parseFloat(e.target.value) || 0)}
-                    style={{ ...styles.input, textAlign: 'right', color: line.debit > 0 ? '#1d4ed8' : undefined }}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div style={{ flex: '0 0 110px' }}>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={line.credit || ''}
-                    onChange={e => updateLine(idx, 'credit', parseFloat(e.target.value) || 0)}
-                    style={{ ...styles.input, textAlign: 'right', color: line.credit > 0 ? '#be185d' : undefined }}
-                    placeholder="0.00"
-                  />
-                </div>
-                <button type="button" onClick={() => removeLine(idx)} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca', flex: '0 0 32px' }}>✕</button>
+                {/* Tax breakdown display */}
+                {taxResults[idx] && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11, color: '#64758b', paddingLeft: 4, paddingBottom: 4 }}>
+                    <span>Amt: {fmt(taxResults[idx].amount)}</span>
+                    <span>Disc: {fmt(taxResults[idx].discountAmount)}</span>
+                    <span>Sub: {fmt(taxResults[idx].toAmount)}</span>
+                    <span>GST: {fmt(taxResults[idx].gstAmount)}</span>
+                    <span>FED: {fmt(taxResults[idx].fedAmount)}</span>
+                    <span>Adv: {fmt(taxResults[idx].advanceTaxAmount)}</span>
+                    <span>F.Tax: {fmt(taxResults[idx].furtherTaxAmount)}</span>
+                    <span style={{ fontWeight: 600, color: '#1e293b' }}>Net: {fmt(taxResults[idx].netAmount)}</span>
+                    {isProductType && (
+                      <>
+                        <span style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: 8 }}>COGS: {fmt(taxResults[idx].cogs)}</span>
+                        <span style={{ fontWeight: 600, color: taxResults[idx].grossProfit >= 0 ? '#15803d' : '#dc2626' }}>
+                          Profit: {fmt(taxResults[idx].grossProfit)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
 
@@ -967,16 +1122,22 @@ const AccountRow: React.FC<{
   depth: number;
   expanded: boolean;
   hasChildren: boolean;
+  metaExpanded: boolean;
   onToggle: () => void;
+  onToggleMeta: () => void;
   onEdit: () => void;
   onAddChild: () => void;
-}> = ({ account: a, depth, expanded, hasChildren, onToggle, onEdit, onAddChild }) => {
+}> = ({ account: a, depth, expanded, hasChildren, metaExpanded, onToggle, onToggleMeta, onEdit, onAddChild }) => {
   const badge = TYPE_BADGE_COLORS[a.accountType];
+  const hasMetadata = !!(a.address || a.ownerName || a.phone || a.stn || a.ntn || a.cnic);
   return (
+    <>
     <div style={{ ...styles.row, minWidth: 730, opacity: a.isActive ? 1 : 0.5 }}>
       <span style={{ ...styles.col, flex: '0 0 40px', paddingLeft: depth * 20 }}>
         {hasChildren ? (
           <button onClick={onToggle} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>
+        ) : hasMetadata ? (
+          <button onClick={onToggleMeta} style={{ ...styles.expandBtn, color: metaExpanded ? '#2563eb' : undefined }}>{metaExpanded ? '▼' : '▶'}</button>
         ) : (
           <span style={styles.leafDot}>•</span>
         )}
@@ -1002,6 +1163,17 @@ const AccountRow: React.FC<{
         {a.level < 4 && <button onClick={onAddChild} style={styles.rowBtn} title="Add child">+</button>}
       </span>
     </div>
+    {metaExpanded && hasMetadata && (
+      <div style={{ padding: '6px 16px 6px ' + (depth * 20 + 56) + 'px', backgroundColor: '#f8fafc', borderBottom: '1px solid #f1f5f9', fontSize: 12, display: 'flex', gap: 12, flexWrap: 'wrap', color: '#64758b' }}>
+        {a.address && <span><strong>Address:</strong> {a.address}</span>}
+        {a.ownerName && <span><strong>Owner:</strong> {a.ownerName}</span>}
+        {a.phone && <span><strong>Phone:</strong> {a.phone}</span>}
+        {a.stn && <span><strong>STN:</strong> {a.stn}</span>}
+        {a.ntn && <span><strong>NTN:</strong> {a.ntn}</span>}
+        {a.cnic && <span><strong>CNIC:</strong> {a.cnic}</span>}
+      </div>
+    )}
+    </>
   );
 };
 
@@ -1016,6 +1188,12 @@ const CreateAccountModal: React.FC<{
   const [name, setName] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('ASSET');
   const [controlCategory, setControlCategory] = useState<ControlCategory | ''>('');
+  const [address, setAddress] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [stn, setStn] = useState('');
+  const [ntn, setNtn] = useState('');
+  const [cnic, setCnic] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -1033,6 +1211,12 @@ const CreateAccountModal: React.FC<{
         level,
         accountType,
         controlCategory: controlCategory || undefined,
+        address: address || undefined,
+        ownerName: ownerName || undefined,
+        phone: phone || undefined,
+        stn: stn || undefined,
+        ntn: ntn || undefined,
+        cnic: cnic || undefined,
       });
     } catch (err: any) {
       setError(err.message || 'Failed to create account.');
@@ -1073,9 +1257,42 @@ const CreateAccountModal: React.FC<{
               </select>
             </div>
           </div>
-          <p style={styles.infoNote}>
+          <p style={{ ...styles.infoNote, marginBottom: 12 }}>
             This will be a <strong>{level < 4 ? 'Summary' : 'Posting'}</strong> account. Normal balance: <strong>{deriveNormalBalanceLabel(accountType)}</strong>
           </p>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 8 }}>
+            <label style={{ ...styles.label, fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Account Metadata</label>
+          </div>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Address</label>
+              <textarea value={address} onChange={e => setAddress(e.target.value)} style={{ ...styles.textarea, minHeight: 48 }} rows={2} placeholder="Physical address..." />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Owner / Contact Name</label>
+              <input value={ownerName} onChange={e => setOwnerName(e.target.value)} style={styles.input} placeholder="Contact person..." />
+            </div>
+          </div>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Phone</label>
+              <input value={phone} onChange={e => setPhone(e.target.value)} style={styles.input} placeholder="Phone number..." />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>STN (Sales Tax No.)</label>
+              <input value={stn} onChange={e => setStn(e.target.value)} style={styles.input} placeholder="STN..." />
+            </div>
+          </div>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>NTN (National Tax No.)</label>
+              <input value={ntn} onChange={e => setNtn(e.target.value)} style={styles.input} placeholder="NTN..." />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>CNIC</label>
+              <input value={cnic} onChange={e => setCnic(e.target.value)} style={styles.input} placeholder="CNIC..." />
+            </div>
+          </div>
           {error && <div style={styles.error}>{error}</div>}
           <div style={styles.modalActions}>
             <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
@@ -1096,6 +1313,12 @@ const EditAccountModal: React.FC<{
   const [name, setName] = useState(account.accountName);
   const [isActive, setIsActive] = useState(account.isActive);
   const [controlCategory, setControlCategory] = useState<ControlCategory | ''>(account.controlCategory ?? '');
+  const [address, setAddress] = useState(account.address ?? '');
+  const [ownerName, setOwnerName] = useState(account.ownerName ?? '');
+  const [phone, setPhone] = useState(account.phone ?? '');
+  const [stn, setStn] = useState(account.stn ?? '');
+  const [ntn, setNtn] = useState(account.ntn ?? '');
+  const [cnic, setCnic] = useState(account.cnic ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -1104,6 +1327,12 @@ const EditAccountModal: React.FC<{
       accountName: name.trim() || account.accountName,
       isActive,
       controlCategory: controlCategory || null,
+      address: address || undefined,
+      ownerName: ownerName || undefined,
+      phone: phone || undefined,
+      stn: stn || undefined,
+      ntn: ntn || undefined,
+      cnic: cnic || undefined,
     });
     setSaving(false);
   };
@@ -1135,6 +1364,37 @@ const EditAccountModal: React.FC<{
               </button>
               <span style={{ fontSize: 14, color: '#475569' }}>{isActive ? 'Active' : 'Inactive'}</span>
             </div>
+          </div>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 8, marginTop: 4 }}>
+            <label style={{ ...styles.label, fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Account Metadata</label>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Address</label>
+            <textarea value={address} onChange={e => setAddress(e.target.value)} style={{ ...styles.textarea, minHeight: 48 }} rows={2} placeholder="Physical address..." />
+          </div>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Owner / Contact Name</label>
+              <input value={ownerName} onChange={e => setOwnerName(e.target.value)} style={styles.input} placeholder="Contact person..." />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Phone</label>
+              <input value={phone} onChange={e => setPhone(e.target.value)} style={styles.input} placeholder="Phone number..." />
+            </div>
+          </div>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>STN (Sales Tax No.)</label>
+              <input value={stn} onChange={e => setStn(e.target.value)} style={styles.input} placeholder="STN..." />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>NTN (National Tax No.)</label>
+              <input value={ntn} onChange={e => setNtn(e.target.value)} style={styles.input} placeholder="NTN..." />
+            </div>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>CNIC</label>
+            <input value={cnic} onChange={e => setCnic(e.target.value)} style={styles.input} placeholder="CNIC..." />
           </div>
           <div style={styles.modalActions}>
             <button onClick={onClose} style={styles.cancelBtn}>Cancel</button>
@@ -1223,4 +1483,5 @@ const styles: Record<string, React.CSSProperties> = {
   lineItemRow: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 },
   dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', zIndex: 10, maxHeight: 200, overflow: 'auto' },
   dropdownItem: { padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f1f5f9' },
+  textarea: { padding: '10px 12px', fontSize: 14, border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none', backgroundColor: '#fff', color: '#1e293b', resize: 'vertical', fontFamily: 'inherit' },
 };
