@@ -21,6 +21,7 @@ import { MockSettingsAdapter } from '../domain/adapters/mock/MockSettingsAdapter
 import { MockCOAAdapter } from '../domain/adapters/mock/MockCOAAdapter';
 import { MockVoucherAdapter } from '../domain/adapters/mock/MockVoucherAdapter';
 import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapter';
+import { FinancialReportService } from '../domain/services/FinancialReportService';
 
 /**
  * Service container for dependency injection.
@@ -35,6 +36,7 @@ class ServiceContainer {
   private _coaRepository: ICOARepository;
   private _voucherRepository: IVoucherRepository;
   private _inventoryRepository: IInventoryRepository;
+  private _financialReportService: FinancialReportService;
 
   private constructor() {
     // Initialize mock adapters
@@ -55,6 +57,10 @@ class ServiceContainer {
     this._coaRepository = new MockCOAAdapter();
     this._voucherRepository = new MockVoucherAdapter();
     this._inventoryRepository = new MockInventoryAdapter();
+    this._financialReportService = new FinancialReportService(
+      this._coaRepository,
+      this._voucherRepository,
+    );
   }
 
   static getInstance(): ServiceContainer {
@@ -86,6 +92,10 @@ class ServiceContainer {
 
   get inventoryRepository(): IInventoryRepository {
     return this._inventoryRepository;
+  }
+
+  get financialReportService(): FinancialReportService {
+    return this._financialReportService;
   }
 }
 

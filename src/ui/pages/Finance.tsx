@@ -40,15 +40,17 @@ import {
   BillLineTaxInput,
   BillLineTaxResult,
 } from '../../domain/types/inventory';
+import { FinancialReportsView } from '../components/finance/FinancialReportsView';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
-type FinanceTab = 'coa' | 'vouchers' | 'ledger';
+type FinanceTab = 'coa' | 'vouchers' | 'ledger' | 'reports';
 
 const TABS: { key: FinanceTab; label: string }[] = [
   { key: 'coa',      label: 'Chart of Accounts' },
   { key: 'vouchers', label: 'Vouchers' },
   { key: 'ledger',   label: 'General Ledger' },
+  { key: 'reports',  label: 'Reports' },
 ];
 
 /* ─── Constants ────────────────────────────────────────────── */
@@ -128,6 +130,7 @@ export const Finance: React.FC = () => {
       {tab === 'coa'      && <COATab tenantId={tenant.id} />}
       {tab === 'vouchers' && <VouchersTab tenantId={tenant.id} user={user.username} />}
       {tab === 'ledger'   && <LedgerTab tenantId={tenant.id} />}
+      {tab === 'reports'  && <FinancialReportsView tenantId={tenant.id} />}
     </div>
   );
 };
