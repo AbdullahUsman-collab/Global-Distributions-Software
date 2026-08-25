@@ -376,7 +376,6 @@ export class FinancialReportService {
       } else if (ancestor.legacyMainHeadNo === 200) {
         equityRows.push(row);
       } else if (
-        ancestor.legacyMainHeadNo === 1 ||
         ancestor.legacyMainHeadNo === 500 ||
         ancestor.legacyMainHeadNo === 8000
       ) {
