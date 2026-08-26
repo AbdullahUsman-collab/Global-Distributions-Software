@@ -226,42 +226,39 @@ export class SalesService {
     // Calculate bill for validation
     const calculation = await this.calculateBill(tenantId, dto.lines);
 
-    // Build voucher lines — each bill line becomes a VoucherLine with product/quantity metadata
-    // The actual GL posting lines are generated at post time
-    const voucherLines: CreateVoucherDTO['lines'] = dto.lines.map((line, idx) => {
-      const detail = calculation.lines[idx];
-      const product = productMap.get(line.productId)!;
+    // D2 safety: Further Tax and Advance Tax have no verified GL liability
+    // accounts. Posting without accounts would create an unbalanced voucher.
+    // Fail safely rather than silently posting incorrect accounting.
+    if (calculation.totalFurtherTax > 0 || calculation.totalAdvanceTax > 0) {
+      throw new Error(
+        'Cannot create sale bill: Further Tax or Advance Tax is non-zero but ' +
+        'no GL liability accounts are configured for these tax types. ' +
+        'Set Further Tax % and Advance Tax % to 0, or configure GL accounts first.',
+      );
+    }
 
-      return {
-        accountId: customer.accountHeadId, // Customer AR account
-        description: `${product.name} × ${line.packs} @ ${line.rate}`,
-        debit: detail.netAmount, // Will be the debit to Customer AR
-        credit: 0,
-        quantity: line.packs,
-        productId: line.productId,
-        branch: dto.warehouseId,
-        stRate: line.gstPercent,
-        stAmount: detail.gstAmount,
-        amtExclStd: detail.toAmount,
-      };
-    });
-
-    // Create voucher — note: the createVoucher validates balanced entries,
-    // but SV is a compound entry. We store bill data as metadata and
-    // generate balanced GL entries at post time.
-    //
-    // For now, create a balanced representation:
-    // DEBIT: Customer AR (netAmount)
-    // CREDIT: Sales Revenue (toAmount) + Tax Payable (taxAmount) = netAmount
-    const totalTax = calculation.totalGst + calculation.totalFed;
+    // Create balanced GL entries.
+    // DEBIT: Customer AR — one line per bill line (carries productId/quantity
+    //        for inventory ISSUE on posting).
+    // CREDIT: Sales Revenue (base amount) + Tax Payable (GST + FED).
     const balancedLines: CreateVoucherDTO['lines'] = [
-      // DEBIT: Customer AR — Net Amount
-      {
-        accountId: customer.accountHeadId,
-        description: `Sale to ${customer.name}`,
-        debit: calculation.totalNetAmount,
-        credit: 0,
-      },
+      // DEBIT: Customer AR — per-product lines with bill metadata
+      ...dto.lines.map((line, idx) => {
+        const detail = calculation.lines[idx];
+        const product = productMap.get(line.productId)!;
+        return {
+          accountId: customer.accountHeadId,
+          description: `${product.name} × ${line.packs} @ ${line.rate}`,
+          debit: detail.netAmount,
+          credit: 0,
+          quantity: line.packs,
+          productId: line.productId,
+          branch: dto.warehouseId,
+          stRate: line.gstPercent,
+          stAmount: detail.gstAmount,
+          amtExclStd: detail.toAmount,
+        };
+      }),
       // CREDIT: Sales Revenue — Base Amount (To.Amt)
       {
         accountId: ACCOUNT_CODES.SALES_REVENUE,
@@ -284,21 +281,6 @@ export class SalesService {
         credit: calculation.totalFed,
       }] : []),
     ];
-
-    // Store bill-line metadata on the first line for later use
-    // (product references, quantities, individual tax breakdowns)
-    const billMetadata = dto.lines.map((line, idx) => ({
-      productId: line.productId,
-      cartons: line.cartons,
-      packs: line.packs,
-      rate: line.rate,
-      tradeDiscountPercent: line.tradeDiscountPercent,
-      gstPercent: line.gstPercent,
-      furtherTaxPercent: line.furtherTaxPercent,
-      fedPercent: line.fedPercent,
-      advanceTaxPercent: line.advanceTaxPercent,
-      ...calculation.lines[idx],
-    }));
 
     const voucher = await this.voucherRepo.createVoucher(
       tenantId,
