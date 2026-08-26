@@ -34,3 +34,4 @@ export {
   calculateBillLineTax,
 } from './inventory';
 export * from './reports';
+export * from './customer';

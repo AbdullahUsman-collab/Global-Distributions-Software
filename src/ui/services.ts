@@ -12,6 +12,7 @@ import { ISettingsRepository } from '../domain/repositories/ISettingsRepository'
 import { ICOARepository } from '../domain/repositories/ICOARepository';
 import { IVoucherRepository } from '../domain/repositories/IVoucherRepository';
 import { IInventoryRepository } from '../domain/repositories/IInventoryRepository';
+import { ICustomerRepository } from '../domain/repositories/ICustomerRepository';
 import { MockTenantAdapter } from '../domain/adapters/mock/MockTenantAdapter';
 import { MockUserAdapter } from '../domain/adapters/mock/MockUserAdapter';
 import { MockUserCredentialsAdapter } from '../domain/adapters/mock/MockUserCredentialsAdapter';
@@ -21,7 +22,9 @@ import { MockSettingsAdapter } from '../domain/adapters/mock/MockSettingsAdapter
 import { MockCOAAdapter } from '../domain/adapters/mock/MockCOAAdapter';
 import { MockVoucherAdapter } from '../domain/adapters/mock/MockVoucherAdapter';
 import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapter';
+import { MockCustomerAdapter } from '../domain/adapters/mock/MockCustomerAdapter';
 import { FinancialReportService } from '../domain/services/FinancialReportService';
+import { SalesService } from '../domain/services/SalesService';
 
 /**
  * Service container for dependency injection.
@@ -36,7 +39,9 @@ class ServiceContainer {
   private _coaRepository: ICOARepository;
   private _voucherRepository: IVoucherRepository;
   private _inventoryRepository: IInventoryRepository;
+  private _customerRepository: ICustomerRepository;
   private _financialReportService: FinancialReportService;
+  private _salesService: SalesService;
 
   private constructor() {
     // Initialize mock adapters
@@ -57,9 +62,16 @@ class ServiceContainer {
     this._coaRepository = new MockCOAAdapter();
     this._voucherRepository = new MockVoucherAdapter();
     this._inventoryRepository = new MockInventoryAdapter();
+    this._customerRepository = new MockCustomerAdapter(this._coaRepository);
     this._financialReportService = new FinancialReportService(
       this._coaRepository,
       this._voucherRepository,
+    );
+    this._salesService = new SalesService(
+      this._coaRepository,
+      this._voucherRepository,
+      this._inventoryRepository,
+      this._customerRepository,
     );
   }
 
@@ -94,8 +106,16 @@ class ServiceContainer {
     return this._inventoryRepository;
   }
 
+  get customerRepository(): ICustomerRepository {
+    return this._customerRepository;
+  }
+
   get financialReportService(): FinancialReportService {
     return this._financialReportService;
+  }
+
+  get salesService(): SalesService {
+    return this._salesService;
   }
 }
 

@@ -11,3 +11,4 @@ export * from './ISettingsRepository';
 export * from './ICOARepository';
 export * from './IVoucherRepository';
 export * from './IInventoryRepository';
+export * from './ICustomerRepository';

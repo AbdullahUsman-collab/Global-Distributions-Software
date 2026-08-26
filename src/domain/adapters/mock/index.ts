@@ -14,3 +14,4 @@ export { MockSettingsAdapter } from './MockSettingsAdapter';
 export { MockCOAAdapter } from './MockCOAAdapter';
 export { MockVoucherAdapter } from './MockVoucherAdapter';
 export { MockInventoryAdapter } from './MockInventoryAdapter';
+export { MockCustomerAdapter } from './MockCustomerAdapter';
