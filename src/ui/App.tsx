@@ -13,6 +13,7 @@ import { Finance } from './pages/Finance';
 import { Inventory } from './pages/Inventory';
 import { Sales } from './pages/Sales';
 import { Purchases } from './pages/Purchases';
+import { CustomerReceipts } from './pages/CustomerReceipts';
 import { Settings } from './pages/Settings';
 import { Layout } from './components/layout/Layout';
 
@@ -32,6 +33,7 @@ export const App: React.FC = () => {
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/purchases" element={<Purchases />} />
+            <Route path="/customer-receipts" element={<CustomerReceipts />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>

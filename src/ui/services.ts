@@ -28,6 +28,7 @@ import { MockSupplierAdapter } from '../domain/adapters/mock/MockSupplierAdapter
 import { FinancialReportService } from '../domain/services/FinancialReportService';
 import { SalesService } from '../domain/services/SalesService';
 import { PurchaseService } from '../domain/services/PurchaseService';
+import { CustomerReceiptService } from '../domain/services/CustomerReceiptService';
 
 /**
  * Service container for dependency injection.
@@ -47,6 +48,7 @@ class ServiceContainer {
   private _financialReportService: FinancialReportService;
   private _salesService: SalesService;
   private _purchaseService: PurchaseService;
+  private _customerReceiptService: CustomerReceiptService;
 
   private constructor() {
     // Initialize mock adapters
@@ -84,6 +86,11 @@ class ServiceContainer {
       this._voucherRepository,
       this._inventoryRepository,
       this._supplierRepository,
+    );
+    this._customerReceiptService = new CustomerReceiptService(
+      this._coaRepository,
+      this._voucherRepository,
+      this._customerRepository,
     );
   }
 
@@ -136,6 +143,10 @@ class ServiceContainer {
 
   get purchaseService(): PurchaseService {
     return this._purchaseService;
+  }
+
+  get customerReceiptService(): CustomerReceiptService {
+    return this._customerReceiptService;
   }
 }
 
