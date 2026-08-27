@@ -33,8 +33,10 @@ import { ICOARepository } from '../repositories/ICOARepository';
 const ACCOUNT_CODES = {
   /** Sales Revenue — Wholesale Sales */
   SALES_REVENUE: '41101',
-  /** Tax Payable — Sales Tax Output */
+  /** Tax Payable — Sales Tax Output (GST + Further Tax) */
   SALES_TAX_OUTPUT: '21201',
+  /** Tax Payable — Withholding Tax / Advance Tax Payable */
+  WITHHOLDING_TAX_PAYABLE: '21202',
   /** Tax Payable — FED Payable */
   FED_PAYABLE: '21203',
   /** Inventory — General Inventory */
@@ -226,21 +228,10 @@ export class SalesService {
     // Calculate bill for validation
     const calculation = await this.calculateBill(tenantId, dto.lines);
 
-    // D2 safety: Further Tax and Advance Tax have no verified GL liability
-    // accounts. Posting without accounts would create an unbalanced voucher.
-    // Fail safely rather than silently posting incorrect accounting.
-    if (calculation.totalFurtherTax > 0 || calculation.totalAdvanceTax > 0) {
-      throw new Error(
-        'Cannot create sale bill: Further Tax or Advance Tax is non-zero but ' +
-        'no GL liability accounts are configured for these tax types. ' +
-        'Set Further Tax % and Advance Tax % to 0, or configure GL accounts first.',
-      );
-    }
-
     // Create balanced GL entries.
     // DEBIT: Customer AR — one line per bill line (carries productId/quantity
     //        for inventory ISSUE on posting).
-    // CREDIT: Sales Revenue (base amount) + Tax Payable (GST + FED).
+    // CREDIT: Sales Revenue (base amount) + Tax Payable (GST + Further Tax + FED + Advance Tax).
     const balancedLines: CreateVoucherDTO['lines'] = [
       // DEBIT: Customer AR — per-product lines with bill metadata
       ...dto.lines.map((line, idx) => {
@@ -266,12 +257,12 @@ export class SalesService {
         debit: 0,
         credit: calculation.totalToAmount,
       },
-      // CREDIT: Sales Tax Output — GST
-      ...(calculation.totalGst > 0 ? [{
+      // CREDIT: Sales Tax Output — GST + Further Tax (combined sales-tax liability)
+      ...(calculation.totalGst + calculation.totalFurtherTax > 0 ? [{
         accountId: ACCOUNT_CODES.SALES_TAX_OUTPUT,
         description: 'Sales tax collected',
         debit: 0,
-        credit: calculation.totalGst,
+        credit: calculation.totalGst + calculation.totalFurtherTax,
       }] : []),
       // CREDIT: FED Payable — FED
       ...(calculation.totalFed > 0 ? [{
@@ -279,6 +270,13 @@ export class SalesService {
         description: 'Federal excise duty collected',
         debit: 0,
         credit: calculation.totalFed,
+      }] : []),
+      // CREDIT: Withholding Tax Payable — Advance Tax
+      ...(calculation.totalAdvanceTax > 0 ? [{
+        accountId: ACCOUNT_CODES.WITHHOLDING_TAX_PAYABLE,
+        description: 'Advance income tax withheld',
+        debit: 0,
+        credit: calculation.totalAdvanceTax,
       }] : []),
     ];
 
@@ -306,10 +304,12 @@ export class SalesService {
    * 1. Voucher posted → LedgerEntry records created
    * 2. Stock ISSUE movement created and posted for each line
    *
-   * Accounting entries (per audit/10, audit/24):
-   *   DEBIT: Customer AR (500 DEBITORS) — Net Amount
-   *   CREDIT: Sales Income (1600 INCOME) — Base Amount
-   *   CREDIT: Tax Payable — Tax Amount (GST + FED)
+   * Accounting entries (per audit/10, audit/24, legacy ERP accounting model):
+   *   DEBIT: Customer AR (500 DEBITORS) — Net Amount (all taxes included)
+   *   CREDIT: Sales Income (41101) — Base Amount (To.Amt)
+   *   CREDIT: Sales Tax Output (21201) — GST + Further Tax
+   *   CREDIT: FED Payable (21203) — FED
+   *   CREDIT: Withholding Tax Payable (21202) — Advance Tax
    *   DEBIT: COGS — Cost Amount [DEFERRED — specification gap]
    *   CREDIT: Inventory — Cost Amount [DEFERRED — specification gap]
    *
