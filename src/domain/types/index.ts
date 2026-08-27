@@ -35,3 +35,4 @@ export {
 } from './inventory';
 export * from './reports';
 export * from './customer';
+export * from './supplier';

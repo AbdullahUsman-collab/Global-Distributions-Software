@@ -13,6 +13,7 @@ import { ICOARepository } from '../domain/repositories/ICOARepository';
 import { IVoucherRepository } from '../domain/repositories/IVoucherRepository';
 import { IInventoryRepository } from '../domain/repositories/IInventoryRepository';
 import { ICustomerRepository } from '../domain/repositories/ICustomerRepository';
+import { ISupplierRepository } from '../domain/repositories/ISupplierRepository';
 import { MockTenantAdapter } from '../domain/adapters/mock/MockTenantAdapter';
 import { MockUserAdapter } from '../domain/adapters/mock/MockUserAdapter';
 import { MockUserCredentialsAdapter } from '../domain/adapters/mock/MockUserCredentialsAdapter';
@@ -23,8 +24,10 @@ import { MockCOAAdapter } from '../domain/adapters/mock/MockCOAAdapter';
 import { MockVoucherAdapter } from '../domain/adapters/mock/MockVoucherAdapter';
 import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapter';
 import { MockCustomerAdapter } from '../domain/adapters/mock/MockCustomerAdapter';
+import { MockSupplierAdapter } from '../domain/adapters/mock/MockSupplierAdapter';
 import { FinancialReportService } from '../domain/services/FinancialReportService';
 import { SalesService } from '../domain/services/SalesService';
+import { PurchaseService } from '../domain/services/PurchaseService';
 
 /**
  * Service container for dependency injection.
@@ -40,8 +43,10 @@ class ServiceContainer {
   private _voucherRepository: IVoucherRepository;
   private _inventoryRepository: IInventoryRepository;
   private _customerRepository: ICustomerRepository;
+  private _supplierRepository: ISupplierRepository;
   private _financialReportService: FinancialReportService;
   private _salesService: SalesService;
+  private _purchaseService: PurchaseService;
 
   private constructor() {
     // Initialize mock adapters
@@ -63,6 +68,7 @@ class ServiceContainer {
     this._voucherRepository = new MockVoucherAdapter();
     this._inventoryRepository = new MockInventoryAdapter();
     this._customerRepository = new MockCustomerAdapter(this._coaRepository);
+    this._supplierRepository = new MockSupplierAdapter(this._coaRepository);
     this._financialReportService = new FinancialReportService(
       this._coaRepository,
       this._voucherRepository,
@@ -72,6 +78,12 @@ class ServiceContainer {
       this._voucherRepository,
       this._inventoryRepository,
       this._customerRepository,
+    );
+    this._purchaseService = new PurchaseService(
+      this._coaRepository,
+      this._voucherRepository,
+      this._inventoryRepository,
+      this._supplierRepository,
     );
   }
 
@@ -110,12 +122,20 @@ class ServiceContainer {
     return this._customerRepository;
   }
 
+  get supplierRepository(): ISupplierRepository {
+    return this._supplierRepository;
+  }
+
   get financialReportService(): FinancialReportService {
     return this._financialReportService;
   }
 
   get salesService(): SalesService {
     return this._salesService;
+  }
+
+  get purchaseService(): PurchaseService {
+    return this._purchaseService;
   }
 }
 

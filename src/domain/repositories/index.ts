@@ -12,3 +12,4 @@ export * from './ICOARepository';
 export * from './IVoucherRepository';
 export * from './IInventoryRepository';
 export * from './ICustomerRepository';
+export * from './ISupplierRepository';
