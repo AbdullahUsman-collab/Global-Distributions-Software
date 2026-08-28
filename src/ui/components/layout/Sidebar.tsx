@@ -79,6 +79,15 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    label: 'Cash Book',
+    path: '/cash-book',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11a1 1 0 11-2 0V9a1 1 0 112 0v4zm0-6a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+      </svg>
+    ),
+  },
+  {
     label: 'Settings',
     path: '/settings',
     icon: (

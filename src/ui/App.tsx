@@ -14,6 +14,7 @@ import { Inventory } from './pages/Inventory';
 import { Sales } from './pages/Sales';
 import { Purchases } from './pages/Purchases';
 import { CustomerReceipts } from './pages/CustomerReceipts';
+import { CashBook } from './pages/CashBook';
 import { Settings } from './pages/Settings';
 import { Layout } from './components/layout/Layout';
 
@@ -34,6 +35,7 @@ export const App: React.FC = () => {
             <Route path="/sales" element={<Sales />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/customer-receipts" element={<CustomerReceipts />} />
+            <Route path="/cash-book" element={<CashBook />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>

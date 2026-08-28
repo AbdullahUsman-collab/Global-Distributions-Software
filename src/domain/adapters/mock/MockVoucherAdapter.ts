@@ -324,11 +324,6 @@ export class MockVoucherAdapter implements IVoucherRepository {
       throw new Error('A voucher must have at least 2 lines');
     }
 
-    // Validate balanced
-    if (!isBalanced(dto.lines)) {
-      throw new Error('Voucher does not balance: total debit must equal total credit');
-    }
-
     const vnum = await this.getNextVoucherNumber(tenantId);
     const vid = uid();
     const now = new Date();
@@ -403,9 +398,6 @@ export class MockVoucherAdapter implements IVoucherRepository {
     if (dto.lines) {
       if (dto.lines.length < 2) {
         throw new Error('A voucher must have at least 2 lines');
-      }
-      if (!isBalanced(dto.lines)) {
-        throw new Error('Voucher does not balance: total debit must equal total credit');
       }
 
       // Remove old lines

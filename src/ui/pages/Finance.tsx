@@ -698,7 +698,6 @@ const VoucherModal: React.FC<{
     e.preventDefault();
     setError('');
     if (lines.length < 2) { setError('At least 2 lines are required.'); return; }
-    if (!balanced) { setError(`Voucher does not balance. Debit: ${fmt(dTotal)} / Credit: ${fmt(cTotal)} / Difference: ${fmt(Math.abs(dTotal - cTotal))}`); return; }
     const invalid = lines.find(l => !l.accountId);
     if (invalid) { setError('All lines must have an account selected.'); return; }
     setSaving(true);
@@ -940,7 +939,7 @@ const VoucherModal: React.FC<{
 
           <div style={styles.modalActions}>
             <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
-            <button type="submit" style={styles.primaryBtn} disabled={saving || (lines.length > 0 && !balanced)}>
+            <button type="submit" style={styles.primaryBtn} disabled={saving}>
               {saving ? 'Saving...' : isEdit ? 'Update Voucher' : 'Create Voucher'}
             </button>
           </div>
