@@ -135,9 +135,11 @@ function buildSeedTree(tenantId: string): AccountHead[] {
   add('41101', 'Wholesale Sales',       4, 'REVENUE',   '41100');
   add('41102', 'Retail Sales',          4, 'REVENUE',   '41100');
   add('41103', 'Service Income',        4, 'REVENUE',   '41100');
+  add('41104', 'Sales Return',          4, 'REVENUE',   '41100');
   add('51101', 'Material Purchases',    4, 'COGS',      '51100');
   add('51102', 'Freight & Duties',      4, 'COGS',      '51100');
   add('51103', 'Direct Production Costs', 4, 'COGS',   '51100');
+  add('51104', 'Purchase Return',       4, 'COGS',      '51100');
   add('61101', 'Rent Expense',          4, 'EXPENSE',   '61100');
   add('61102', 'Utilities Expense',     4, 'EXPENSE',   '61100');
   add('61103', 'Office Salaries',       4, 'EXPENSE',   '61100');

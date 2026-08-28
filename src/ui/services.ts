@@ -30,6 +30,8 @@ import { SalesService } from '../domain/services/SalesService';
 import { PurchaseService } from '../domain/services/PurchaseService';
 import { CustomerReceiptService } from '../domain/services/CustomerReceiptService';
 import { CashBookService } from '../domain/services/CashBookService';
+import { SaleReturnService } from '../domain/services/SaleReturnService';
+import { PurchaseReturnService } from '../domain/services/PurchaseReturnService';
 
 /**
  * Service container for dependency injection.
@@ -51,6 +53,8 @@ class ServiceContainer {
   private _purchaseService: PurchaseService;
   private _customerReceiptService: CustomerReceiptService;
   private _cashBookService: CashBookService;
+  private _saleReturnService: SaleReturnService;
+  private _purchaseReturnService: PurchaseReturnService;
 
   private constructor() {
     // Initialize mock adapters
@@ -97,6 +101,16 @@ class ServiceContainer {
     this._cashBookService = new CashBookService(
       this._coaRepository,
       this._voucherRepository,
+    );
+    this._saleReturnService = new SaleReturnService(
+      this._voucherRepository,
+      this._inventoryRepository,
+      this._customerRepository,
+    );
+    this._purchaseReturnService = new PurchaseReturnService(
+      this._voucherRepository,
+      this._inventoryRepository,
+      this._supplierRepository,
     );
   }
 
@@ -157,6 +171,14 @@ class ServiceContainer {
 
   get cashBookService(): CashBookService {
     return this._cashBookService;
+  }
+
+  get saleReturnService(): SaleReturnService {
+    return this._saleReturnService;
+  }
+
+  get purchaseReturnService(): PurchaseReturnService {
+    return this._purchaseReturnService;
   }
 }
 

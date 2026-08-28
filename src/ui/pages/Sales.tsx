@@ -34,14 +34,16 @@ import {
 } from '../../domain/types/voucher';
 import { AccountHead } from '../../domain/types/coa';
 import { SaleBillLine, SaleBillCalculation, SaleLineTaxDetail } from '../../domain/services/SalesService';
+import { SaleReturnLine, SaleReturnBillCalculation, SaleReturnLineTaxDetail } from '../../domain/services/SaleReturnService';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
-type SalesTab = 'customers' | 'bills';
+type SalesTab = 'customers' | 'bills' | 'returns';
 
 const TABS: { key: SalesTab; label: string }[] = [
   { key: 'customers', label: 'Customers' },
   { key: 'bills',     label: 'Sale Bills' },
+  { key: 'returns',   label: 'Sale Returns' },
 ];
 
 /* ─── Constants ────────────────────────────────────────────── */
@@ -89,6 +91,7 @@ export const Sales: React.FC = () => {
       {/* Tab Content */}
       {tab === 'customers' && <CustomersTab tenantId={tenant.id} />}
       {tab === 'bills'     && <SaleBillsTab tenantId={tenant.id} />}
+      {tab === 'returns'   && <SaleReturnsTab tenantId={tenant.id} />}
     </div>
   );
 };
@@ -742,6 +745,256 @@ const SaleBillForm: React.FC<{
             style={styles.primaryBtn}
           >
             {saving ? 'Saving...' : 'Save & Post Bill'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Sale Returns Tab                                             */
+/* ═══════════════════════════════════════════════════════════ */
+
+const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
+  const [returns, setReturns] = useState<VoucherHeader[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+
+  const loadReturns = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await services.saleReturnService.getSaleReturns(tenantId);
+      setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
+    } catch (err) {
+      console.error('Failed to load sale returns:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantId]);
+
+  useEffect(() => { loadReturns(); }, [loadReturns]);
+
+  const handlePost = async (id: string) => {
+    if (!confirm('Post this sale return? This will create GL entries and restore stock.')) return;
+    try {
+      await services.saleReturnService.postSaleReturn(tenantId, id);
+      await loadReturns();
+    } catch (err) {
+      console.error('Failed to post sale return:', err);
+      alert(err instanceof Error ? err.message : 'Failed to post sale return');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this draft sale return?')) return;
+    try {
+      await services.saleReturnService.deleteSaleReturn(tenantId, id);
+      await loadReturns();
+    } catch (err) {
+      console.error('Failed to delete sale return:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete sale return');
+    }
+  };
+
+  return (
+    <div>
+      <div style={styles.toolbar}>
+        <h2 style={styles.sectionTitle}>Sale Returns (SRV)</h2>
+        <button onClick={() => setShowForm(true)} style={styles.primaryBtn}>+ New Sale Return</button>
+      </div>
+
+      {showForm && (
+        <SaleReturnForm
+          tenantId={tenantId}
+          onSaved={async () => { setShowForm(false); await loadReturns(); }}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {loading ? (
+        <p style={styles.loading}>Loading returns...</p>
+      ) : returns.length === 0 ? (
+        <p style={styles.empty}>No sale returns yet.</p>
+      ) : (
+        <div className="table-wrap">
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>SRV #</th>
+                <th style={styles.th}>Date</th>
+                <th style={styles.th}>Narration</th>
+                <th style={styles.th}>Status</th>
+                <th style={styles.th}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {returns.map(r => (
+                <tr key={r.id} style={styles.tr}>
+                  <td style={styles.td}>{r.voucherNumber}</td>
+                  <td style={styles.td}>{r.date}</td>
+                  <td style={styles.td}>{r.narration}</td>
+                  <td style={styles.td}>
+                    <span style={{
+                      ...styles.badge,
+                      backgroundColor: STATUS_COLORS[r.status].bg,
+                      color: STATUS_COLORS[r.status].fg,
+                    }}>
+                      {VOUCHER_STATUS_LABELS[r.status]}
+                    </span>
+                  </td>
+                  <td style={styles.td}>
+                    {r.status === 'DRAFT' && (
+                      <>
+                        <button onClick={() => handlePost(r.id)} style={styles.linkBtn}>Post</button>
+                        <button onClick={() => handleDelete(r.id)} style={styles.dangerBtn}>Delete</button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Sale Return Form ─────────────────────────────────────── */
+
+const SaleReturnForm: React.FC<{
+  tenantId: string;
+  onSaved: () => void;
+  onCancel: () => void;
+}> = ({ tenantId, onSaved, onCancel }) => {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+
+  const [customerId, setCustomerId] = useState('');
+  const [warehouseId, setWarehouseId] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [narration, setNarration] = useState('');
+  const [lines, setLines] = useState<SaleReturnLine[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const [custs, prods, whs] = await Promise.all([
+        services.customerRepository.getCustomersByTenantId(tenantId, { isActive: true }),
+        services.inventoryRepository.getProducts(tenantId),
+        services.inventoryRepository.getWarehouses(tenantId),
+      ]);
+      setCustomers(custs);
+      setProducts(prods.filter(p => p.isActive));
+      setWarehouses(whs.filter(w => w.isActive));
+    };
+    load();
+  }, [tenantId]);
+
+  const addLine = () => {
+    setLines([...lines, {
+      productId: '',
+      cartons: 0,
+      packs: 0,
+      rate: 0,
+      tradeDiscountPercent: 0,
+      gstPercent: 0,
+      furtherTaxPercent: 0,
+      fedPercent: 0,
+      advanceTaxPercent: 0,
+    }]);
+  };
+
+  const updateLine = (idx: number, field: keyof SaleReturnLine, value: string | number) => {
+    const updated = [...lines];
+    (updated[idx] as any)[field] = value;
+    setLines(updated);
+  };
+
+  const removeLine = (idx: number) => {
+    setLines(lines.filter((_, i) => i !== idx));
+  };
+
+  const handleSave = async () => {
+    if (!customerId) { alert('Select a customer'); return; }
+    if (!warehouseId) { alert('Select a warehouse'); return; }
+    if (lines.length === 0) { alert('Add at least one line'); return; }
+    for (const line of lines) {
+      if (!line.productId) { alert('Select a product for all lines'); return; }
+      if (line.packs <= 0) { alert('Quantity must be > 0'); return; }
+    }
+    setSaving(true);
+    try {
+      await services.saleReturnService.createSaleReturn(tenantId, {
+        customerId,
+        warehouseId,
+        date,
+        narration: narration || undefined,
+        lines,
+      }, 'admin');
+      onSaved();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={styles.modalOverlay}>
+      <div style={{ ...styles.modal, maxWidth: '900px' }}>
+        <h2 style={styles.modalTitle}>New Sale Return</h2>
+
+        <div style={styles.formGrid}>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Customer *</label>
+            <select value={customerId} onChange={e => setCustomerId(e.target.value)} style={styles.select}>
+              <option value="">-- Select Customer --</option>
+              {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Warehouse *</label>
+            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} style={styles.select}>
+              <option value="">-- Select Warehouse --</option>
+              {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </div>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Date *</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={styles.input} />
+          </div>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Narration</label>
+            <input value={narration} onChange={e => setNarration(e.target.value)} style={styles.input} placeholder="Optional" />
+          </div>
+        </div>
+
+        <div style={{ marginTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600' }}>Return Lines</h3>
+            <button onClick={addLine} style={styles.secondaryBtn}>+ Add Line</button>
+          </div>
+          {lines.map((line, idx) => (
+            <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+              <select value={line.productId} onChange={e => updateLine(idx, 'productId', e.target.value)} style={{ ...styles.select, flex: 2 }}>
+                <option value="">-- Product --</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <input type="number" placeholder="Packs" value={line.packs || ''} onChange={e => updateLine(idx, 'packs', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <input type="number" placeholder="Rate" value={line.rate || ''} onChange={e => updateLine(idx, 'rate', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} step={0.01} />
+              <input type="number" placeholder="GST %" value={line.gstPercent || ''} onChange={e => updateLine(idx, 'gstPercent', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <button onClick={() => removeLine(idx)} style={styles.dangerBtn}>✕</button>
+            </div>
+          ))}
+        </div>
+
+        <div style={styles.formActions}>
+          <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
+          <button type="button" onClick={handleSave} style={styles.primaryBtn} disabled={saving}>
+            {saving ? 'Saving...' : 'Create Return'}
           </button>
         </div>
       </div>

@@ -33,14 +33,16 @@ import {
   VOUCHER_STATUS_LABELS,
 } from '../../domain/types/voucher';
 import { PurchaseBillLine, PurchaseBillCalculation, PurchaseLineTaxDetail } from '../../domain/services/PurchaseService';
+import { PurchaseReturnLine, PurchaseReturnBillCalculation, PurchaseReturnLineTaxDetail } from '../../domain/services/PurchaseReturnService';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
-type PurchasesTab = 'suppliers' | 'bills';
+type PurchasesTab = 'suppliers' | 'bills' | 'returns';
 
 const TABS: { key: PurchasesTab; label: string }[] = [
   { key: 'suppliers', label: 'Suppliers' },
   { key: 'bills',     label: 'Purchase Bills' },
+  { key: 'returns',   label: 'Purchase Returns' },
 ];
 
 /* ─── Constants ────────────────────────────────────────────── */
@@ -88,6 +90,7 @@ export const Purchases: React.FC = () => {
       {/* Tab Content */}
       {tab === 'suppliers' && <SuppliersTab tenantId={tenant.id} />}
       {tab === 'bills'     && <PurchaseBillsTab tenantId={tenant.id} />}
+      {tab === 'returns'   && <PurchaseReturnsTab tenantId={tenant.id} />}
     </div>
   );
 };
@@ -763,6 +766,256 @@ const PurchaseBillForm: React.FC<{
             style={styles.primaryBtn}
           >
             {saving ? 'Saving...' : 'Save & Post Bill'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Purchase Returns Tab                                         */
+/* ═══════════════════════════════════════════════════════════ */
+
+const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
+  const [returns, setReturns] = useState<VoucherHeader[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+
+  const loadReturns = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await services.purchaseReturnService.getPurchaseReturns(tenantId);
+      setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
+    } catch (err) {
+      console.error('Failed to load purchase returns:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantId]);
+
+  useEffect(() => { loadReturns(); }, [loadReturns]);
+
+  const handlePost = async (id: string) => {
+    if (!confirm('Post this purchase return? This will create GL entries and deduct stock.')) return;
+    try {
+      await services.purchaseReturnService.postPurchaseReturn(tenantId, id);
+      await loadReturns();
+    } catch (err) {
+      console.error('Failed to post purchase return:', err);
+      alert(err instanceof Error ? err.message : 'Failed to post purchase return');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this draft purchase return?')) return;
+    try {
+      await services.purchaseReturnService.deletePurchaseReturn(tenantId, id);
+      await loadReturns();
+    } catch (err) {
+      console.error('Failed to delete purchase return:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete purchase return');
+    }
+  };
+
+  return (
+    <div>
+      <div style={styles.toolbar}>
+        <h2 style={styles.sectionTitle}>Purchase Returns (PRV)</h2>
+        <button onClick={() => setShowForm(true)} style={styles.primaryBtn}>+ New Purchase Return</button>
+      </div>
+
+      {showForm && (
+        <PurchaseReturnForm
+          tenantId={tenantId}
+          onSaved={async () => { setShowForm(false); await loadReturns(); }}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {loading ? (
+        <p style={styles.loading}>Loading returns...</p>
+      ) : returns.length === 0 ? (
+        <p style={styles.empty}>No purchase returns yet.</p>
+      ) : (
+        <div className="table-wrap">
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>PRV #</th>
+                <th style={styles.th}>Date</th>
+                <th style={styles.th}>Narration</th>
+                <th style={styles.th}>Status</th>
+                <th style={styles.th}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {returns.map(r => (
+                <tr key={r.id} style={styles.tr}>
+                  <td style={styles.td}>{r.voucherNumber}</td>
+                  <td style={styles.td}>{r.date}</td>
+                  <td style={styles.td}>{r.narration}</td>
+                  <td style={styles.td}>
+                    <span style={{
+                      ...styles.badge,
+                      backgroundColor: STATUS_COLORS[r.status].bg,
+                      color: STATUS_COLORS[r.status].fg,
+                    }}>
+                      {VOUCHER_STATUS_LABELS[r.status]}
+                    </span>
+                  </td>
+                  <td style={styles.td}>
+                    {r.status === 'DRAFT' && (
+                      <>
+                        <button onClick={() => handlePost(r.id)} style={styles.linkBtn}>Post</button>
+                        <button onClick={() => handleDelete(r.id)} style={styles.dangerBtn}>Delete</button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Purchase Return Form ─────────────────────────────────── */
+
+const PurchaseReturnForm: React.FC<{
+  tenantId: string;
+  onSaved: () => void;
+  onCancel: () => void;
+}> = ({ tenantId, onSaved, onCancel }) => {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+
+  const [supplierId, setSupplierId] = useState('');
+  const [warehouseId, setWarehouseId] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [narration, setNarration] = useState('');
+  const [lines, setLines] = useState<PurchaseReturnLine[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const [sups, prods, whs] = await Promise.all([
+        services.supplierRepository.getSuppliers(tenantId),
+        services.inventoryRepository.getProducts(tenantId),
+        services.inventoryRepository.getWarehouses(tenantId),
+      ]);
+      setSuppliers(sups);
+      setProducts(prods.filter(p => p.isActive));
+      setWarehouses(whs.filter(w => w.isActive));
+    };
+    load();
+  }, [tenantId]);
+
+  const addLine = () => {
+    setLines([...lines, {
+      productId: '',
+      cartons: 0,
+      packs: 0,
+      rate: 0,
+      tradeDiscountPercent: 0,
+      gstPercent: 0,
+      furtherTaxPercent: 0,
+      fedPercent: 0,
+      advanceTaxPercent: 0,
+    }]);
+  };
+
+  const updateLine = (idx: number, field: keyof PurchaseReturnLine, value: string | number) => {
+    const updated = [...lines];
+    (updated[idx] as any)[field] = value;
+    setLines(updated);
+  };
+
+  const removeLine = (idx: number) => {
+    setLines(lines.filter((_, i) => i !== idx));
+  };
+
+  const handleSave = async () => {
+    if (!supplierId) { alert('Select a supplier'); return; }
+    if (!warehouseId) { alert('Select a warehouse'); return; }
+    if (lines.length === 0) { alert('Add at least one line'); return; }
+    for (const line of lines) {
+      if (!line.productId) { alert('Select a product for all lines'); return; }
+      if (line.packs <= 0) { alert('Quantity must be > 0'); return; }
+    }
+    setSaving(true);
+    try {
+      await services.purchaseReturnService.createPurchaseReturn(tenantId, {
+        supplierId,
+        warehouseId,
+        date,
+        narration: narration || undefined,
+        lines,
+      }, 'admin');
+      onSaved();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={styles.modalOverlay}>
+      <div style={{ ...styles.modal, maxWidth: '900px' }}>
+        <h2 style={styles.modalTitle}>New Purchase Return</h2>
+
+        <div style={styles.formGrid}>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Supplier *</label>
+            <select value={supplierId} onChange={e => setSupplierId(e.target.value)} style={styles.select}>
+              <option value="">-- Select Supplier --</option>
+              {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Warehouse *</label>
+            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} style={styles.select}>
+              <option value="">-- Select Warehouse --</option>
+              {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </div>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Date *</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={styles.input} />
+          </div>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Narration</label>
+            <input value={narration} onChange={e => setNarration(e.target.value)} style={styles.input} placeholder="Optional" />
+          </div>
+        </div>
+
+        <div style={{ marginTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600' }}>Return Lines</h3>
+            <button onClick={addLine} style={styles.secondaryBtn}>+ Add Line</button>
+          </div>
+          {lines.map((line, idx) => (
+            <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+              <select value={line.productId} onChange={e => updateLine(idx, 'productId', e.target.value)} style={{ ...styles.select, flex: 2 }}>
+                <option value="">-- Product --</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <input type="number" placeholder="Packs" value={line.packs || ''} onChange={e => updateLine(idx, 'packs', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <input type="number" placeholder="Rate" value={line.rate || ''} onChange={e => updateLine(idx, 'rate', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} step={0.01} />
+              <input type="number" placeholder="GST %" value={line.gstPercent || ''} onChange={e => updateLine(idx, 'gstPercent', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <button onClick={() => removeLine(idx)} style={styles.dangerBtn}>✕</button>
+            </div>
+          ))}
+        </div>
+
+        <div style={styles.formActions}>
+          <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
+          <button type="button" onClick={handleSave} style={styles.primaryBtn} disabled={saving}>
+            {saving ? 'Saving...' : 'Create Return'}
           </button>
         </div>
       </div>
