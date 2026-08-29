@@ -20,6 +20,7 @@ import {
 } from '../../domain/services/AgingReportService';
 import { Customer } from '../../domain/types/customer';
 import { Supplier } from '../../domain/types/supplier';
+import { printWindow, generateCsv, downloadFile, generateExportFilename } from '../utils/export';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -141,8 +142,35 @@ export const AgingReport: React.FC = () => {
 
   // Print
   const handlePrint = useCallback(() => {
-    window.print();
+    printWindow();
   }, []);
+
+  // Export CSV
+  const handleExportCsv = useCallback(() => {
+    if (filteredRows.length === 0) return;
+    const headers = ['Party', 'Account Code', 'Current', '1-30', '31-60', '61-90', '91-120', '120+', 'Total Outstanding'];
+    const rows = filteredRows.map(r => [
+      r.partyName,
+      r.accountCode,
+      r.aging.current.toFixed(2),
+      r.aging.d1_30.toFixed(2),
+      r.aging.d31_60.toFixed(2),
+      r.aging.d61_90.toFixed(2),
+      r.aging.d91_120.toFixed(2),
+      r.aging.d120plus.toFixed(2),
+      r.totalOutstanding.toFixed(2),
+    ]);
+    // Add totals row
+    rows.push([]);
+    rows.push(['Total', '', filteredTotals.current.toFixed(2), filteredTotals.d1_30.toFixed(2),
+      filteredTotals.d31_60.toFixed(2), filteredTotals.d61_90.toFixed(2), filteredTotals.d91_120.toFixed(2),
+      filteredTotals.d120plus.toFixed(2), filteredGrandTotal.toFixed(2)]);
+
+    const csv = generateCsv(headers, rows);
+    const label = mode === 'customer' ? 'Customer' : 'Supplier';
+    const filename = generateExportFilename(`${label}-Aging`, asOfDate);
+    downloadFile(csv, filename);
+  }, [filteredRows, filteredTotals, filteredGrandTotal, mode, asOfDate]);
 
   return (
     <div className="page-pad aging-page" style={styles.page}>
@@ -153,9 +181,14 @@ export const AgingReport: React.FC = () => {
           <h1 style={styles.title}>Aging Report</h1>
           <p style={styles.subtitle}>{tenant.brandName} — Accounts receivable / payable aging</p>
         </div>
-        <button onClick={handlePrint} style={styles.printBtn} className="aging-hide-print">
-          Print
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }} className="aging-hide-print">
+          <button onClick={handleExportCsv} style={styles.exportBtn} disabled={filteredRows.length === 0}>
+            Export CSV
+          </button>
+          <button onClick={handlePrint} style={styles.printBtn}>
+            Print
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -406,12 +439,23 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   printBtn: {
     padding: '8px 16px',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '13px',
+    cursor: 'pointer',
+    fontWeight: '500',
+  },
+  exportBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#ffffff',
     color: '#475569',
     border: '1px solid #e2e8f0',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
+    fontWeight: '500',
   },
   filterBar: {
     backgroundColor: '#f8fafc',

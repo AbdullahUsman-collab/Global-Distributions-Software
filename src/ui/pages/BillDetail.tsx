@@ -26,6 +26,7 @@ import {
 } from '../../domain/services/BillDetailService';
 import { BILL_TYPE_LABELS, BILL_TYPE_COLORS } from '../../domain/services/BillsListService';
 import { VoucherStatus, VOUCHER_STATUS_LABELS } from '../../domain/types/voucher';
+import { printWindow, generateCsv, downloadFile, generateExportFilename } from '../utils/export';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -90,12 +91,59 @@ export const BillDetailPage: React.FC = () => {
     navigate('/aging');
   };
 
+  // Print handler
+  const handlePrint = () => {
+    printWindow();
+  };
+
+  // Export CSV handler
+  const handleExportCsv = () => {
+    if (!detail) return;
+    const headers = ['#', 'Product', 'SKU', 'Qty', 'Rate', 'Amount', 'Tax', 'Total'];
+    const rows = detail.lines.map((bl, i) => [
+      i + 1,
+      bl.productName || '',
+      bl.productSku || '',
+      bl.quantity || '',
+      bl.rate ? bl.rate.toFixed(2) : '',
+      bl.amount.toFixed(2),
+      bl.gstAmount > 0 ? bl.gstAmount.toFixed(2) : '',
+      bl.netAmount.toFixed(2),
+    ]);
+    // Add totals
+    rows.push([]);
+    rows.push(['', '', '', '', '', '', 'Subtotal', detail.taxSummary.subtotal.toFixed(2)]);
+    if (detail.taxSummary.gst > 0) rows.push(['', '', '', '', '', '', 'GST', detail.taxSummary.gst.toFixed(2)]);
+    if (detail.taxSummary.totalTax > 0) rows.push(['', '', '', '', '', '', 'Total Tax', detail.taxSummary.totalTax.toFixed(2)]);
+    rows.push(['', '', '', '', '', '', 'Grand Total', detail.taxSummary.grandTotal.toFixed(2)]);
+
+    const csv = generateCsv(headers, rows);
+    const ref = `${detail.voucher.voucherType}-${String(detail.voucher.voucherNumber).padStart(6, '0')}`;
+    const filename = generateExportFilename(
+      `${BILL_TYPE_LABELS[detail.voucher.voucherType] || 'Bill'}`,
+      ref,
+    );
+    downloadFile(csv, filename);
+  };
+
   return (
     <div className="page-pad bill-detail-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
-        <button onClick={() => navigate('/bills')} style={styles.backBtn}>← Bills List</button>
-        <h1 style={styles.title}>Bill Detail</h1>
+        <div>
+          <button onClick={() => navigate('/bills')} style={styles.backBtn}>← Bills List</button>
+          <h1 style={styles.title}>Bill Detail</h1>
+        </div>
+        {detail && (
+          <div style={{ display: 'flex', gap: '8px' }} className="no-print">
+            <button onClick={handleExportCsv} style={styles.exportBtn}>
+              Export CSV
+            </button>
+            <button onClick={handlePrint} style={styles.printBtn}>
+              Print
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Loading */}
@@ -497,6 +545,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '6px',
     fontSize: '13px',
     color: '#2563eb',
+    cursor: 'pointer',
+    fontWeight: '500',
+  },
+  printBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '13px',
+    cursor: 'pointer',
+    fontWeight: '500',
+  },
+  exportBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#ffffff',
+    color: '#475569',
+    border: '1px solid #e2e8f0',
+    borderRadius: '6px',
+    fontSize: '13px',
     cursor: 'pointer',
     fontWeight: '500',
   },

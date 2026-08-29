@@ -26,6 +26,7 @@ import {
 import { Customer } from '../../domain/types/customer';
 import { Supplier } from '../../domain/types/supplier';
 import { Product } from '../../domain/types/inventory';
+import { printWindow, generateCsv, downloadFile, generateExportFilename } from '../utils/export';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -195,6 +196,30 @@ export const BillsList: React.FC = () => {
     return count;
   }, [typeFilter, dateFrom, dateTo, partyId, itemId, search]);
 
+  // Export CSV handler
+  const handleExportCsv = useCallback(() => {
+    if (filteredBills.length === 0) return;
+    const headers = ['Voucher #', 'Type', 'Date', 'Party', 'Items', 'Total', 'Status', 'Narration'];
+    const rows = filteredBills.map(b => [
+      b.voucher.voucherNumber,
+      BILL_TYPE_LABELS[b.voucher.voucherType] || b.voucher.voucherType,
+      b.voucher.date,
+      b.partyName,
+      b.lineCount,
+      b.total.toFixed(2),
+      VOUCHER_STATUS_LABELS[b.voucher.status],
+      b.voucher.narration,
+    ]);
+    const csv = generateCsv(headers, rows);
+    const filename = generateExportFilename('Bills-Register');
+    downloadFile(csv, filename);
+  }, [filteredBills]);
+
+  // Print handler
+  const handlePrint = useCallback(() => {
+    printWindow();
+  }, []);
+
   return (
     <div className="page-pad" style={styles.page}>
       {/* Header */}
@@ -203,6 +228,14 @@ export const BillsList: React.FC = () => {
           <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
           <h1 style={styles.title}>Bills List</h1>
           <p style={styles.subtitle}>{tenant.brandName} — All transactions</p>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }} className="no-print">
+          <button onClick={handleExportCsv} style={styles.exportBtn} disabled={filteredBills.length === 0}>
+            Export CSV
+          </button>
+          <button onClick={handlePrint} style={styles.printBtn} disabled={filteredBills.length === 0}>
+            Print
+          </button>
         </div>
       </div>
 
@@ -635,5 +668,25 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '12px',
     padding: '4px 10px',
     borderRadius: '4px',
+  },
+  printBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '13px',
+    cursor: 'pointer',
+    fontWeight: '500',
+  },
+  exportBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#ffffff',
+    color: '#475569',
+    border: '1px solid #e2e8f0',
+    borderRadius: '6px',
+    fontSize: '13px',
+    cursor: 'pointer',
+    fontWeight: '500',
   },
 };

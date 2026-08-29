@@ -363,3 +363,96 @@ input {
     align-items: flex-start !important;
   }
 }
+
+/* ─── Global Print Styles ─────────────────────────────────── */
+
+@media print {
+  /* Hide non-print elements */
+  .no-print,
+  nav,
+  .sidebar,
+  .sidebar-responsive,
+  header,
+  .backBtn,
+  .printBtn,
+  .exportBtn,
+  .deleteBtn,
+  .linkBtn,
+  .primaryBtn,
+  .dangerBtn,
+  .retryBtn,
+  .filterBar,
+  .bills-filters,
+  .aging-page .aging-hide-print,
+  [style*="cursor: pointer"] {
+    display: none !important;
+  }
+
+  /* Reset page layout */
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  .page-pad,
+  .aging-page,
+  .bill-detail-page {
+    padding: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure tables print well */
+  table {
+    font-size: 11px;
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* Print color adjustment */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Ensure links show URL for print */
+  a[href]:after {
+    content: none !important;
+  }
+
+  /* Page breaks for large tables */
+  .print-break-before {
+    page-break-before: always;
+  }
+
+  .print-break-after {
+    page-break-after: always;
+  }
+}
+
+/* ─── Print-only elements ─────────────────────────────────── */
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
+@media print {
+  .print-only {
+    display: block !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

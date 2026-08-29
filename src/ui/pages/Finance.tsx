@@ -32,6 +32,7 @@ import {
   totalCredit,
   isBalanced,
 } from '../../domain/types/voucher';
+import { printWindow, generateCsv, downloadFile, generateExportFilename } from '../utils/export';
 import {
   Product,
   calculateBillLineTax,
@@ -1084,6 +1085,30 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
         <button onClick={loadLedger} style={styles.primaryBtn} disabled={!accountFilter || loading}>
           {loading ? 'Loading...' : 'Load Ledger'}
         </button>
+        {loaded && ledgerEntries.length > 0 && (
+          <>
+            <button onClick={() => {
+              const headers = ['Date', 'Voucher #', 'Type', 'Narration', 'Debit', 'Credit', 'Balance'];
+              const rows = ledgerEntries.map(e => [
+                e.entryDate,
+                e.voucherNumber,
+                e.voucherType,
+                e.narration,
+                e.debit > 0 ? e.debit.toFixed(2) : '',
+                e.credit > 0 ? e.credit.toFixed(2) : '',
+                e.balance.toFixed(2),
+              ]);
+              const csv = generateCsv(headers, rows);
+              const filename = generateExportFilename('General-Ledger', accountFilter);
+              downloadFile(csv, filename);
+            }} style={{ ...styles.primaryBtn, backgroundColor: '#ffffff', color: '#475569', border: '1px solid #e2e8f0' }}>
+              Export CSV
+            </button>
+            <button onClick={printWindow} style={{ ...styles.primaryBtn, backgroundColor: '#2563eb' }}>
+              Print
+            </button>
+          </>
+        )}
       </div>
 
       {selectedAccount && loaded && (
