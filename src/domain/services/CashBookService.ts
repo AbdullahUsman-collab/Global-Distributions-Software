@@ -117,13 +117,16 @@ export class CashBookService {
       throw new Error(`Account ${account.accountCode} is not a Cash or Bank account`);
     }
 
+    // Use accountCode for ledger queries (ledger stores account codes, not UUIDs)
+    const accountCode = account.accountCode;
+
     // Get opening balance: all ledger entries for this account STRICTLY BEFORE startDate
     // getLedgerEntries uses <= for endDate, so subtract one day to exclude startDate itself
     const dayBeforeStart = new Date(startDate + 'T00:00:00');
     dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
     const openingEndDate = dayBeforeStart.toISOString().slice(0, 10);
     const openingEntries = await this.voucherRepo.getLedgerEntries(tenantId, {
-      accountId: accountHeadId,
+      accountId: accountCode,
       endDate: openingEndDate,
     });
     const openingBalance = openingEntries.reduce(
@@ -141,7 +144,7 @@ export class CashBookService {
 
     // Get ledger entries for this account in the date range
     const rangeEntries = await this.voucherRepo.getLedgerEntries(tenantId, {
-      accountId: accountHeadId,
+      accountId: accountCode,
       startDate,
       endDate,
     });
@@ -230,13 +233,13 @@ export class CashBookService {
 
     const lines: CreateVoucherDTO['lines'] = [
       {
-        accountId: dto.cashAccountId,
+        accountId: cashAccount.accountCode,
         description: `Cash received: ${dto.narration.trim()}`,
         debit: dto.amount,
         credit: 0,
       },
       {
-        accountId: dto.creditAccountId,
+        accountId: creditAccount.accountCode,
         description: dto.narration.trim(),
         debit: 0,
         credit: dto.amount,
@@ -286,13 +289,13 @@ export class CashBookService {
 
     const lines: CreateVoucherDTO['lines'] = [
       {
-        accountId: dto.debitAccountId,
+        accountId: debitAccount.accountCode,
         description: dto.narration.trim(),
         debit: dto.amount,
         credit: 0,
       },
       {
-        accountId: dto.cashAccountId,
+        accountId: cashAccount.accountCode,
         description: `Cash paid: ${dto.narration.trim()}`,
         debit: 0,
         credit: dto.amount,

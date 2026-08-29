@@ -123,20 +123,24 @@ export class CustomerReceiptService {
       throw new Error('Customer does not have an AR posting account');
     }
 
+    // Resolve customer's accountHeadId to accountCode for GL entries
+    const customerCoaAccount = await this.coaRepo.getAccountById(tenantId, customer.accountHeadId);
+    const customerAccountCode = customerCoaAccount?.accountCode ?? '';
+
     // Build balanced GL entries.
     // DEBIT: Cash/Bank Account — Receipt Amount
     // CREDIT: Customer AR Account — Receipt Amount
     const balancedLines: CreateVoucherDTO['lines'] = [
       // DEBIT: Cash/Bank Account
       {
-        accountId: cashAccount.id,
+        accountId: cashAccount.accountCode,
         description: `Cash received from ${customer.name}`,
         debit: dto.amount,
         credit: 0,
       },
       // CREDIT: Customer AR Account
       {
-        accountId: customer.accountHeadId,
+        accountId: customerAccountCode,
         description: dto.narration.trim(),
         debit: 0,
         credit: dto.amount,
@@ -204,8 +208,12 @@ export class CustomerReceiptService {
     if (!customer) throw new Error('Customer not found');
     if (!customer.accountHeadId) return 0;
 
+    // Resolve accountHeadId to accountCode for ledger query
+    const coaAccount = await this.coaRepo.getAccountById(tenantId, customer.accountHeadId);
+    const accountCode = coaAccount?.accountCode ?? '';
+
     const ledgerEntries = await this.voucherRepo.getLedgerEntries(tenantId, {
-      accountId: customer.accountHeadId,
+      accountId: accountCode,
     });
 
     return ledgerEntries.reduce((balance, entry) => balance + entry.debit - entry.credit, 0);
