@@ -140,6 +140,11 @@ export const AgingReport: React.FC = () => {
     navigate('/finance', { state: { tab: 'ledger', accountId: accountCode } });
   }, [navigate]);
 
+  // Navigate to bills list for a party
+  const handleBillsNav = useCallback((partyName: string) => {
+    navigate('/bills', { state: { search: partyName } });
+  }, [navigate]);
+
   // Print
   const handlePrint = useCallback(() => {
     printWindow();
@@ -334,6 +339,13 @@ export const AgingReport: React.FC = () => {
                         title="View in Ledger"
                       >
                         Ledger
+                      </button>
+                      <button
+                        onClick={() => handleBillsNav(row.partyName)}
+                        style={styles.ledgerBtn}
+                        title="View in Bills List"
+                      >
+                        Bills
                       </button>
                     </div>
                   </td>

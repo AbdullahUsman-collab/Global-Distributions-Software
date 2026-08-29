@@ -32,9 +32,9 @@ const firstOfMonth = () => {
 /* ─── Component ────────────────────────────────────────────── */
 
 export const CashBook: React.FC = () => {
-  const { session } = useAuth();
+  const { tenant } = useAuth();
   const navigate = useNavigate();
-  const tenantId = session?.tenantId ?? '';
+  const tenantId = tenant.id;
 
   // Data
   const [accounts, setAccounts] = useState<AccountHead[]>([]);
@@ -182,7 +182,7 @@ export const CashBook: React.FC = () => {
   }
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -305,7 +305,15 @@ export const CashBook: React.FC = () => {
                         {VOUCHER_TYPE_LABELS[tx.ledgerEntry.voucherType] ?? tx.ledgerEntry.voucherType}
                       </span>
                     </td>
-                    <td style={styles.td}>#{tx.ledgerEntry.voucherNumber}</td>
+                    <td style={styles.td}>
+                      <button
+                        onClick={() => navigate(`/bills/${tx.ledgerEntry.voucherId}`)}
+                        style={{ ...styles.voucherLink }}
+                        title="View bill detail"
+                      >
+                        #{tx.ledgerEntry.voucherNumber}
+                      </button>
+                    </td>
                     <td style={styles.td}>{tx.ledgerEntry.narration || '—'}</td>
                     <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.debit > 0 ? '#15803d' : '#94a3b8' }}>
                       {tx.ledgerEntry.debit > 0 ? fmt(tx.ledgerEntry.debit) : '—'}
@@ -618,6 +626,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: 14,
     fontWeight: 500,
     cursor: 'pointer',
+  },
+  voucherLink: {
+    background: 'none',
+    border: 'none',
+    color: '#2563eb',
+    cursor: 'pointer',
+    fontSize: 14,
+    fontWeight: 600,
+    padding: 0,
+    textDecoration: 'none',
   },
   error: {
     padding: '8px 12px',

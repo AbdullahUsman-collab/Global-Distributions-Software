@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
 import {
@@ -44,6 +44,8 @@ const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
 export const BillsList: React.FC = () => {
   const { tenant } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = location.state as { search?: string; partyId?: string } | null;
 
   const [bills, setBills] = useState<BillRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,9 +55,9 @@ export const BillsList: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<VoucherType | ''>('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [partyId, setPartyId] = useState('');
+  const [partyId, setPartyId] = useState(navState?.partyId ?? '');
   const [itemId, setItemId] = useState('');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(navState?.search ?? '');
 
   // Lookup data for filter dropdowns
   const [customers, setCustomers] = useState<Customer[]>([]);

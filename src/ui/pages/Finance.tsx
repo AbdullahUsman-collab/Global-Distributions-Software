@@ -479,7 +479,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
               <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Debit</span>
               <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Credit</span>
               <span style={{ ...styles.col, flex: '0 0 80px' }}>Status</span>
-              <span style={{ ...styles.col, flex: '0 0 100px' }}>Actions</span>
+              <span style={{ ...styles.col, flex: '0 0 120px' }}>Actions</span>
             </div>
             {vouchers.length === 0 && <div style={styles.empty}>No vouchers found.</div>}
             {vouchers.map(v => (
@@ -570,7 +570,7 @@ const VoucherRow: React.FC<{
             {v.status}
           </span>
         </span>
-        <span style={{ ...styles.col, flex: '0 0 160px', gap: 4 }}>
+        <span style={{ ...styles.col, flex: '0 0 120px', gap: 4 }}>
           {v.status === 'DRAFT' && (
             <>
               <button onClick={onEdit} style={styles.rowBtn} title="Edit Draft">✎</button>
@@ -1508,8 +1508,8 @@ const styles: Record<string, React.CSSProperties> = {
 
   card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)' },
 
-  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  row: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14, transition: 'background 0.1s' },
+  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', minWidth: 800 },
+  row: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14, transition: 'background 0.1s', minWidth: 800 },
   col: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   codeCell: { fontFamily: 'ui-monospace, monospace', fontSize: 13, color: '#475569' },
 
@@ -1543,7 +1543,7 @@ const styles: Record<string, React.CSSProperties> = {
   toggle: { width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', position: 'relative', padding: 0, transition: 'background-color 0.2s' },
   toggleKnob: { position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#fff', boxShadow: '0 1px 3px rgb(0 0 0 / 0.2)', transition: 'transform 0.2s' },
 
-  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14 },
+  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14, minWidth: 800 },
   linesContainer: { backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' },
   linesHeader: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #e2e8f0', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
   lineRow: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #f1f5f9', fontSize: 14, alignItems: 'center' },

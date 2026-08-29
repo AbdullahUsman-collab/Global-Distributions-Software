@@ -67,6 +67,7 @@ export const CustomerReceipts: React.FC = () => {
 /* ═══════════════════════════════════════════════════════════ */
 
 const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
+  const navigate = useNavigate();
   const [receipts, setReceipts] = useState<VoucherHeader[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cashAccounts, setCashAccounts] = useState<AccountHead[]>([]);
@@ -192,6 +193,7 @@ const ReceiptList: React.FC<{
   onPost: (id: string) => void;
   onDelete: (id: string) => void;
 }> = ({ receipts, customerMap, cashAccountMap, tenantId, onPost, onDelete }) => {
+  const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [lineCache, setLineCache] = useState<Map<string, VoucherLine[]>>(new Map());
 
@@ -260,6 +262,13 @@ const ReceiptList: React.FC<{
                     </span>
                   </td>
                   <td style={styles.td} onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => navigate(`/bills/${r.id}`)}
+                      style={styles.linkBtn}
+                      title="View bill detail"
+                    >
+                      View
+                    </button>
                     {r.status === 'DRAFT' && (
                       <>
                         <button onClick={() => onPost(r.id)} style={styles.linkBtn}>Post</button>
