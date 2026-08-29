@@ -465,7 +465,7 @@ describe('BillsListService', () => {
 
       await expect(
         service.deleteBill(TENANT_ID, bills[0].voucher.id)
-      ).rejects.toThrow('Can only delete DRAFT vouchers');
+      ).rejects.toThrow('Cannot delete a posted voucher');
     });
   });
 });

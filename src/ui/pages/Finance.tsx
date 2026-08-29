@@ -358,6 +358,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
   const [showCreate, setShowCreate] = useState(false);
   const [editVoucher, setEditVoucher] = useState<VoucherHeader | null>(null);
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -398,8 +399,13 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this draft voucher? This cannot be undone.')) return;
-    await services.voucherRepository.deleteVoucher(tenantId, id);
-    await load();
+    try {
+      await services.voucherRepository.deleteVoucher(tenantId, id);
+      await load();
+    } catch (err) {
+      console.error('Failed to delete voucher:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete voucher');
+    }
   };
 
   const toggleLines = (id: string) => {
@@ -493,6 +499,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
                 onEdit={() => setEditVoucher(v)}
                 onPost={() => handlePost(v.id)}
                 onDelete={() => handleDelete(v.id)}
+                onNavigate={(id) => navigate('/bills/' + id)}
               />
             ))}
           </>
@@ -531,7 +538,8 @@ const VoucherRow: React.FC<{
   onEdit: () => void;
   onPost: () => void;
   onDelete: () => void;
-}> = ({ voucher: v, tenantId, accountMap, expanded, onToggleLines, onEdit, onPost, onDelete }) => {
+  onNavigate: (id: string) => void;
+}> = ({ voucher: v, tenantId, accountMap, expanded, onToggleLines, onEdit, onPost, onDelete, onNavigate }) => {
   const [lines, setLines] = useState<VoucherLine[]>([]);
 
   useEffect(() => {
@@ -550,7 +558,7 @@ const VoucherRow: React.FC<{
       <div style={styles.voucherRow}>
         <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace' }}>
           <button onClick={onToggleLines} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>
-          {v.voucherNumber}
+          <button onClick={() => onNavigate(v.id)} style={{ ...styles.linkBtn, padding: 0, fontSize: 13 }}>{v.voucherNumber}</button>
         </span>
         <span style={{ ...styles.col, flex: '0 0 110px' }}>
           <span style={{ ...styles.typeBadge, backgroundColor: typeBadge.bg, color: typeBadge.fg }}>
@@ -1012,6 +1020,7 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
   const [ledgerEntries, setLedgerEntries] = useState<(LedgerEntry & { balance: number })[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const navigate = useNavigate();
 
   const postingAccounts = useMemo(() => accounts.filter(a => a.isPosting), [accounts]);
 
@@ -1157,7 +1166,9 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
             {ledgerEntries.map(e => (
               <div key={e.id} style={styles.voucherRow}>
                 <span style={{ ...styles.col, flex: '0 0 110px', fontSize: 13 }}>{e.entryDate}</span>
-                <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{e.voucherNumber}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
+                  <button onClick={() => navigate('/bills/' + e.voucherId)} style={{ ...styles.linkBtn, padding: 0, fontSize: 13 }}>{e.voucherNumber}</button>
+                </span>
                 <span style={{ ...styles.col, flex: '0 0 50px' }}>
                   <span style={{ ...styles.typeBadge, backgroundColor: VOUCHER_TYPE_COLORS[e.voucherType].bg, color: VOUCHER_TYPE_COLORS[e.voucherType].fg, fontSize: 10 }}>
                     {e.voucherType}

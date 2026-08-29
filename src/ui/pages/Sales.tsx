@@ -376,6 +376,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [bills, setBills] = useState<VoucherHeader[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
 
   const loadBills = useCallback(async () => {
     setLoading(true);
@@ -465,6 +466,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                     </span>
                   </td>
                   <td style={styles.td}>
+                    <button onClick={() => navigate('/bills/' + b.id)} style={styles.linkBtn}>View</button>
                     {b.status === 'DRAFT' && (
                       <>
                         <button onClick={() => handlePost(b.id)} style={styles.linkBtn}>Post</button>
@@ -817,6 +819,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [returns, setReturns] = useState<VoucherHeader[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
 
   const loadReturns = useCallback(async () => {
     setLoading(true);
@@ -903,6 +906,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                     </span>
                   </td>
                   <td style={styles.td}>
+                    <button onClick={() => navigate('/bills/' + r.id)} style={styles.linkBtn}>View</button>
                     {r.status === 'DRAFT' && (
                       <>
                         <button onClick={() => handlePost(r.id)} style={styles.linkBtn}>Post</button>

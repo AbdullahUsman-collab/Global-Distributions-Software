@@ -322,6 +322,9 @@ export class CashBookService {
    * Delete a DRAFT cash book voucher.
    */
   async deleteVoucher(tenantId: string, voucherId: string): Promise<void> {
+    const voucher = await this.voucherRepo.getVoucherById(tenantId, voucherId);
+    if (!voucher) throw new Error('Voucher not found');
+    if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');
     return this.voucherRepo.deleteVoucher(tenantId, voucherId);
   }
 

@@ -98,8 +98,7 @@ export class FinancialReportService {
       };
 
       // Compute net balance
-      // For DEBIT-normal accounts: balance = (openingDr - openingCr) + (periodDr - periodCr)
-      // For CREDIT-normal accounts: balance = (openingCr - openingDr) + (periodCr - periodDr)
+      // closingNet = (Dr - Cr). Positive means net debit, negative means net credit.
       const openingNet = bal.openingDebit - bal.openingCredit;
       const periodNet = bal.periodDebit - bal.periodCredit;
       const closingNet = openingNet + periodNet;
@@ -107,19 +106,10 @@ export class FinancialReportService {
       let closingDebit = 0;
       let closingCredit = 0;
 
-      if (account.normalBalance === 'DEBIT') {
-        if (closingNet >= 0) {
-          closingDebit = r2(closingNet);
-        } else {
-          closingCredit = r2(-closingNet);
-        }
+      if (closingNet >= 0) {
+        closingDebit = r2(closingNet);
       } else {
-        // CREDIT-normal
-        if (closingNet >= 0) {
-          closingCredit = r2(closingNet);
-        } else {
-          closingDebit = r2(-closingNet);
-        }
+        closingCredit = r2(-closingNet);
       }
 
       // Skip zero-balance accounts if filter says so

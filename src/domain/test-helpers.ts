@@ -232,7 +232,7 @@ export function createMockVoucherRepo(): IVoucherRepository {
       }
       return vouchers[idx];
     },
-    getLedgerEntries: async (t: string, filters?: { accountId?: string; startDate?: string; endDate?: string }) => {
+    getLedgerEntries: async (t: string, filters?: { accountId?: string; startDate?: string; endDate?: string; voucherId?: string }) => {
       let entries = ledger.filter(e => e.tenantId === t);
       if (filters?.accountId) {
         entries = entries.filter(e => e.accountId === filters.accountId);
@@ -242,6 +242,9 @@ export function createMockVoucherRepo(): IVoucherRepository {
       }
       if (filters?.endDate) {
         entries = entries.filter(e => e.entryDate <= filters.endDate!);
+      }
+      if (filters?.voucherId) {
+        entries = entries.filter(e => e.voucherId === filters.voucherId);
       }
       return entries;
     },
