@@ -101,17 +101,28 @@ export const Sales: React.FC = () => {
 /* ═══════════════════════════════════════════════════════════ */
 
 const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchPrefix, setSearchPrefix] = useState('');
+  const [accountCodeMap, setAccountCodeMap] = useState<Map<string, string>>(new Map());
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await services.customerRepository.getCustomersByTenantId(tenantId);
+      const [data, accounts] = await Promise.all([
+        services.customerRepository.getCustomersByTenantId(tenantId),
+        services.coaRepository.getAccountsByTenantId(tenantId),
+      ]);
       setCustomers(data);
+      // Build accountHeadId → accountCode map for ledger navigation
+      const map = new Map<string, string>();
+      for (const a of accounts) {
+        map.set(a.id, a.accountCode);
+      }
+      setAccountCodeMap(map);
     } catch (err) {
       console.error('Failed to load customers:', err);
     } finally {
@@ -230,6 +241,15 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   </td>
                   <td style={styles.td}>
                     <button onClick={() => handleEdit(c)} style={styles.linkBtn}>Edit</button>
+                    <button
+                      onClick={() => {
+                        const code = accountCodeMap.get(c.accountHeadId);
+                        if (code) navigate('/finance', { state: { tab: 'ledger', accountId: code } });
+                      }}
+                      style={styles.linkBtn}
+                    >
+                      Ledger
+                    </button>
                     {c.isActive && (
                       <button onClick={() => handleDeactivate(c.id)} style={styles.dangerBtn}>Deactivate</button>
                     )}

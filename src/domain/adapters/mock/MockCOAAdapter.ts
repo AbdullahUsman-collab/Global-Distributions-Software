@@ -124,6 +124,7 @@ function buildSeedTree(tenantId: string): AccountHead[] {
   add('11302', 'Finished Goods',        4, 'ASSET',     '11300', 'INVENTORY');
   add('11401', 'Sales Tax Input',       4, 'ASSET',     '11400', 'TAX');
   add('11402', 'Advance Income Tax',    4, 'ASSET',     '11400', 'TAX');
+  add('11403', 'FED Input',            4, 'ASSET',     '11400', 'TAX');
   add('12101', 'Office Equipment',      4, 'ASSET',     '12100');
   add('12102', 'Computer Equipment',    4, 'ASSET',     '12100');
   add('12201', 'Delivery Vehicles',     4, 'ASSET',     '12200');

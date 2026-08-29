@@ -11,7 +11,9 @@
  * Accounting (PRV posting):
  *   DEBIT: Supplier AP — Net Amount
  *   CREDIT: Inventory (11301) — Base Amount
- *   CREDIT: Tax Input (11401) — GST Amount
+ *   CREDIT: Sales Tax Input (11401) — GST + Further Tax
+ *   CREDIT: FED Input (11403) — FED Amount
+ *   CREDIT: Advance Income Tax (11402) — Advance Tax
  *
  * Inventory effect:
  *   Stock DECREASED by returned quantity (RETURN movement, reverse of GRN)
@@ -29,8 +31,12 @@ import { ISupplierRepository } from '../repositories/ISupplierRepository';
 const ACCOUNT_CODES = {
   /** Inventory — General Inventory */
   INVENTORY: '11301',
-  /** Tax Input — Sales Tax Input */
+  /** Tax Input — Sales Tax Input (GST + Further Tax combined) */
   SALES_TAX_INPUT: '11401',
+  /** FED Input — Federal Excise Duty on purchases */
+  FED_INPUT: '11403',
+  /** Advance Income Tax — Advance Tax on purchases */
+  ADVANCE_TAX_INPUT: '11402',
 } as const;
 
 /* ─── DTOs ─────────────────────────────────────────────────── */
@@ -187,10 +193,9 @@ export class PurchaseReturnService {
    * Accounting (audit/11, audit/12):
    *   DEBIT: Supplier AP — Net Amount
    *   CREDIT: Inventory (11301) — Base Amount
-   *   CREDIT: Tax Input (11401) — GST Amount
-   *
-   * D2 safety: Further Tax, Advance Tax, and FED have no verified GL
-   * purchase-side accounts. Fail safely if any are non-zero.
+   *   CREDIT: Sales Tax Input (11401) — GST + Further Tax
+   *   CREDIT: FED Input (11403) — FED Amount
+   *   CREDIT: Advance Income Tax (11402) — Advance Tax
    */
   async createPurchaseReturn(
     tenantId: string,
@@ -215,20 +220,9 @@ export class PurchaseReturnService {
     // Calculate bill for validation
     const calculation = await this.calculateBill(tenantId, dto.lines);
 
-    // D2 safety: Further Tax, Advance Tax, and FED have no verified GL
-    // purchase-side accounts. Posting without accounts would create an
-    // unbalanced voucher. Fail safely rather than silently ignoring tax.
-    if (calculation.totalFurtherTax > 0 || calculation.totalAdvanceTax > 0 || calculation.totalFed > 0) {
-      throw new Error(
-        'Cannot create purchase return: Further Tax, Advance Tax, or FED is non-zero but ' +
-        'no GL purchase-side accounts are configured for these tax types. ' +
-        'Set Further Tax %, Advance Tax %, and FED % to 0, or configure GL accounts first.',
-      );
-    }
-
     // Create balanced GL entries.
     // DEBIT: Supplier AP — per-product lines with bill metadata
-    // CREDIT: Inventory (base amount) + Tax Input (GST)
+    // CREDIT: Inventory (base amount) + Tax Input (GST + Further Tax + FED + Advance Tax)
     const balancedLines: CreateVoucherDTO['lines'] = [
       // DEBIT: Supplier AP — per-product lines (mirrors Customer AR pattern)
       ...dto.lines.map((line, idx) => {
@@ -254,12 +248,26 @@ export class PurchaseReturnService {
         debit: 0,
         credit: calculation.totalToAmount,
       },
-      // CREDIT: Tax Input — GST
-      ...(calculation.totalGst > 0 ? [{
+      // CREDIT: Sales Tax Input — GST + Further Tax
+      ...(calculation.totalGst + calculation.totalFurtherTax > 0 ? [{
         accountId: ACCOUNT_CODES.SALES_TAX_INPUT,
-        description: 'Input sales tax reversed on purchase return',
+        description: 'Input tax reversed on purchase return (GST + Further Tax)',
         debit: 0,
-        credit: calculation.totalGst,
+        credit: calculation.totalGst + calculation.totalFurtherTax,
+      }] : []),
+      // CREDIT: FED Input — Federal Excise Duty
+      ...(calculation.totalFed > 0 ? [{
+        accountId: ACCOUNT_CODES.FED_INPUT,
+        description: 'FED reversed on purchase return',
+        debit: 0,
+        credit: calculation.totalFed,
+      }] : []),
+      // CREDIT: Advance Income Tax — Advance Tax
+      ...(calculation.totalAdvanceTax > 0 ? [{
+        accountId: ACCOUNT_CODES.ADVANCE_TAX_INPUT,
+        description: 'Advance tax reversed on purchase return',
+        debit: 0,
+        credit: calculation.totalAdvanceTax,
       }] : []),
     ];
 

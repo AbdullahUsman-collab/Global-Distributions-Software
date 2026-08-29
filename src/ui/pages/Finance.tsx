@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
 import {
@@ -100,7 +100,9 @@ const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2,
 export const Finance: React.FC = () => {
   const { tenant, user } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<FinanceTab>('coa');
+  const location = useLocation();
+  const state = location.state as { tab?: FinanceTab; accountId?: string } | null;
+  const [tab, setTab] = useState<FinanceTab>(state?.tab ?? 'coa');
 
   return (
     <div className="page-pad" style={styles.page}>
@@ -129,7 +131,7 @@ export const Finance: React.FC = () => {
       {/* Tab Content */}
       {tab === 'coa'      && <COATab tenantId={tenant.id} />}
       {tab === 'vouchers' && <VouchersTab tenantId={tenant.id} user={user.username} />}
-      {tab === 'ledger'   && <LedgerTab tenantId={tenant.id} />}
+      {tab === 'ledger'   && <LedgerTab tenantId={tenant.id} initialAccountId={state?.accountId} />}
       {tab === 'reports'  && <FinancialReportsView tenantId={tenant.id} />}
     </div>
   );
@@ -384,13 +386,17 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
   const postingAccounts = useMemo(() => accounts.filter(a => a.isPosting), [accounts]);
 
   const handlePost = async (id: string) => {
-    if (!confirm('Post this voucher? It will become immutable.')) return;
-    await services.voucherRepository.postVoucher(tenantId, id);
-    await load();
+    if (!confirm('Post this voucher? It will become immutable and cannot be edited or deleted.')) return;
+    try {
+      await services.voucherRepository.postVoucher(tenantId, id);
+      await load();
+    } catch (err: any) {
+      alert(err.message || 'Failed to post voucher. Ensure the voucher is balanced (Debit = Credit).');
+    }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this draft voucher?')) return;
+    if (!confirm('Delete this draft voucher? This cannot be undone.')) return;
     await services.voucherRepository.deleteVoucher(tenantId, id);
     await load();
   };
@@ -440,7 +446,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
             <span style={styles.statLabel}>Posted</span>
           </div>
         </div>
-        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Voucher</button>
+        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Journal Voucher</button>
       </div>
 
       <div className="toolbar-responsive" style={styles.toolbar}>
@@ -563,13 +569,16 @@ const VoucherRow: React.FC<{
             {v.status}
           </span>
         </span>
-        <span style={{ ...styles.col, flex: '0 0 100px', gap: 4 }}>
+        <span style={{ ...styles.col, flex: '0 0 160px', gap: 4 }}>
           {v.status === 'DRAFT' && (
             <>
-              <button onClick={onEdit} style={styles.rowBtn} title="Edit">✎</button>
-              <button onClick={onPost} style={{ ...styles.rowBtn, color: '#16a34a', borderColor: '#bbf7d0' }} title="Post">✓</button>
-              <button onClick={onDelete} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca' }} title="Delete">✕</button>
+              <button onClick={onEdit} style={styles.rowBtn} title="Edit Draft">✎</button>
+              <button onClick={onPost} style={{ ...styles.rowBtn, color: '#16a34a', borderColor: '#bbf7d0' }} title="Post Voucher (requires balanced)">✓</button>
+              <button onClick={onDelete} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca' }} title="Delete Draft">✕</button>
             </>
+          )}
+          {v.status === 'POSTED' && (
+            <span style={{ fontSize: 11, color: '#166534', fontStyle: 'italic' }}>Posted</span>
           )}
         </span>
       </div>
@@ -735,14 +744,14 @@ const VoucherModal: React.FC<{
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div className="responsive-modal" style={{ ...styles.modal, maxWidth: 800 }} onClick={e => e.stopPropagation()}>
-        <h2 style={styles.modalTitle}>{isEdit ? 'Edit' : 'New'} Voucher</h2>
+        <h2 style={styles.modalTitle}>{isEdit ? 'Edit Draft' : 'New Journal Voucher'}</h2>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Voucher Type</label>
               <select value={vType} onChange={e => setVType(e.target.value as VoucherType)} style={styles.select} disabled={isEdit}>
-                {(Object.keys(VOUCHER_TYPE_LABELS) as VoucherType[]).map(t => (
+                {(['JV', 'CV', 'PV', 'CP', 'CR'] as VoucherType[]).map(t => (
                   <option key={t} value={t}>{VOUCHER_TYPE_LABELS[t]}</option>
                 ))}
               </select>
@@ -928,8 +937,8 @@ const VoucherModal: React.FC<{
             {lines.length > 0 && (
               <div style={{ ...styles.infoNote, marginTop: 8, borderColor: balanced ? '#bbf7d0' : '#fecaca', backgroundColor: balanced ? '#f0fdf4' : '#fef2f2' }}>
                 {balanced
-                  ? `Balanced ✓ — Debit: ${fmt(dTotal)} = Credit: ${fmt(cTotal)}`
-                  : `NOT BALANCED ✕ — Debit: ${fmt(dTotal)} / Credit: ${fmt(cTotal)} / Diff: ${fmt(Math.abs(dTotal - cTotal))}`
+                  ? `Balanced — Debit: ${fmt(dTotal)} = Credit: ${fmt(cTotal)}`
+                  : `Not Balanced — Debit: ${fmt(dTotal)} / Credit: ${fmt(cTotal)} / Diff: ${fmt(Math.abs(dTotal - cTotal))} (add ${dTotal < cTotal ? 'debit' : 'credit'} lines to balance)`
                 }
               </div>
             )}
@@ -940,7 +949,7 @@ const VoucherModal: React.FC<{
           <div style={styles.modalActions}>
             <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
             <button type="submit" style={styles.primaryBtn} disabled={saving}>
-              {saving ? 'Saving...' : isEdit ? 'Update Voucher' : 'Create Voucher'}
+              {saving ? 'Saving...' : isEdit ? 'Save Draft Changes' : 'Save Draft'}
             </button>
           </div>
         </form>
@@ -994,9 +1003,9 @@ const AccountSelect: React.FC<{
 /* Tab: General Ledger                                        */
 /* ═══════════════════════════════════════════════════════════ */
 
-const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
+const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ tenantId, initialAccountId }) => {
   const [accounts, setAccounts] = useState<AccountHead[]>([]);
-  const [accountFilter, setAccountFilter] = useState('');
+  const [accountFilter, setAccountFilter] = useState(initialAccountId ?? '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [ledgerEntries, setLedgerEntries] = useState<(LedgerEntry & { balance: number })[]>([]);
@@ -1008,6 +1017,30 @@ const LedgerTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   useEffect(() => {
     services.coaRepository.getAccountsByTenantId(tenantId).then(setAccounts);
   }, [tenantId]);
+
+  // Auto-load ledger when initialAccountId is provided and accounts are loaded
+  useEffect(() => {
+    if (initialAccountId && accounts.length > 0 && !loaded) {
+      setAccountFilter(initialAccountId);
+      // Auto-load after a tick to ensure state is set
+      const timer = setTimeout(() => {
+        loadLedgerForAccount(initialAccountId);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [initialAccountId, accounts]);
+
+  const loadLedgerForAccount = async (accountCode: string) => {
+    if (!accountCode) return;
+    setLoading(true);
+    try {
+      const entries = await services.voucherRepository.getLedgerForAccount(tenantId, accountCode);
+      setLedgerEntries(entries);
+      setLoaded(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadLedger = async () => {
     if (!accountFilter) return;

@@ -11,13 +11,10 @@
  *
  * Accounting (PV posting, audit/24):
  *   DEBIT: Inventory (11301) — Base Amount
- *   DEBIT: Tax Input (11401) — GST Amount
+ *   DEBIT: Sales Tax Input (11401) — GST + Further Tax (combined input tax)
+ *   DEBIT: FED Input (11403) — FED amount
+ *   DEBIT: Advance Income Tax (11402) — Advance Tax amount
  *   CREDIT: Supplier AP (21100) — Net Amount
- *
- * Rejected taxes (no GL accounts):
- *   FED — No FED Input account in COA (only 21203 FED Payable for sales)
- *   Further Tax — No GL account defined
- *   Advance Tax — No GL account defined
  *
  * Inventory effect (audit/07, audit/24):
  *   Stock INCREASED by received quantity via GRN movement
@@ -40,8 +37,12 @@ import { ICOARepository } from '../repositories/ICOARepository';
 const ACCOUNT_CODES = {
   /** Inventory — General Inventory */
   INVENTORY: '11301',
-  /** Tax Input — Sales Tax Input */
+  /** Tax Input — Sales Tax Input (GST + Further Tax combined) */
   SALES_TAX_INPUT: '11401',
+  /** FED Input — Federal Excise Duty on purchases */
+  FED_INPUT: '11403',
+  /** Advance Income Tax — Advance Tax on purchases */
+  ADVANCE_TAX_INPUT: '11402',
   /** Accounts Payable — parent for supplier-specific accounts */
   ACCOUNTS_PAYABLE: '21100',
 } as const;
@@ -226,19 +227,8 @@ export class PurchaseService {
     // Calculate bill for validation
     const calculation = await this.calculateBill(tenantId, dto.lines);
 
-    // D2 safety: Further Tax, Advance Tax, and FED have no verified GL
-    // purchase-side accounts. Posting without accounts would create an
-    // unbalanced voucher. Fail safely rather than silently ignoring tax.
-    if (calculation.totalFurtherTax > 0 || calculation.totalAdvanceTax > 0 || calculation.totalFed > 0) {
-      throw new Error(
-        'Cannot create purchase bill: Further Tax, Advance Tax, or FED is non-zero but ' +
-        'no GL purchase-side accounts are configured for these tax types. ' +
-        'Set Further Tax %, Advance Tax %, and FED % to 0, or configure GL accounts first.',
-      );
-    }
-
     // Create balanced GL entries.
-    // DEBIT: Inventory (base amount) + Tax Input (GST)
+    // DEBIT: Inventory (base amount) + Tax Input (GST + Further Tax + FED + Advance Tax)
     // CREDIT: Supplier AP — per-product lines with bill metadata
     const balancedLines: CreateVoucherDTO['lines'] = [
       // DEBIT: Inventory — Base Amount (To.Amt)
@@ -248,11 +238,25 @@ export class PurchaseService {
         debit: calculation.totalToAmount,
         credit: 0,
       },
-      // DEBIT: Tax Input — GST
-      ...(calculation.totalGst > 0 ? [{
+      // DEBIT: Sales Tax Input — GST + Further Tax (combined input tax)
+      ...(calculation.totalGst + calculation.totalFurtherTax > 0 ? [{
         accountId: ACCOUNT_CODES.SALES_TAX_INPUT,
-        description: 'Input sales tax on purchases',
-        debit: calculation.totalGst,
+        description: 'Input tax on purchases (GST + Further Tax)',
+        debit: calculation.totalGst + calculation.totalFurtherTax,
+        credit: 0,
+      }] : []),
+      // DEBIT: FED Input — Federal Excise Duty
+      ...(calculation.totalFed > 0 ? [{
+        accountId: ACCOUNT_CODES.FED_INPUT,
+        description: 'FED on purchases',
+        debit: calculation.totalFed,
+        credit: 0,
+      }] : []),
+      // DEBIT: Advance Income Tax — Advance Tax
+      ...(calculation.totalAdvanceTax > 0 ? [{
+        accountId: ACCOUNT_CODES.ADVANCE_TAX_INPUT,
+        description: 'Advance tax on purchases',
+        debit: calculation.totalAdvanceTax,
         credit: 0,
       }] : []),
       // CREDIT: Supplier AP — per-product lines (mirrors Customer AR pattern)
@@ -300,7 +304,9 @@ export class PurchaseService {
    *
    * Accounting entries (per audit/11, audit/24):
    *   DEBIT: Inventory (11301) — Base Amount
-   *   DEBIT: Tax Input (11401) — GST Amount
+   *   DEBIT: Sales Tax Input (11401) — GST + Further Tax
+   *   DEBIT: FED Input (11403) — FED Amount
+   *   DEBIT: Advance Income Tax (11402) — Advance Tax
    *   CREDIT: Supplier AP (21100) — Net Amount
    *
    * Inventory effect (per audit/24):
