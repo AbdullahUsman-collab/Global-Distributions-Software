@@ -12,6 +12,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { emitDataRefresh } from '../utils/dataRefresh';
 import {
   Customer,
 } from '../../domain/types/customer';
@@ -116,6 +117,7 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Post this receipt? This will create GL entries and update customer AR balance.')) return;
     try {
       await services.customerReceiptService.postReceipt(tenantId, id);
+      emitDataRefresh('receipt-posted');
       await loadData();
     } catch (err) {
       console.error('Failed to post receipt:', err);
@@ -127,6 +129,7 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Delete this draft receipt?')) return;
     try {
       await services.customerReceiptService.deleteReceipt(tenantId, id);
+      emitDataRefresh('receipt-deleted');
       await loadData();
     } catch (err) {
       console.error('Failed to delete receipt:', err);

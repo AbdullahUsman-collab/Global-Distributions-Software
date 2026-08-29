@@ -15,6 +15,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { emitDataRefresh } from '../utils/dataRefresh';
 import {
   Supplier,
   CreateSupplierDTO,
@@ -418,6 +419,7 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Post this purchase bill? This will create GL entries and add stock.')) return;
     try {
       await services.purchaseService.postPurchaseBill(tenantId, id);
+      emitDataRefresh('purchase-posted');
       await loadBills();
     } catch (err) {
       console.error('Failed to post bill:', err);
@@ -429,6 +431,7 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Delete this draft bill?')) return;
     try {
       await services.purchaseService.deletePurchaseBill(tenantId, id);
+      emitDataRefresh('purchase-deleted');
       await loadBills();
     } catch (err) {
       console.error('Failed to delete bill:', err);
@@ -854,6 +857,7 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Post this purchase return? This will create GL entries and deduct stock.')) return;
     try {
       await services.purchaseReturnService.postPurchaseReturn(tenantId, id);
+      emitDataRefresh('purchase-return-posted');
       await loadReturns();
     } catch (err) {
       console.error('Failed to post purchase return:', err);
@@ -865,6 +869,7 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Delete this draft purchase return?')) return;
     try {
       await services.purchaseReturnService.deletePurchaseReturn(tenantId, id);
+      emitDataRefresh('purchase-return-deleted');
       await loadReturns();
     } catch (err) {
       console.error('Failed to delete purchase return:', err);

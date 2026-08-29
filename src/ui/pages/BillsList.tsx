@@ -11,6 +11,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   BillRecord,
   BillsListService,
@@ -104,6 +105,17 @@ export const BillsList: React.FC = () => {
   }, [tenant.id]);
 
   useEffect(() => { loadBills(); loadLookups(); }, [loadBills, loadLookups]);
+
+  // Refresh bills list when any transaction is posted/deleted
+  const reloadAll = useCallback(() => { loadBills(); loadLookups(); }, [loadBills, loadLookups]);
+  useRefreshOnMount(reloadAll, [
+    'sale-posted', 'sale-deleted',
+    'purchase-posted', 'purchase-deleted',
+    'sale-return-posted', 'sale-return-deleted',
+    'purchase-return-posted', 'purchase-return-deleted',
+    'receipt-posted', 'receipt-deleted',
+    'payment-posted', 'payment-deleted',
+  ]);
 
   // Apply filters
   const filteredBills = useMemo(() => {

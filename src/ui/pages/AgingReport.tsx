@@ -11,6 +11,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   AgingReportService,
   AgingMode,
@@ -99,6 +100,16 @@ export const AgingReport: React.FC = () => {
   // Auto-generate on mount and when filters change
   useEffect(() => { generateReport(); }, [generateReport]);
 
+  // Refresh aging when receipts/payments/returns are posted
+  useRefreshOnMount(generateReport, [
+    'sale-posted', 'sale-deleted',
+    'purchase-posted', 'purchase-deleted',
+    'sale-return-posted', 'sale-return-deleted',
+    'purchase-return-posted', 'purchase-return-deleted',
+    'receipt-posted', 'receipt-deleted',
+    'payment-posted', 'payment-deleted',
+  ]);
+
   // Party options based on mode
   const partyOptions = useMemo(() => {
     if (mode === 'customer') {
@@ -141,8 +152,8 @@ export const AgingReport: React.FC = () => {
   }, [navigate]);
 
   // Navigate to bills list for a party
-  const handleBillsNav = useCallback((partyName: string) => {
-    navigate('/bills', { state: { search: partyName } });
+  const handleBillsNav = useCallback((partyId: string, partyName: string) => {
+    navigate('/bills', { state: { partyId, search: partyName } });
   }, [navigate]);
 
   // Print
@@ -341,7 +352,7 @@ export const AgingReport: React.FC = () => {
                         Ledger
                       </button>
                       <button
-                        onClick={() => handleBillsNav(row.partyName)}
+                        onClick={() => handleBillsNav(row.partyId, row.partyName)}
                         style={styles.ledgerBtn}
                         title="View in Bills List"
                       >

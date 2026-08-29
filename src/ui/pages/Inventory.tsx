@@ -9,6 +9,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   Product,
   Warehouse,
@@ -453,6 +454,14 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   }, [tenantId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Refresh stock levels when sales/purchases/returns are posted
+  useRefreshOnMount(load, [
+    'sale-posted', 'sale-deleted',
+    'purchase-posted', 'purchase-deleted',
+    'sale-return-posted', 'sale-return-deleted',
+    'purchase-return-posted', 'purchase-return-deleted',
+  ]);
 
   // Lookup maps
   const productMap = useMemo(() => {

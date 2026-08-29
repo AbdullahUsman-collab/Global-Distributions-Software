@@ -15,6 +15,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { emitDataRefresh } from '../utils/dataRefresh';
 import {
   Customer,
   CreateCustomerDTO,
@@ -394,6 +395,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Post this sale bill? This will create GL entries and deduct stock.')) return;
     try {
       await services.salesService.postSaleBill(tenantId, id);
+      emitDataRefresh('sale-posted');
       await loadBills();
     } catch (err) {
       console.error('Failed to post bill:', err);
@@ -405,6 +407,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Delete this draft bill?')) return;
     try {
       await services.salesService.deleteSaleBill(tenantId, id);
+      emitDataRefresh('sale-deleted');
       await loadBills();
     } catch (err) {
       console.error('Failed to delete bill:', err);
@@ -833,6 +836,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Post this sale return? This will create GL entries and restore stock.')) return;
     try {
       await services.saleReturnService.postSaleReturn(tenantId, id);
+      emitDataRefresh('sale-return-posted');
       await loadReturns();
     } catch (err) {
       console.error('Failed to post sale return:', err);
@@ -844,6 +848,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     if (!confirm('Delete this draft sale return?')) return;
     try {
       await services.saleReturnService.deleteSaleReturn(tenantId, id);
+      emitDataRefresh('sale-return-deleted');
       await loadReturns();
     } catch (err) {
       console.error('Failed to delete sale return:', err);

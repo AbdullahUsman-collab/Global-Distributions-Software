@@ -11,6 +11,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { emitDataRefresh } from '../utils/dataRefresh';
 import { AccountHead } from '../../domain/types/coa';
 import { VoucherHeader, VOUCHER_TYPE_LABELS, VOUCHER_STATUS_LABELS } from '../../domain/types/voucher';
 import { CashBookSummary, CashBookTransaction } from '../../domain/services/CashBookService';
@@ -155,6 +156,7 @@ export const CashBook: React.FC = () => {
   const handlePost = async (voucherId: string) => {
     try {
       await services.cashBookService.postVoucher(tenantId, voucherId);
+      emitDataRefresh('payment-posted');
       await loadCashBook();
     } catch (err: any) {
       alert(err.message || 'Failed to post voucher.');
@@ -165,6 +167,7 @@ export const CashBook: React.FC = () => {
     if (!confirm('Delete this draft voucher?')) return;
     try {
       await services.cashBookService.deleteVoucher(tenantId, voucherId);
+      emitDataRefresh('payment-deleted');
       await loadCashBook();
     } catch (err: any) {
       alert(err.message || 'Failed to delete voucher.');

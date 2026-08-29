@@ -16,6 +16,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   DashboardService,
   DashboardPeriod,
@@ -97,6 +98,16 @@ export const Dashboard: React.FC = () => {
   }, [tenant.id, period, customStart, customEnd, dashboardService]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Refresh Dashboard when any transaction is posted/deleted in other modules
+  useRefreshOnMount(loadData, [
+    'sale-posted', 'sale-deleted',
+    'purchase-posted', 'purchase-deleted',
+    'sale-return-posted', 'sale-return-deleted',
+    'purchase-return-posted', 'purchase-return-deleted',
+    'receipt-posted', 'receipt-deleted',
+    'payment-posted', 'payment-deleted',
+  ]);
 
   return (
     <div className="page-pad dashboard-page" style={styles.page}>
