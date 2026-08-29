@@ -253,6 +253,19 @@ input {
   }
 }
 
+/* ─── Responsive Finance Page ─────────────────────────────── */
+
+@media (max-width: 768px) {
+  .finance-page {
+    overflow-x: hidden !important;
+  }
+
+  .finance-page .table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* ─── Responsive Toolbar ──────────────────────────────────── */
 
 @media (max-width: 640px) {
