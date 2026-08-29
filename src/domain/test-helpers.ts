@@ -146,8 +146,8 @@ export function createMockVoucherRepo(): IVoucherRepository {
   }
 
   return {
-    getVouchersByTenantId: async (_t: string, filters?: { voucherType?: string; status?: string }) => {
-      let result = [...vouchers];
+    getVouchersByTenantId: async (t: string, filters?: { voucherType?: string; status?: string }) => {
+      let result = vouchers.filter(v => v.tenantId === t);
       if (filters?.voucherType) {
         result = result.filter(v => v.voucherType === filters.voucherType);
       }
@@ -164,7 +164,7 @@ export function createMockVoucherRepo(): IVoucherRepository {
       const voucherLines: VoucherLine[] = dto.lines.map((l, i) => ({
         id: `line-${id}-${i}`,
         voucherId: id,
-        tenantId: TENANT_ID,
+        tenantId: _t,
         accountId: l.accountId,
         description: l.description,
         debit: l.debit,
@@ -181,7 +181,7 @@ export function createMockVoucherRepo(): IVoucherRepository {
       const now = new Date();
       const header: VoucherHeader = {
         id,
-        tenantId: TENANT_ID,
+        tenantId: _t,
         voucherNumber: vouchers.length + 1,
         voucherType: dto.voucherType,
         date: dto.date,
@@ -217,7 +217,7 @@ export function createMockVoucherRepo(): IVoucherRepository {
           const accountCode = codeById.get(vl.accountId) ?? vl.accountId;
           ledger.push({
             id: `ledger-${++ledgerIdCounter}`,
-            tenantId: TENANT_ID,
+            tenantId: vouchers[idx].tenantId,
             voucherId: id,
             voucherLineId: vl.id,
             accountId: accountCode,
@@ -232,8 +232,8 @@ export function createMockVoucherRepo(): IVoucherRepository {
       }
       return vouchers[idx];
     },
-    getLedgerEntries: async (_t: string, filters?: { accountId?: string; startDate?: string; endDate?: string }) => {
-      let entries = [...ledger];
+    getLedgerEntries: async (t: string, filters?: { accountId?: string; startDate?: string; endDate?: string }) => {
+      let entries = ledger.filter(e => e.tenantId === t);
       if (filters?.accountId) {
         entries = entries.filter(e => e.accountId === filters.accountId);
       }
@@ -245,8 +245,8 @@ export function createMockVoucherRepo(): IVoucherRepository {
       }
       return entries;
     },
-    getLedgerForAccount: async (_t: string, accountId: string) =>
-      ledger.filter(e => e.accountId === accountId).map(e => ({ ...e, balance: e.debit - e.credit })),
+    getLedgerForAccount: async (t: string, accountId: string) =>
+      ledger.filter(e => e.tenantId === t && e.accountId === accountId).map(e => ({ ...e, balance: e.debit - e.credit })),
   };
 }
 

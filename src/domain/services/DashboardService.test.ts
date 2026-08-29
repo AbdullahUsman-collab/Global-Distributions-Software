@@ -61,6 +61,7 @@ function makeLines(voucherId: string, overrides: {
   debit?: number;
   credit?: number;
   accountId?: string;
+  productId?: string;
 } = {}): VoucherLine[] {
   return [
     {
@@ -72,7 +73,8 @@ function makeLines(voucherId: string, overrides: {
       debit: overrides.debit ?? 10000,
       credit: overrides.credit ?? 0,
       lineOrder: 0,
-      quantity: 0,
+      productId: overrides.productId ?? 'prod-1',
+      quantity: 10,
       stRate: 0,
       stAmount: 0,
       amtExclStd: 0,
@@ -197,13 +199,13 @@ describe('DashboardService', () => {
         voucherType: 'SV',
         date: today(),
         narration: 'Sale 1',
-        lines: [{ accountId: 'acc-41101', description: 'Sale 1', debit: 5000, credit: 0, quantity: 0, stRate: 0, stAmount: 0, amtExclStd: 0 }],
+        lines: [{ accountId: 'acc-41101', description: 'Sale 1', debit: 5000, credit: 0, productId: 'prod-1', quantity: 10, stRate: 0, stAmount: 0, amtExclStd: 0 }],
       }, 'admin');
       await voucherRepo.createVoucher(TENANT_ID, {
         voucherType: 'SV',
         date: today(),
         narration: 'Sale 2',
-        lines: [{ accountId: 'acc-41101', description: 'Sale 2', debit: 3000, credit: 0, quantity: 0, stRate: 0, stAmount: 0, amtExclStd: 0 }],
+        lines: [{ accountId: 'acc-41101', description: 'Sale 2', debit: 3000, credit: 0, productId: 'prod-1', quantity: 10, stRate: 0, stAmount: 0, amtExclStd: 0 }],
       }, 'admin');
       // Post them
       const all = await voucherRepo.getVouchersByTenantId(TENANT_ID);
@@ -221,7 +223,7 @@ describe('DashboardService', () => {
         voucherType: 'PV',
         date: today(),
         narration: 'Purchase 1',
-        lines: [{ accountId: 'acc-21100', description: 'Purchase 1', debit: 12000, credit: 0, quantity: 0, stRate: 0, stAmount: 0, amtExclStd: 0 }],
+        lines: [{ accountId: 'acc-21100', description: 'Purchase 1', debit: 12000, credit: 0, productId: 'prod-1', quantity: 10, stRate: 0, stAmount: 0, amtExclStd: 0 }],
       }, 'admin');
       const all = await voucherRepo.getVouchersByTenantId(TENANT_ID);
       for (const v of all) {
@@ -238,7 +240,7 @@ describe('DashboardService', () => {
         voucherType: 'SRV',
         date: today(),
         narration: 'Sale Return',
-        lines: [{ accountId: 'acc-11201', description: 'SR', debit: 2000, credit: 0, quantity: 0, stRate: 0, stAmount: 0, amtExclStd: 0 }],
+        lines: [{ accountId: 'acc-11201', description: 'SR', debit: 2000, credit: 0, productId: 'prod-1', quantity: 10, stRate: 0, stAmount: 0, amtExclStd: 0 }],
       }, 'admin');
       const all = await voucherRepo.getVouchersByTenantId(TENANT_ID);
       for (const v of all) {
@@ -256,7 +258,7 @@ describe('DashboardService', () => {
         voucherType: 'PRV',
         date: today(),
         narration: 'Purchase Return',
-        lines: [{ accountId: 'acc-21100', description: 'PR', debit: 1500, credit: 0, quantity: 0, stRate: 0, stAmount: 0, amtExclStd: 0 }],
+        lines: [{ accountId: 'acc-21100', description: 'PR', debit: 1500, credit: 0, productId: 'prod-1', quantity: 10, stRate: 0, stAmount: 0, amtExclStd: 0 }],
       }, 'admin');
       const all = await voucherRepo.getVouchersByTenantId(TENANT_ID);
       for (const v of all) {
@@ -279,14 +281,14 @@ describe('DashboardService', () => {
         voucherType: 'SV',
         date: today(),
         narration: 'Today sale',
-        lines: [{ accountId: 'acc-41101', description: 'Today', debit: 1000, credit: 0, quantity: 0, stRate: 0, stAmount: 0, amtExclStd: 0 }],
+        lines: [{ accountId: 'acc-41101', description: 'Today', debit: 1000, credit: 0, productId: 'prod-1', quantity: 10, stRate: 0, stAmount: 0, amtExclStd: 0 }],
       }, 'admin');
       // Old voucher (outside "today" period)
       await voucherRepo.createVoucher(TENANT_ID, {
         voucherType: 'SV',
         date: '2026-01-01',
         narration: 'Old sale',
-        lines: [{ accountId: 'acc-41101', description: 'Old', debit: 5000, credit: 0, quantity: 0, stRate: 0, stAmount: 0, amtExclStd: 0 }],
+        lines: [{ accountId: 'acc-41101', description: 'Old', debit: 5000, credit: 0, productId: 'prod-1', quantity: 10, stRate: 0, stAmount: 0, amtExclStd: 0 }],
       }, 'admin');
 
       const all = await voucherRepo.getVouchersByTenantId(TENANT_ID);

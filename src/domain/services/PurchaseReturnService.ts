@@ -301,7 +301,8 @@ export class PurchaseReturnService {
     // Get the voucher lines to extract product/quantity data
     const voucherLines = await this.voucherRepo.getVoucherLines(tenantId, voucherId);
 
-    // Create stock RETURN movements for lines with product references
+    // Create stock ISSUE movements for lines with product references
+    // Purchase return = goods leaving our warehouse back to supplier = stock decrease
     for (const line of voucherLines) {
       if (line.productId && line.quantity && line.quantity > 0) {
         // Get stock levels to find the source warehouse
@@ -313,10 +314,10 @@ export class PurchaseReturnService {
           ?? productLevels[0];
 
         if (sourceLevel) {
-          // Create RETURN movement (removes from stock, reverse of GRN)
+          // Create ISSUE movement (removes from stock, goods returning to supplier)
           const movement: Omit<StockMovement, 'id' | 'createdAt'> = {
             tenantId,
-            movementType: 'RETURN',
+            movementType: 'ISSUE',
             movementDate: postedVoucher.date,
             referenceType: 'Voucher',
             referenceId: voucherId,
@@ -325,7 +326,7 @@ export class PurchaseReturnService {
             quantity: line.quantity,
             unitCost: sourceLevel.unitCost,
             totalCost: line.quantity * sourceLevel.unitCost,
-            narration: `Purchase return issue for ${line.description}`,
+            narration: `Purchase return to supplier: ${line.description}`,
             status: 'DRAFT',
             createdBy: postedVoucher.createdBy,
           };
@@ -359,6 +360,9 @@ export class PurchaseReturnService {
    * Delete a DRAFT purchase return bill.
    */
   async deletePurchaseReturn(tenantId: string, id: string): Promise<void> {
+    const voucher = await this.voucherRepo.getVoucherById(tenantId, id);
+    if (!voucher) throw new Error('Voucher not found');
+    if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');
     return this.voucherRepo.deleteVoucher(tenantId, id);
   }
 }

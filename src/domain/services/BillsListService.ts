@@ -217,8 +217,12 @@ export class BillsListService {
         partyId = supplier.id;
       }
 
-      // Total: use debit amount as the bill total reference
-      total += line.debit;
+      // Total: sum product lines only (party lines have productId)
+      // For SV/PRV: party line is debited; for PV/SRV: party line is credited
+      // Using Math.max(debit, credit) handles both debit-normal and credit-normal correctly
+      if (line.productId) {
+        total += Math.max(line.debit, line.credit);
+      }
 
       // Items: collect unique product names
       if (line.productId && productById.has(line.productId)) {

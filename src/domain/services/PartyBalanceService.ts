@@ -45,13 +45,7 @@ export class PartyBalanceService {
    * Uses ledger entries as the authoritative source.
    */
   async getCustomerBalances(tenantId: string): Promise<PartyBalance[]> {
-    const [customers, accounts] = await Promise.all([
-      this.customerRepo.getCustomersByTenantId(tenantId),
-      this.coaRepo.getAccountsByTenantId(tenantId),
-    ]);
-
-    const accountByCode = new Map<string, string>();
-    for (const a of accounts) accountByCode.set(a.accountCode, a.accountName);
+    const customers = await this.customerRepo.getCustomersByTenantId(tenantId);
 
     const balances: PartyBalance[] = [];
     for (const customer of customers) {
@@ -61,7 +55,6 @@ export class PartyBalanceService {
         'customer',
         customer.accountHeadId,
         customer.name,
-        accountByCode,
       );
       balances.push(balance);
     }
@@ -73,13 +66,7 @@ export class PartyBalanceService {
    * Get balance for all suppliers.
    */
   async getSupplierBalances(tenantId: string): Promise<PartyBalance[]> {
-    const [suppliers, accounts] = await Promise.all([
-      this.supplierRepo.getSuppliers(tenantId),
-      this.coaRepo.getAccountsByTenantId(tenantId),
-    ]);
-
-    const accountByCode = new Map<string, string>();
-    for (const a of accounts) accountByCode.set(a.accountCode, a.accountName);
+    const suppliers = await this.supplierRepo.getSuppliers(tenantId);
 
     const balances: PartyBalance[] = [];
     for (const supplier of suppliers) {
@@ -89,7 +76,6 @@ export class PartyBalanceService {
         'supplier',
         supplier.accountHeadId,
         supplier.name,
-        accountByCode,
       );
       balances.push(balance);
     }
@@ -106,16 +92,14 @@ export class PartyBalanceService {
     partyType: 'customer' | 'supplier',
     accountHeadId: string,
     partyName: string,
-    accountByCode: Map<string, string>,
   ): Promise<PartyBalance> {
     // Get all ledger entries for this party's AR/AP account
     // The accountHeadId is the COA record ID; ledger entries use account code
     const coaAccount = await this.coaRepo.getAccountById(tenantId, accountHeadId);
     const accountCode = coaAccount?.accountCode ?? '';
 
-    // Fetch all ledger entries and filter for this account
-    const allEntries = await this.voucherRepo.getLedgerEntries(tenantId, {});
-    const partyEntries = allEntries.filter(e => e.accountId === accountCode);
+    // Fetch ledger entries filtered by this party's account code
+    const partyEntries = await this.voucherRepo.getLedgerEntries(tenantId, { accountId: accountCode });
 
     // For AR (customer): debits are sales (increase balance), credits are receipts/returns (decrease)
     // For AP (supplier): credits are purchases (increase balance), debits are returns/payments (decrease)

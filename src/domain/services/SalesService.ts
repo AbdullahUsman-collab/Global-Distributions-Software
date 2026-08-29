@@ -385,6 +385,9 @@ export class SalesService {
    * Source: audit/10_SALES_ENGINE.md — "Delete Bill" button exists
    */
   async deleteSaleBill(tenantId: string, id: string): Promise<void> {
+    const voucher = await this.voucherRepo.getVoucherById(tenantId, id);
+    if (!voucher) throw new Error('Voucher not found');
+    if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');
     return this.voucherRepo.deleteVoucher(tenantId, id);
   }
 }
