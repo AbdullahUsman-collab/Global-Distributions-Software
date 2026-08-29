@@ -294,7 +294,11 @@ export const Dashboard: React.FC = () => {
                       {data.recentTransactions.map(t => {
                         const colors = TYPE_COLORS[t.voucherType] || { bg: '#f1f5f9', fg: '#475569' };
                         return (
-                          <tr key={t.id} style={styles.tr}>
+                          <tr
+                            key={t.id}
+                            style={{ ...styles.tr, cursor: 'pointer' }}
+                            onClick={() => navigate(`/bills/${t.id}`)}
+                          >
                             <td style={styles.td}>
                               <span style={{ ...styles.typeBadge, backgroundColor: colors.bg, color: colors.fg }}>
                                 {TYPE_LABELS[t.voucherType] || t.voucherType}

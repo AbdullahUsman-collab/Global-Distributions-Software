@@ -33,6 +33,8 @@ import { CashBookService } from '../domain/services/CashBookService';
 import { SaleReturnService } from '../domain/services/SaleReturnService';
 import { PurchaseReturnService } from '../domain/services/PurchaseReturnService';
 import { DashboardService } from '../domain/services/DashboardService';
+import { BillDetailService } from '../domain/services/BillDetailService';
+import { PartyBalanceService } from '../domain/services/PartyBalanceService';
 
 /**
  * Service container for dependency injection.
@@ -57,6 +59,8 @@ class ServiceContainer {
   private _saleReturnService: SaleReturnService;
   private _purchaseReturnService: PurchaseReturnService;
   private _dashboardService: DashboardService;
+  private _billDetailService: BillDetailService;
+  private _partyBalanceService: PartyBalanceService;
 
   private constructor() {
     // Initialize mock adapters
@@ -122,6 +126,19 @@ class ServiceContainer {
       this._supplierRepository,
       this._cashBookService,
       this._financialReportService,
+    );
+    this._billDetailService = new BillDetailService(
+      this._voucherRepository,
+      this._coaRepository,
+      this._customerRepository,
+      this._supplierRepository,
+      this._inventoryRepository,
+    );
+    this._partyBalanceService = new PartyBalanceService(
+      this._voucherRepository,
+      this._coaRepository,
+      this._customerRepository,
+      this._supplierRepository,
     );
   }
 
@@ -194,6 +211,14 @@ class ServiceContainer {
 
   get dashboardService(): DashboardService {
     return this._dashboardService;
+  }
+
+  get billDetailService(): BillDetailService {
+    return this._billDetailService;
+  }
+
+  get partyBalanceService(): PartyBalanceService {
+    return this._partyBalanceService;
   }
 }
 

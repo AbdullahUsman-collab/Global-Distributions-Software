@@ -107,6 +107,7 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [searchPrefix, setSearchPrefix] = useState('');
   const [accountCodeMap, setAccountCodeMap] = useState<Map<string, string>>(new Map());
+  const [balanceMap, setBalanceMap] = useState<Map<string, { outstanding: number; purchases: number; returns: number; payments: number }>>(new Map());
 
   const loadSuppliers = useCallback(async () => {
     setLoading(true);
@@ -122,6 +123,24 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         map.set(a.id, a.accountCode);
       }
       setAccountCodeMap(map);
+
+      // Load balances from ledger entries
+      const allEntries = await services.voucherRepository.getLedgerEntries(tenantId, {});
+      const bMap = new Map<string, { outstanding: number; purchases: number; returns: number; payments: number }>();
+      for (const s of data) {
+        const acc = accounts.find(a => a.id === s.accountHeadId);
+        if (!acc) continue;
+        const entries = allEntries.filter(e => e.accountId === acc.accountCode);
+        let purchases = 0, returns = 0, payments = 0;
+        for (const e of entries) {
+          if (e.voucherType === 'PV') purchases += e.credit;
+          else if (e.voucherType === 'PRV') returns += e.debit;
+          else if (e.voucherType === 'CP') payments += e.debit;
+        }
+        const outstanding = entries.reduce((s, e) => s + e.credit - e.debit, 0);
+        bMap.set(s.id, { outstanding: Math.max(0, outstanding), purchases, returns, payments });
+      }
+      setBalanceMap(bMap);
     } catch (err) {
       console.error('Failed to load suppliers:', err);
     } finally {
@@ -213,21 +232,35 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               <tr>
                 <th style={styles.th}>Name</th>
                 <th style={styles.th}>Contact</th>
-                <th style={styles.th}>Phone</th>
-                <th style={styles.th}>City</th>
-                <th style={styles.th}>Payment Terms</th>
+                <th style={styles.th} className="purchases-hide-mobile">Phone</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Purchases</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Returns</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Payments</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Outstanding</th>
                 <th style={styles.th}>Status</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredSuppliers.map(s => (
+              {filteredSuppliers.map(s => {
+                const bal = balanceMap.get(s.id);
+                return (
                 <tr key={s.id} style={styles.tr}>
                   <td style={styles.td}>{s.name}</td>
                   <td style={styles.td}>{s.contactPerson ?? '—'}</td>
-                  <td style={styles.td}>{s.phone ?? '—'}</td>
-                  <td style={styles.td}>{s.city ?? '—'}</td>
-                  <td style={styles.td}>{s.paymentTerms ?? '—'}</td>
+                  <td style={styles.td} className="purchases-hide-mobile">{s.phone ?? '—'}</td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                    {bal && bal.purchases > 0 ? bal.purchases.toLocaleString() : '—'}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                    {bal && bal.returns > 0 ? bal.returns.toLocaleString() : '—'}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                    {bal && bal.payments > 0 ? bal.payments.toLocaleString() : '—'}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace', fontWeight: '600' }}>
+                    {bal ? bal.outstanding.toLocaleString() : '—'}
+                  </td>
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
@@ -253,7 +286,8 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

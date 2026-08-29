@@ -108,6 +108,7 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchPrefix, setSearchPrefix] = useState('');
   const [accountCodeMap, setAccountCodeMap] = useState<Map<string, string>>(new Map());
+  const [balanceMap, setBalanceMap] = useState<Map<string, { outstanding: number; sales: number; returns: number; receipts: number }>>(new Map());
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
@@ -123,6 +124,24 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         map.set(a.id, a.accountCode);
       }
       setAccountCodeMap(map);
+
+      // Load balances from ledger entries
+      const allEntries = await services.voucherRepository.getLedgerEntries(tenantId, {});
+      const bMap = new Map<string, { outstanding: number; sales: number; returns: number; receipts: number }>();
+      for (const c of data) {
+        const acc = accounts.find(a => a.id === c.accountHeadId);
+        if (!acc) continue;
+        const entries = allEntries.filter(e => e.accountId === acc.accountCode);
+        let sales = 0, returns = 0, receipts = 0;
+        for (const e of entries) {
+          if (e.voucherType === 'SV') sales += e.debit;
+          else if (e.voucherType === 'SRV') returns += e.credit;
+          else if (e.voucherType === 'CR') receipts += e.credit;
+        }
+        const outstanding = entries.reduce((s, e) => s + e.debit - e.credit, 0);
+        bMap.set(c.id, { outstanding: Math.max(0, outstanding), sales, returns, receipts });
+      }
+      setBalanceMap(bMap);
     } catch (err) {
       console.error('Failed to load customers:', err);
     } finally {
@@ -215,21 +234,35 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               <tr>
                 <th style={styles.th}>Name</th>
                 <th style={styles.th}>Owner</th>
-                <th style={styles.th}>Phone</th>
-                <th style={styles.th}>NTN</th>
-                <th style={styles.th}>CNIC</th>
+                <th style={styles.th} className="sales-hide-mobile">Phone</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Sales</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Returns</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Receipts</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>Outstanding</th>
                 <th style={styles.th}>Status</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredCustomers.map(c => (
+              {filteredCustomers.map(c => {
+                const bal = balanceMap.get(c.id);
+                return (
                 <tr key={c.id} style={styles.tr}>
                   <td style={styles.td}>{c.name}</td>
                   <td style={styles.td}>{c.ownerName}</td>
-                  <td style={styles.td}>{c.phone}</td>
-                  <td style={styles.td}>{c.ntn}</td>
-                  <td style={styles.td}>{c.cnic}</td>
+                  <td style={styles.td} className="sales-hide-mobile">{c.phone}</td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                    {bal && bal.sales > 0 ? bal.sales.toLocaleString() : '—'}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                    {bal && bal.returns > 0 ? bal.returns.toLocaleString() : '—'}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                    {bal && bal.receipts > 0 ? bal.receipts.toLocaleString() : '—'}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace', fontWeight: '600' }}>
+                    {bal ? bal.outstanding.toLocaleString() : '—'}
+                  </td>
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
@@ -255,7 +288,8 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

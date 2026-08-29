@@ -294,13 +294,15 @@ export const AgingReport: React.FC = () => {
                     {fmt(row.totalOutstanding)}
                   </td>
                   <td style={styles.td} className="aging-hide-print">
-                    <button
-                      onClick={() => handleLedgerNav(row.accountCode)}
-                      style={styles.ledgerBtn}
-                      title="View in Ledger"
-                    >
-                      Ledger
-                    </button>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button
+                        onClick={() => handleLedgerNav(row.accountCode)}
+                        style={styles.ledgerBtn}
+                        title="View in Ledger"
+                      >
+                        Ledger
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -165,13 +165,9 @@ export const BillsList: React.FC = () => {
     }
   }, [tenant.id, billsService, loadBills]);
 
-  // Open/navigate to bill
+  // Open/navigate to bill detail
   const handleOpen = useCallback((record: BillRecord) => {
-    const type = record.voucher.voucherType;
-    if (type === 'SV') navigate('/sales');
-    else if (type === 'PV') navigate('/purchases');
-    else if (type === 'SRV') navigate('/sales');
-    else if (type === 'PRV') navigate('/purchases');
+    navigate(`/bills/${record.voucher.id}`);
   }, [navigate]);
 
   // Party options (combined customers + suppliers)
