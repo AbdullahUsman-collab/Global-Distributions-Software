@@ -544,12 +544,12 @@ const VoucherRow: React.FC<{
 
   useEffect(() => {
     if (expanded && lines.length === 0) {
-      services.voucherRepository.getVoucherLines(tenantId, v.id).then(setLines);
+      services.voucherRepository.getVoucherLines(tenantId, v.id).then(raw => setLines(raw ?? []));
     }
   }, [expanded, v.id, tenantId, lines.length]);
 
-  const typeBadge = VOUCHER_TYPE_COLORS[v.voucherType];
-  const statusBadge = VOUCHER_STATUS_COLORS[v.status];
+  const typeBadge = VOUCHER_TYPE_COLORS[v.voucherType] ?? { bg: '#f1f5f9', fg: '#475569' };
+  const statusBadge = VOUCHER_STATUS_COLORS[v.status] ?? { bg: '#f1f5f9', fg: '#475569' };
   const totalD = totalDebit(lines.length > 0 ? lines : []);
   const totalC = totalCredit(lines.length > 0 ? lines : []);
 
@@ -676,7 +676,7 @@ const VoucherModal: React.FC<{
   useEffect(() => {
     if (isEdit && voucher) {
       services.voucherRepository.getVoucherLines(tenantId, voucher.id).then(raw => {
-        setLines(raw.map(l => ({
+        setLines((raw ?? []).map(l => ({
           accountId: l.accountId, description: l.description, debit: l.debit, credit: l.credit,
           contraAccountId: l.contraAccountId, quantity: l.quantity, productId: l.productId, branch: l.branch,
           stInvNo: l.stInvNo, stRate: l.stRate, stAmount: l.stAmount, amtExclStd: l.amtExclStd,
@@ -1170,7 +1170,7 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
                   <button onClick={() => navigate('/bills/' + e.voucherId)} style={{ ...styles.linkBtn, padding: 0, fontSize: 13 }}>{e.voucherNumber}</button>
                 </span>
                 <span style={{ ...styles.col, flex: '0 0 50px' }}>
-                  <span style={{ ...styles.typeBadge, backgroundColor: VOUCHER_TYPE_COLORS[e.voucherType].bg, color: VOUCHER_TYPE_COLORS[e.voucherType].fg, fontSize: 10 }}>
+                  <span style={{ ...styles.typeBadge, backgroundColor: (VOUCHER_TYPE_COLORS[e.voucherType] ?? { bg: '#f1f5f9', fg: '#475569' }).bg, color: (VOUCHER_TYPE_COLORS[e.voucherType] ?? { bg: '#f1f5f9', fg: '#475569' }).fg, fontSize: 10 }}>
                     {e.voucherType}
                   </span>
                 </span>

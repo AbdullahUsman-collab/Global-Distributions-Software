@@ -105,13 +105,13 @@ export const Settings: React.FC = () => {
         existing = await services.settingsRepository.updateSettings(tenant.id, {});
       }
       setSettings(existing);
-      setDraftProfile(existing.profile);
-      setDraftSalesTax(existing.salesTax);
-      setDraftFurtherTax(existing.furtherTax);
-      setDraftFed(existing.fed);
-      setDraftAdvanceTax(existing.advanceTax);
-      setDraftTaxAccounts(existing.taxAccounts);
-      setDraftFinancial(existing.financial);
+      setDraftProfile(existing.profile ?? { businessName: '', tradeName: '', ntn: '', stn: '', email: '', phone: '', address: '', baseCurrency: 'PKR' });
+      setDraftSalesTax(existing.salesTax ?? { isEnabled: true, defaultRate: 0, defaultGstType: '3RD', isTaxInclusiveDefault: false });
+      setDraftFurtherTax(existing.furtherTax ?? { isEnabled: false, defaultRate: 0 });
+      setDraftFed(existing.fed ?? { isEnabled: false, defaultRate: 0 });
+      setDraftAdvanceTax(existing.advanceTax ?? { isEnabled: false, saleRate: 0, purchaseRate: 0 });
+      setDraftTaxAccounts(existing.taxAccounts ?? {});
+      setDraftFinancial(existing.financial ?? { fiscalYearStartMonth: 7, decimalPrecision: 2, voucherNumberingPrefix: '' });
     } catch {
       setErrorMessage('Failed to load settings.');
     } finally {
@@ -147,13 +147,13 @@ export const Settings: React.FC = () => {
 
   const handleReset = () => {
     if (settings) {
-      setDraftProfile(settings.profile);
-      setDraftSalesTax(settings.salesTax);
-      setDraftFurtherTax(settings.furtherTax);
-      setDraftFed(settings.fed);
-      setDraftAdvanceTax(settings.advanceTax);
-      setDraftTaxAccounts(settings.taxAccounts);
-      setDraftFinancial(settings.financial);
+      setDraftProfile(settings.profile ?? { businessName: '', tradeName: '', ntn: '', stn: '', email: '', phone: '', address: '', baseCurrency: 'PKR' });
+      setDraftSalesTax(settings.salesTax ?? { isEnabled: true, defaultRate: 0, defaultGstType: '3RD', isTaxInclusiveDefault: false });
+      setDraftFurtherTax(settings.furtherTax ?? { isEnabled: false, defaultRate: 0 });
+      setDraftFed(settings.fed ?? { isEnabled: false, defaultRate: 0 });
+      setDraftAdvanceTax(settings.advanceTax ?? { isEnabled: false, saleRate: 0, purchaseRate: 0 });
+      setDraftTaxAccounts(settings.taxAccounts ?? {});
+      setDraftFinancial(settings.financial ?? { fiscalYearStartMonth: 7, decimalPrecision: 2, voucherNumberingPrefix: '' });
     }
     setSaveMessage(null);
     setErrorMessage(null);

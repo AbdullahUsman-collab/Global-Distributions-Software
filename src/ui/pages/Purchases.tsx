@@ -406,7 +406,7 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const data = await services.purchaseService.getPurchaseBills(tenantId);
-      setBills(data.sort((a, b) => b.date.localeCompare(a.date)));
+      if (data) setBills(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load bills:', err);
     } finally {
@@ -483,8 +483,8 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[b.status].bg,
-                      color: STATUS_COLORS[b.status].fg,
+                      backgroundColor: STATUS_COLORS[b.status]?.bg ?? '#f1f5f9',
+                      color: STATUS_COLORS[b.status]?.fg ?? '#475569',
                     }}>
                       {VOUCHER_STATUS_LABELS[b.status]}
                     </span>
@@ -847,7 +847,7 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const data = await services.purchaseReturnService.getPurchaseReturns(tenantId);
-      setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
+      if (data) setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load purchase returns:', err);
     } finally {
@@ -921,8 +921,8 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[r.status].bg,
-                      color: STATUS_COLORS[r.status].fg,
+                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? '#f1f5f9',
+                      color: STATUS_COLORS[r.status]?.fg ?? '#475569',
                     }}>
                       {VOUCHER_STATUS_LABELS[r.status]}
                     </span>

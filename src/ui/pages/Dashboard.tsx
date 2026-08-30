@@ -198,7 +198,7 @@ export const Dashboard: React.FC = () => {
               }
             />
             <KpiCardComponent
-              card={{ label: 'Receivables', amount: data.receivables.grandTotal, count: 0 }}
+              card={{ label: 'Receivables', amount: (data.receivables ?? {}).grandTotal ?? 0, count: 0 }}
               iconBg="#fef3c7"
               iconColor="#d97706"
               onClick={() => navigate('/aging')}
@@ -210,7 +210,7 @@ export const Dashboard: React.FC = () => {
               }
             />
             <KpiCardComponent
-              card={{ label: 'Payables', amount: data.payables.grandTotal, count: 0 }}
+              card={{ label: 'Payables', amount: (data.payables ?? {}).grandTotal ?? 0, count: 0 }}
               iconBg="#fce7f3"
               iconColor="#be185d"
               onClick={() => navigate('/aging')}
@@ -224,9 +224,9 @@ export const Dashboard: React.FC = () => {
             <KpiCardComponent
               card={{
                 label: 'Inventory',
-                amount: data.inventory.totalStockValue,
-                count: data.inventory.totalProducts,
-                secondary: data.inventory.totalStockQty,
+                amount: (data.inventory ?? {}).totalStockValue ?? 0,
+                count: (data.inventory ?? {}).totalProducts ?? 0,
+                secondary: (data.inventory ?? {}).totalStockQty ?? 0,
               }}
               iconBg="#f0fdf4"
               iconColor="#15803d"
@@ -240,8 +240,8 @@ export const Dashboard: React.FC = () => {
             <KpiCardComponent
               card={{
                 label: 'Cash Position',
-                amount: data.cashPosition.totalBalance,
-                count: data.cashPosition.accountCount,
+                amount: (data.cashPosition ?? {}).totalBalance ?? 0,
+                count: (data.cashPosition ?? {}).accountCount ?? 0,
               }}
               iconBg="#ede9fe"
               iconColor="#7c3aed"
@@ -260,10 +260,10 @@ export const Dashboard: React.FC = () => {
             <div style={styles.card}>
               <h2 style={styles.cardTitle}>Sales vs Purchases</h2>
               <div style={styles.svPurchaseGrid}>
-                <SummaryRow label="Sales" amount={data.sales.amount} count={data.sales.count} color="#1d4ed8" />
-                <SummaryRow label="Purchases" amount={data.purchases.amount} count={data.purchases.count} color="#166534" />
-                <SummaryRow label="Sale Returns" amount={data.saleReturns.amount} count={data.saleReturns.count} color="#92400e" />
-                <SummaryRow label="Purchase Returns" amount={data.purchaseReturns.amount} count={data.purchaseReturns.count} color="#9d174d" />
+                <SummaryRow label="Sales" amount={(data.sales ?? {}).amount ?? 0} count={(data.sales ?? {}).count ?? 0} color="#1d4ed8" />
+                <SummaryRow label="Purchases" amount={(data.purchases ?? {}).amount ?? 0} count={(data.purchases ?? {}).count ?? 0} color="#166534" />
+                <SummaryRow label="Sale Returns" amount={(data.saleReturns ?? {}).amount ?? 0} count={(data.saleReturns ?? {}).count ?? 0} color="#92400e" />
+                <SummaryRow label="Purchase Returns" amount={(data.purchaseReturns ?? {}).amount ?? 0} count={(data.purchaseReturns ?? {}).count ?? 0} color="#9d174d" />
               </div>
             </div>
 

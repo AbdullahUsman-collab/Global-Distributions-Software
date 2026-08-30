@@ -128,7 +128,7 @@ export const BillsList: React.FC = () => {
       search: search || undefined,
     };
 
-    let result = [...bills];
+    let result = [...(bills ?? [])];
 
     if (filters.voucherType) {
       result = result.filter(b => b.voucher.voucherType === filters.voucherType);
@@ -149,9 +149,9 @@ export const BillsList: React.FC = () => {
       const q = filters.search.trim().toLowerCase();
       result = result.filter(b =>
         String(b.voucher.voucherNumber).includes(q) ||
-        b.voucher.narration.toLowerCase().includes(q) ||
-        b.partyName.toLowerCase().includes(q) ||
-        b.itemNames.some(name => name.toLowerCase().includes(q))
+        (b.voucher.narration?.toLowerCase() ?? '').includes(q) ||
+        (b.partyName?.toLowerCase() ?? '').includes(q) ||
+        (b.itemNames?.some(name => name.toLowerCase().includes(q)) ?? false)
       );
     }
 
@@ -401,8 +401,8 @@ export const BillsList: React.FC = () => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.typeBadge,
-                      backgroundColor: BILL_TYPE_COLORS[b.voucher.voucherType].bg,
-                      color: BILL_TYPE_COLORS[b.voucher.voucherType].fg,
+                      backgroundColor: (BILL_TYPE_COLORS[b.voucher.voucherType] ?? {}).bg ?? '#f1f5f9',
+                      color: (BILL_TYPE_COLORS[b.voucher.voucherType] ?? {}).fg ?? '#475569',
                     }}>
                       {BILL_TYPE_LABELS[b.voucher.voucherType]}
                     </span>
@@ -419,8 +419,8 @@ export const BillsList: React.FC = () => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.statusBadge,
-                      backgroundColor: STATUS_COLORS[b.voucher.status].bg,
-                      color: STATUS_COLORS[b.voucher.status].fg,
+                      backgroundColor: (STATUS_COLORS[b.voucher.status] ?? {}).bg ?? '#f1f5f9',
+                      color: (STATUS_COLORS[b.voucher.status] ?? {}).fg ?? '#475569',
                     }}>
                       {VOUCHER_STATUS_LABELS[b.voucher.status]}
                     </span>

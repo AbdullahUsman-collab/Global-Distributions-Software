@@ -939,8 +939,8 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               const prod = productMap.get(m.productId);
               const fromWh = m.fromWarehouseId ? warehouseMap.get(m.fromWarehouseId) : null;
               const toWh = m.toWarehouseId ? warehouseMap.get(m.toWarehouseId) : null;
-              const typeColor = MOVEMENT_TYPE_COLORS[m.movementType];
-              const statusColor = MOVEMENT_STATUS_COLORS[m.status];
+              const typeColor = MOVEMENT_TYPE_COLORS[m.movementType] ?? { bg: '#f1f5f9', fg: '#475569' };
+              const statusColor = MOVEMENT_STATUS_COLORS[m.status] ?? { bg: '#f1f5f9', fg: '#475569' };
 
               return (
                 <div key={m.id} style={{ ...styles.voucherRow, minWidth: 1070 }}>

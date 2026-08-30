@@ -158,9 +158,9 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     return customers.filter(c =>
       c.name.toLowerCase().includes(lower) ||
       c.ownerName.toLowerCase().includes(lower) ||
-      c.phone.includes(lower) ||
-      c.ntn.toLowerCase().includes(lower) ||
-      c.cnic.toLowerCase().includes(lower)
+      (c.phone?.toLowerCase() ?? '').includes(lower) ||
+      (c.ntn?.toLowerCase() ?? '').includes(lower) ||
+      (c.cnic?.toLowerCase() ?? '').includes(lower)
     );
   }, [customers, searchPrefix]);
 
@@ -382,7 +382,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const data = await services.salesService.getSaleBills(tenantId);
-      setBills(data.sort((a, b) => b.date.localeCompare(a.date)));
+      if (data) setBills(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load bills:', err);
     } finally {
@@ -459,8 +459,8 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[b.status].bg,
-                      color: STATUS_COLORS[b.status].fg,
+                      backgroundColor: STATUS_COLORS[b.status]?.bg ?? '#f1f5f9',
+                      color: STATUS_COLORS[b.status]?.fg ?? '#475569',
                     }}>
                       {VOUCHER_STATUS_LABELS[b.status]}
                     </span>
@@ -826,7 +826,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const data = await services.saleReturnService.getSaleReturns(tenantId);
-      setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
+      if (data) setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load sale returns:', err);
     } finally {
@@ -900,8 +900,8 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[r.status].bg,
-                      color: STATUS_COLORS[r.status].fg,
+                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? '#f1f5f9',
+                      color: STATUS_COLORS[r.status]?.fg ?? '#475569',
                     }}>
                       {VOUCHER_STATUS_LABELS[r.status]}
                     </span>

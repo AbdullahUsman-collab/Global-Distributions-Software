@@ -272,3 +272,164 @@ export async function createCashBookVoucher(dto: any) {
     body: JSON.stringify(dto),
   });
 }
+
+// ─── Purchase Returns API ─────────────────────────────────────
+
+export async function createPurchaseReturn(dto: any) {
+  return apiRequest<any>('/purchase-returns', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function postPurchaseReturn(id: string) {
+  return apiRequest<any>(`/purchase-returns/${id}/post`, { method: 'POST' });
+}
+
+export async function deletePurchaseReturn(id: string) {
+  return apiRequest<any>(`/purchase-returns/${id}`, { method: 'DELETE' });
+}
+
+// ─── Customer Receipts Extended API ───────────────────────────
+
+export async function postCustomerReceipt(id: string) {
+  return apiRequest<any>(`/customer-receipts/${id}/post`, { method: 'POST' });
+}
+
+export async function deleteCustomerReceipt(id: string) {
+  return apiRequest<any>(`/customer-receipts/${id}`, { method: 'DELETE' });
+}
+
+// ─── Cash Book Extended API ───────────────────────────────────
+
+export async function postCashBookVoucher(id: string) {
+  return apiRequest<any>(`/cash-book/${id}/post`, { method: 'POST' });
+}
+
+export async function deleteCashBookVoucher(id: string) {
+  return apiRequest<any>(`/cash-book/${id}`, { method: 'DELETE' });
+}
+
+// ─── Customers API ────────────────────────────────────────────
+
+export async function getCustomers() {
+  return apiRequest<any[]>('/customers');
+}
+
+export async function createCustomer(dto: any) {
+  return apiRequest<any>('/customers', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateCustomer(id: string, dto: any) {
+  return apiRequest<any>(`/customers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function deleteCustomer(id: string) {
+  return apiRequest<any>(`/customers/${id}`, { method: 'DELETE' });
+}
+
+// ─── Suppliers API ────────────────────────────────────────────
+
+export async function getSuppliers() {
+  return apiRequest<any[]>('/suppliers');
+}
+
+export async function createSupplier(dto: any) {
+  return apiRequest<any>('/suppliers', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateSupplier(id: string, dto: any) {
+  return apiRequest<any>(`/suppliers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function deleteSupplier(id: string) {
+  return apiRequest<any>(`/suppliers/${id}`, { method: 'DELETE' });
+}
+
+// ─── Sales/Purchases List API ─────────────────────────────────
+
+export async function getSales() {
+  return apiRequest<any[]>('/sales');
+}
+
+export async function getPurchases() {
+  return apiRequest<any[]>('/purchases');
+}
+
+export async function getSaleReturns() {
+  return apiRequest<any[]>('/sale-returns');
+}
+
+export async function getPurchaseReturns() {
+  return apiRequest<any[]>('/purchase-returns');
+}
+
+// ─── COA CRUD API ─────────────────────────────────────────────
+
+export async function createAccount(dto: any) {
+  return apiRequest<any>('/accounts', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateAccount(id: string, dto: any) {
+  return apiRequest<any>(`/accounts/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function deleteAccount(id: string) {
+  return apiRequest<any>(`/accounts/${id}`, { method: 'DELETE' });
+}
+
+// ─── Settings API ─────────────────────────────────────────────
+
+export async function getSettings() {
+  return apiRequest<any>('/settings');
+}
+
+export async function updateSettings(dto: any) {
+  return apiRequest<any>('/settings', {
+    method: 'PUT',
+    body: JSON.stringify(dto),
+  });
+}
+
+// ─── Financial Reports API ────────────────────────────────────
+
+export async function getTrialBalance(filters?: { startDate?: string; endDate?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.startDate) params.set('startDate', filters.startDate);
+  if (filters?.endDate) params.set('endDate', filters.endDate);
+  const qs = params.toString();
+  return apiRequest<any>(`/reports/trial-balance${qs ? '?' + qs : ''}`);
+}
+
+export async function getProfitAndLoss(filters?: { startDate?: string; endDate?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.startDate) params.set('startDate', filters.startDate);
+  if (filters?.endDate) params.set('endDate', filters.endDate);
+  const qs = params.toString();
+  return apiRequest<any>(`/reports/profit-and-loss${qs ? '?' + qs : ''}`);
+}
+
+export async function getBalanceSheet(filters?: { asOfDate?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.asOfDate) params.set('asOfDate', filters.asOfDate);
+  const qs = params.toString();
+  return apiRequest<any>(`/reports/balance-sheet${qs ? '?' + qs : ''}`);
+}

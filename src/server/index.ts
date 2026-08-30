@@ -36,6 +36,7 @@ import { MockVoucherAdapter } from '../domain/adapters/mock/MockVoucherAdapter';
 import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapter';
 import { MockCustomerAdapter } from '../domain/adapters/mock/MockCustomerAdapter';
 import { MockSupplierAdapter } from '../domain/adapters/mock/MockSupplierAdapter';
+import { MockSettingsAdapter } from '../domain/adapters/mock/MockSettingsAdapter';
 
 // Domain adapters — PostgreSQL
 import { PostgresTenantAdapter } from './db/repositories/PostgresTenantAdapter';
@@ -81,6 +82,7 @@ const voucherAdapter = usePg ? new PostgresVoucherAdapter() : new MockVoucherAda
 const inventoryAdapter = usePg ? new PostgresInventoryAdapter() : new MockInventoryAdapter();
 const customerAdapter = usePg ? new PostgresCustomerAdapter() : new MockCustomerAdapter(coaAdapter);
 const supplierAdapter = usePg ? new PostgresSupplierAdapter() : new MockSupplierAdapter(coaAdapter);
+const settingsAdapter = new MockSettingsAdapter();
 
 // ─── Initialize Domain Services ────────────────────────────────
 
@@ -189,6 +191,10 @@ app.use('/api',
     coaAdapter,
     voucherAdapter,
     inventoryAdapter,
+    customerAdapter,
+    supplierAdapter,
+    settingsAdapter,
+    financialReportService,
   )
 );
 

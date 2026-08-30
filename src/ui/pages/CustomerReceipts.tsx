@@ -258,8 +258,8 @@ const ReceiptList: React.FC<{
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[r.status].bg,
-                      color: STATUS_COLORS[r.status].fg,
+                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? '#f1f5f9',
+                      color: STATUS_COLORS[r.status]?.fg ?? '#475569',
                     }}>
                       {VOUCHER_STATUS_LABELS[r.status]}
                     </span>
