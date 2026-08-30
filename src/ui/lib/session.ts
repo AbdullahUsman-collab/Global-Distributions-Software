@@ -74,8 +74,27 @@ function getLocalMe(): { user: any; tenant: any } | null {
   const user = getCurrentUser();
   const tenantId = getTenantId();
   if (!user || !tenantId) return null;
-  return { user, tenant: { id: tenantId } };
+  const tenant = DEMO_TENANTS[tenantId] || { id: tenantId, brandName: 'ERP', slug: '', logoUrl: '', primaryColor: '#3b82f6', accentColor: '#1d4ed8', isActive: true, createdAt: new Date(), updatedAt: new Date() };
+  return { user, tenant };
 }
+
+const DEMO_TENANTS: Record<string, any> = {
+  'tenant-demo-wholesale-001': {
+    id: 'tenant-demo-wholesale-001', slug: 'demo-wholesale', brandName: 'Demo Wholesale',
+    logoUrl: '', primaryColor: '#3b82f6', accentColor: '#1d4ed8', isActive: true,
+    createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01'),
+  },
+  'tenant-demo-distribution-002': {
+    id: 'tenant-demo-distribution-002', slug: 'demo-distribution', brandName: 'Demo Distribution',
+    logoUrl: '', primaryColor: '#10b981', accentColor: '#059669', isActive: true,
+    createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01'),
+  },
+  'tenant-apex-trading-003': {
+    id: 'tenant-apex-trading-003', slug: 'apex-trading', brandName: 'Apex Trading',
+    logoUrl: '', primaryColor: '#f59e0b', accentColor: '#d97706', isActive: true,
+    createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01'),
+  },
+};
 
 /**
  * Logout via server API.
