@@ -13,53 +13,52 @@ import { UserCredentials } from '../../types/auth';
 import { IUserCredentialsRepository } from '../../repositories/IUserCredentialsRepository';
 
 /**
- * Mock credential data for development.
- * In production, these would be bcrypt/argon2 hashes in a secure database.
+ * Demo credential data for development.
+ * Uses real bcrypt hashes so authentication works in both mock and PostgreSQL modes.
  * 
- * NOTE: These are mock hashes - NOT real password hashes.
- * Real implementation must use proper password hashing.
+ * Passwords: admin123, manager123, clerk123, former123
  */
 const DEMO_CREDENTIALS: UserCredentials[] = [
   // Demo Wholesale - admin (password: "admin123")
   {
     userId: 'user-admin-001',
     tenantId: 'tenant-demo-wholesale-001',
-    passwordHash: '$2b$10$mockHashForAdmin123DemoWholesale',
+    passwordHash: '$2b$10$97vdNbR7uT5I/6ZQ9jgB4OMOfT3bVQt6vhQSZN8RaXLBMGIau8e1O',
     algo: 'bcrypt',
   },
   // Demo Wholesale - manager (password: "manager123")
   {
     userId: 'user-manager-001',
     tenantId: 'tenant-demo-wholesale-001',
-    passwordHash: '$2b$10$mockHashForManager123DemoWholesale',
+    passwordHash: '$2b$10$1yJmsm.CDxVD19KzYFmLCO4iRNLKVjHb4lOD5loIMbXjyfdxWUSF6',
     algo: 'bcrypt',
   },
   // Demo Wholesale - clerk (password: "clerk123")
   {
     userId: 'user-clerk-001',
     tenantId: 'tenant-demo-wholesale-001',
-    passwordHash: '$2b$10$mockHashForClerk123DemoWholesale',
+    passwordHash: '$2b$10$WkqFCEoVlZPdmUZIXPM2POCVyVicy965RpyJFz1/UswZUUoLK5vNG',
     algo: 'bcrypt',
   },
   // Demo Wholesale - former employee (inactive)
   {
     userId: 'user-inactive-001',
     tenantId: 'tenant-demo-wholesale-001',
-    passwordHash: '$2b$10$mockHashForFormer123DemoWholesale',
+    passwordHash: '$2b$10$r.6KiJJeN/we1Fu5HQCuNeNkT3g6Sp9aq8lLPV/Ej/MCbvKsEDSpK',
     algo: 'bcrypt',
   },
-  // Demo Distribution - admin
+  // Demo Distribution - admin (password: "admin123")
   {
     userId: 'user-admin-002',
     tenantId: 'tenant-demo-distribution-002',
-    passwordHash: '$2b$10$mockHashForAdmin123DemoDistribution',
+    passwordHash: '$2b$10$97vdNbR7uT5I/6ZQ9jgB4OMOfT3bVQt6vhQSZN8RaXLBMGIau8e1O',
     algo: 'bcrypt',
   },
-  // Apex Trading - admin
+  // Apex Trading - admin (password: "admin123")
   {
     userId: 'user-admin-003',
     tenantId: 'tenant-apex-trading-003',
-    passwordHash: '$2b$10$mockHashForAdmin123ApexTrading',
+    passwordHash: '$2b$10$97vdNbR7uT5I/6ZQ9jgB4OMOfT3bVQt6vhQSZN8RaXLBMGIau8e1O',
     algo: 'bcrypt',
   },
 ];

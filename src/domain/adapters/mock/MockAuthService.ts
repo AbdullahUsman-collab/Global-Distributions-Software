@@ -1,16 +1,17 @@
 /**
  * Mock Auth Service
- * DEVELOPMENT ONLY - In-memory mock implementation of IAuthService.
+ * In-memory mock implementation of IAuthService.
  * 
  * RULE: This is where authentication business logic lives.
  * Coordinates between repositories and enforces auth rules.
  * 
  * RULE: Free-text username is supported (email NOT required).
  * 
- * RULE: This is a MOCK implementation for development only.
- * Uses simple password comparison instead of proper hashing.
+ * RULE: Uses real bcrypt password verification for compatibility
+ * with both mock and PostgreSQL credential storage.
  */
 
+import bcrypt from 'bcrypt';
 import {
   LoginCredentials,
   AuthResult,
@@ -22,28 +23,6 @@ import { ITenantRepository } from '../../repositories/ITenantRepository';
 import { IUserRepository } from '../../repositories/IUserRepository';
 import { IUserCredentialsRepository } from '../../repositories/IUserCredentialsRepository';
 import { ISessionRepository } from '../../repositories/ISessionRepository';
-
-/**
- * MOCK PASSWORD VERIFICATION - DEVELOPMENT ONLY.
- * In production, this would use bcrypt.compare() or argon2.verify().
- * 
- * For mock purposes, we use a simple comparison:
- * - Mock hashes follow pattern: $2b$10$mockHashFor{Password}{Tenant}
- * - We "verify" by checking if the password matches the pattern
- */
-function mockVerifyPassword(
-  password: string,
-  storedHash: string
-): boolean {
-  // DEVELOPMENT ONLY: Simple mock verification
-  // In production, use bcrypt.compare() or argon2.verify()
-  const lowerPassword = password.toLowerCase();
-  const lowerHash = storedHash.toLowerCase();
-  
-  // Check if password appears in the mock hash
-  // This is a simplistic mock - NOT secure for production
-  return lowerHash.includes(lowerPassword);
-}
 
 /**
  * Mock implementation of IAuthService.
@@ -87,8 +66,8 @@ export class MockAuthService implements IAuthService {
       return { success: false, error: 'Invalid credentials' };
     }
 
-    // 5. Verify password (MOCK - development only)
-    const isPasswordValid = mockVerifyPassword(
+    // 5. Verify password using bcrypt (works with both mock and real hashes)
+    const isPasswordValid = await bcrypt.compare(
       password,
       userCredentials.passwordHash
     );

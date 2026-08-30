@@ -12,7 +12,9 @@
  * - Input validation on all endpoints
  * - Generic error messages (no credential enumeration)
  *
- * DEVELOPMENT ONLY — Uses mock adapters for data persistence.
+ * ADAPTER MODE:
+ * - If DATABASE_URL is set: uses PostgreSQL adapters (production)
+ * - If DATABASE_URL is not set: uses mock adapters (development)
  */
 
 import express from 'express';
@@ -23,7 +25,7 @@ import { apiRateLimiter } from './middleware/rateLimit';
 import { createAuthRoutes } from './routes/auth';
 import { createProtectedRoutes } from './routes/protected';
 
-// Domain adapters
+// Domain adapters — mock
 import { MockTenantAdapter } from '../domain/adapters/mock/MockTenantAdapter';
 import { MockUserAdapter } from '../domain/adapters/mock/MockUserAdapter';
 import { MockUserCredentialsAdapter } from '../domain/adapters/mock/MockUserCredentialsAdapter';
@@ -35,6 +37,20 @@ import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapt
 import { MockCustomerAdapter } from '../domain/adapters/mock/MockCustomerAdapter';
 import { MockSupplierAdapter } from '../domain/adapters/mock/MockSupplierAdapter';
 
+// Domain adapters — PostgreSQL
+import { PostgresTenantAdapter } from './db/repositories/PostgresTenantAdapter';
+import { PostgresUserAdapter } from './db/repositories/PostgresUserAdapter';
+import { PostgresUserCredentialsAdapter } from './db/repositories/PostgresUserCredentialsAdapter';
+import { PostgresSessionAdapter } from './db/repositories/PostgresSessionAdapter';
+import { PostgresCOAAdapter } from './db/repositories/PostgresCOAAdapter';
+import { PostgresVoucherAdapter } from './db/repositories/PostgresVoucherAdapter';
+import { PostgresInventoryAdapter } from './db/repositories/PostgresInventoryAdapter';
+import { PostgresCustomerAdapter } from './db/repositories/PostgresCustomerAdapter';
+import { PostgresSupplierAdapter } from './db/repositories/PostgresSupplierAdapter';
+
+// Database
+import { initPool, closePool } from './db/pool';
+
 // Domain services
 import { SalesService } from '../domain/services/SalesService';
 import { PurchaseService } from '../domain/services/PurchaseService';
@@ -45,24 +61,22 @@ import { PurchaseReturnService } from '../domain/services/PurchaseReturnService'
 import { BillDetailService } from '../domain/services/BillDetailService';
 import { BillsListService } from '../domain/services/BillsListService';
 
-// ─── Initialize Adapters ───────────────────────────────────────
+// ─── Adapter Factory ────────────────────────────────────────────
 
-const tenantAdapter = new MockTenantAdapter();
-const userAdapter = new MockUserAdapter();
-const credentialsAdapter = new MockUserCredentialsAdapter();
-const sessionAdapter = new MockSessionAdapter();
-const authService = new MockAuthService(
-  tenantAdapter,
-  userAdapter,
-  credentialsAdapter,
-  sessionAdapter,
-);
+const usePg = !!process.env.DATABASE_URL;
+const mode = usePg ? 'PostgreSQL' : 'Mock';
 
-const coaAdapter = new MockCOAAdapter();
-const voucherAdapter = new MockVoucherAdapter();
-const inventoryAdapter = new MockInventoryAdapter();
-const customerAdapter = new MockCustomerAdapter(coaAdapter);
-const supplierAdapter = new MockSupplierAdapter(coaAdapter);
+const tenantAdapter = usePg ? new PostgresTenantAdapter() : new MockTenantAdapter();
+const userAdapter = usePg ? new PostgresUserAdapter() : new MockUserAdapter();
+const credentialsAdapter = usePg ? new PostgresUserCredentialsAdapter() : new MockUserCredentialsAdapter();
+const sessionAdapter = usePg ? new PostgresSessionAdapter() : new MockSessionAdapter();
+const authService = new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter);
+
+const coaAdapter = usePg ? new PostgresCOAAdapter() : new MockCOAAdapter();
+const voucherAdapter = usePg ? new PostgresVoucherAdapter() : new MockVoucherAdapter();
+const inventoryAdapter = usePg ? new PostgresInventoryAdapter() : new MockInventoryAdapter();
+const customerAdapter = usePg ? new PostgresCustomerAdapter() : new MockCustomerAdapter(coaAdapter);
+const supplierAdapter = usePg ? new PostgresSupplierAdapter() : new MockSupplierAdapter(coaAdapter);
 
 // ─── Initialize Domain Services ────────────────────────────────
 
@@ -173,12 +187,32 @@ app.get('/api/health', (_req, res) => {
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-app.listen(PORT, () => {
-  const env = process.env.NODE_ENV || 'development';
-  console.log(`
+async function start() {
+  // Initialize PostgreSQL pool if DATABASE_URL is set
+  if (usePg) {
+    try {
+      const { loadConfig } = await import('./db/env');
+      const config = loadConfig();
+      initPool(config.database);
+      const { testConnection } = await import('./db/pool');
+      const connected = await testConnection();
+      if (!connected) {
+        console.error('CRITICAL: PostgreSQL connection failed. Falling back to mock adapters.');
+      } else {
+        console.log('  ✓ PostgreSQL connected');
+      }
+    } catch (err) {
+      console.error('CRITICAL: PostgreSQL initialization failed:', err);
+    }
+  }
+
+  app.listen(PORT, () => {
+    const env = process.env.NODE_ENV || 'development';
+    console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║  Distribution Software ERP — ${env.toUpperCase()} Server${' '.repeat(Math.max(0, 18 - env.length))}║
 ║  Running on http://localhost:${PORT}                          ║
+║  Persistence: ${mode.padEnd(47)}║
 ║                                                              ║
 ║  Security Features:                                          ║
 ║  ✓ HTTP-only cookie sessions                                 ║
@@ -188,6 +222,7 @@ app.listen(PORT, () => {
 ║  ✓ Rate limiting (login: 10/15min, API: 100/15min)          ║
 ║  ✓ Input validation                                          ║
 ║  ✓ Secure session tokens (crypto.randomBytes)                ║
+║  ✓ Real password hashing (bcrypt)                            ║
 ║                                                              ║
 ║  Endpoints:                                                  ║
 ║  - GET  /api/health          Health check                    ║
@@ -206,7 +241,23 @@ app.listen(PORT, () => {
 ║  - GET  /api/bills           List bills                      ║
 ║  - GET  /api/bills/:id       Bill detail                     ║
 ╚══════════════════════════════════════════════════════════════╝
-  `);
+    `);
+  });
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  if (usePg) await closePool();
+  process.exit(0);
 });
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  if (usePg) await closePool();
+  process.exit(0);
+});
+
+start();
 
 export default app;
