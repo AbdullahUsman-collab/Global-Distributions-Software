@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Tenant } from '../../domain/types/tenant';
 import { services } from '../services';
-import { storeSession } from '../lib/session';
+import { apiLogin, getTenantId, storeSession } from '../lib/session';
 
 export const Login: React.FC = () => {
   const { brandSlug } = useParams<{ brandSlug: string }>();
@@ -65,14 +65,9 @@ export const Login: React.FC = () => {
     setSubmitSuccess(false);
 
     try {
-      const result = await services.authService.authenticate({
-        username,
-        password,
-        tenantId: tenant.id,
-      });
+      const result = await apiLogin(username, password, tenant.id);
 
       if (result.success === true) {
-        storeSession(result.session.sessionId, result.session.tenantId);
         navigate('/dashboard');
       } else {
         setSubmitError(result.error);

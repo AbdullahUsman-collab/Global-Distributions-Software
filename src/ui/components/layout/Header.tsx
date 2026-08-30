@@ -11,8 +11,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../auth/ProtectedRoute';
-import { clearSession, getSessionId } from '../../lib/session';
-import { services } from '../../services';
+import { apiLogout } from '../../lib/session';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -26,14 +25,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
 
   const handleLogout = async () => {
     try {
-      const sessionId = getSessionId();
-      if (sessionId) {
-        await services.authService.logout(sessionId);
-      }
+      await apiLogout();
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      clearSession();
       navigate('/');
     }
   };

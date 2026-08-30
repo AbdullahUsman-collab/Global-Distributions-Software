@@ -1,21 +1,22 @@
 /**
  * Protected Route Component
  * Guards routes that require authentication.
- * 
+ *
+ * PRODUCTION: Validates session via server API (HTTP-only cookie).
+ * The browser never reads session tokens directly.
+ *
  * Features:
- * - Reads sessionId from localStorage
- * - Validates session through IAuthService
+ * - Validates session through server /api/auth/me endpoint
  * - Shows loading state during validation
  * - Redirects to / if no session or invalid session
- * - Resolves user and tenant context for children
+ * - Resolves user and tenant context for children from server
  */
 
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { UserSession, User } from '../../../domain/types/auth';
 import { Tenant } from '../../../domain/types/tenant';
-import { services } from '../../services';
-import { getSessionId, clearSession } from '../../lib/session';
+import { apiGetMe, clearLocalSession } from '../../lib/session';
 
 interface AuthContext {
   session: UserSession;
@@ -32,47 +33,34 @@ export const ProtectedRoute: React.FC = () => {
 
   useEffect(() => {
     const validateAndLoad = async () => {
-      const sessionId = getSessionId();
-
-      if (!sessionId) {
-        setShouldRedirect(true);
-        setLoading(false);
-        return;
-      }
-
       try {
-        // Validate session
-        const session = await services.authService.validateSession(sessionId);
+        // Validate session via server API (reads HTTP-only cookie)
+        const result = await apiGetMe();
 
-        if (!session) {
-          clearSession();
+        if (!result || !result.user || !result.tenant) {
+          clearLocalSession();
           setShouldRedirect(true);
           setLoading(false);
           return;
         }
 
-        // Resolve user
-        const user = await services.authService.getUserBySession(sessionId);
-        if (!user) {
-          clearSession();
-          setShouldRedirect(true);
-          setLoading(false);
-          return;
-        }
+        // Create a minimal session object from the server response
+        const session: UserSession = {
+          sessionId: 'cookie-based',
+          userId: result.user.id,
+          tenantId: result.user.tenantId,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        };
 
-        // Resolve tenant
-        const tenant = await services.tenantRepository.getTenantById(session.tenantId);
-        if (!tenant) {
-          clearSession();
-          setShouldRedirect(true);
-          setLoading(false);
-          return;
-        }
-
-        setAuthContext({ session, user, tenant });
+        setAuthContext({
+          session,
+          user: result.user as User,
+          tenant: result.tenant as Tenant,
+        });
       } catch (err) {
         console.error('Session validation error:', err);
-        clearSession();
+        clearLocalSession();
         setShouldRedirect(true);
       } finally {
         setLoading(false);
