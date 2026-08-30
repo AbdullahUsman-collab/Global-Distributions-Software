@@ -64,6 +64,19 @@ const DEMO_CREDENTIALS: UserCredentials[] = [
 ];
 
 /**
+ * Plain-text passwords for client-side mock authentication.
+ * Server-side uses real bcrypt; client uses this for mock mode.
+ */
+export const DEMO_PLAIN_PASSWORDS: Record<string, string> = {
+  'user-admin-001': 'admin123',
+  'user-manager-001': 'manager123',
+  'user-clerk-001': 'clerk123',
+  'user-inactive-001': 'former123',
+  'user-admin-002': 'admin123',
+  'user-admin-003': 'admin123',
+};
+
+/**
  * In-memory storage for mock credentials.
  */
 let credentials: UserCredentials[] = [...DEMO_CREDENTIALS];

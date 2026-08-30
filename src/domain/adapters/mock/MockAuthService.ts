@@ -7,11 +7,10 @@
  * 
  * RULE: Free-text username is supported (email NOT required).
  * 
- * RULE: Uses real bcrypt password verification for compatibility
- * with both mock and PostgreSQL credential storage.
+ * RULE: Uses simple string comparison for client-side mock.
+ * Server-side uses real bcrypt (src/server/lib/password.ts).
  */
 
-import bcrypt from 'bcrypt';
 import {
   LoginCredentials,
   AuthResult,
@@ -23,6 +22,7 @@ import { ITenantRepository } from '../../repositories/ITenantRepository';
 import { IUserRepository } from '../../repositories/IUserRepository';
 import { IUserCredentialsRepository } from '../../repositories/IUserCredentialsRepository';
 import { ISessionRepository } from '../../repositories/ISessionRepository';
+import { DEMO_PLAIN_PASSWORDS } from './MockUserCredentialsAdapter';
 
 /**
  * Mock implementation of IAuthService.
@@ -66,11 +66,10 @@ export class MockAuthService implements IAuthService {
       return { success: false, error: 'Invalid credentials' };
     }
 
-    // 5. Verify password using bcrypt (works with both mock and real hashes)
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      userCredentials.passwordHash
-    );
+    // 5. Verify password using plain-text comparison (mock mode)
+    // Server-side uses real bcrypt; client-side uses this for dev/preview.
+    const plainPassword = DEMO_PLAIN_PASSWORDS[user.id];
+    const isPasswordValid = plainPassword === password;
     if (!isPasswordValid) {
       return { success: false, error: 'Invalid credentials' };
     }
