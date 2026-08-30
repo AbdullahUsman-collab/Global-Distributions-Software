@@ -63,13 +63,26 @@ export class PostgresCustomerAdapter implements ICustomerRepository {
     return this.mapRow(result.rows[0]);
   }
 
+  private static CUSTOMER_UPDATE_COLUMNS: Record<string, string> = {
+    name: 'name',
+    contactPerson: 'contact_person',
+    phone: 'phone',
+    email: 'email',
+    address: 'address',
+    city: 'city',
+    region: 'region',
+    creditLimit: 'credit_limit',
+    paymentTermsDays: 'payment_terms_days',
+    isActive: 'is_active',
+  };
+
   async updateCustomer(tenantId: string, id: string, dto: UpdateCustomerDTO): Promise<Customer> {
     const sets: string[] = [];
     const vals: any[] = [];
     let idx = 1;
     for (const [k, v] of Object.entries(dto)) {
-      if (v !== undefined) {
-        const col = k.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const col = PostgresCustomerAdapter.CUSTOMER_UPDATE_COLUMNS[k];
+      if (col && v !== undefined) {
         sets.push(`${col} = $${idx++}`);
         vals.push(v);
       }

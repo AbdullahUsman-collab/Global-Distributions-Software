@@ -60,6 +60,10 @@ import { SaleReturnService } from '../domain/services/SaleReturnService';
 import { PurchaseReturnService } from '../domain/services/PurchaseReturnService';
 import { BillDetailService } from '../domain/services/BillDetailService';
 import { BillsListService } from '../domain/services/BillsListService';
+import { PartyBalanceService } from '../domain/services/PartyBalanceService';
+import { AgingReportService } from '../domain/services/AgingReportService';
+import { DashboardService } from '../domain/services/DashboardService';
+import { FinancialReportService } from '../domain/services/FinancialReportService';
 
 // ─── Adapter Factory ────────────────────────────────────────────
 
@@ -88,6 +92,10 @@ const saleReturnService = new SaleReturnService(voucherAdapter, inventoryAdapter
 const purchaseReturnService = new PurchaseReturnService(voucherAdapter, inventoryAdapter, supplierAdapter);
 const billDetailService = new BillDetailService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter, inventoryAdapter);
 const billsListService = new BillsListService(voucherAdapter, customerAdapter, supplierAdapter, inventoryAdapter);
+const partyBalanceService = new PartyBalanceService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter);
+const agingReportService = new AgingReportService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter);
+const financialReportService = new FinancialReportService(coaAdapter, voucherAdapter);
+const dashboardService = new DashboardService(voucherAdapter, inventoryAdapter, coaAdapter, customerAdapter, supplierAdapter, cashBookService, financialReportService);
 
 // ─── CORS Configuration ────────────────────────────────────────
 
@@ -175,6 +183,12 @@ app.use('/api',
     purchaseReturnService,
     billDetailService,
     billsListService,
+    partyBalanceService,
+    agingReportService,
+    dashboardService,
+    coaAdapter,
+    voucherAdapter,
+    inventoryAdapter,
   )
 );
 
@@ -200,6 +214,16 @@ async function start() {
         console.error('CRITICAL: PostgreSQL connection failed. Falling back to mock adapters.');
       } else {
         console.log('  ✓ PostgreSQL connected');
+        // Run pending migrations
+        try {
+          const { runMigrations } = await import('./db/migrate');
+          const applied = await runMigrations();
+          if (applied.length > 0) {
+            console.log(`  ✓ Applied ${applied.length} migration(s)`);
+          }
+        } catch (err) {
+          console.error('  ✗ Migration failed:', err);
+        }
       }
     } catch (err) {
       console.error('CRITICAL: PostgreSQL initialization failed:', err);

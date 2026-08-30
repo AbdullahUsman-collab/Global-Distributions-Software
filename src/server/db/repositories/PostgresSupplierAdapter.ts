@@ -65,13 +65,27 @@ export class PostgresSupplierAdapter implements ISupplierRepository {
     return this.mapRow(result.rows[0]);
   }
 
+  private static SUPPLIER_UPDATE_COLUMNS: Record<string, string> = {
+    name: 'name',
+    contactPerson: 'contact_person',
+    phone: 'phone',
+    email: 'email',
+    address: 'address',
+    city: 'city',
+    region: 'region',
+    paymentTermsDays: 'payment_terms_days',
+    gstNumber: 'gst_number',
+    ntnNumber: 'ntn_number',
+    isActive: 'is_active',
+  };
+
   async update(id: string, supplier: UpdateSupplierDTO, tenantId: string): Promise<Supplier | null> {
     const sets: string[] = [];
     const vals: any[] = [];
     let idx = 1;
     for (const [k, v] of Object.entries(supplier)) {
-      if (v !== undefined) {
-        const col = k.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const col = PostgresSupplierAdapter.SUPPLIER_UPDATE_COLUMNS[k];
+      if (col && v !== undefined) {
         sets.push(`${col} = $${idx++}`);
         vals.push(v);
       }

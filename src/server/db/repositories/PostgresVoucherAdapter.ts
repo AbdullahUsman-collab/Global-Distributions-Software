@@ -170,8 +170,18 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
     if (!existing) throw new Error(`Voucher not found: ${id}`);
     if (existing.status === 'POSTED') throw new Error('Cannot delete a POSTED voucher');
 
-    await query('DELETE FROM voucher_lines WHERE tenant_id = $1 AND voucher_id = $2', [tenantId, id]);
-    await query('DELETE FROM vouchers WHERE tenant_id = $1 AND id = $2', [tenantId, id]);
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM voucher_lines WHERE tenant_id = $1 AND voucher_id = $2', [tenantId, id]);
+      await client.query('DELETE FROM vouchers WHERE tenant_id = $1 AND id = $2', [tenantId, id]);
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async postVoucher(tenantId: string, id: string): Promise<VoucherHeader> {
@@ -252,7 +262,7 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
 
   private async getNextVoucherNumberTx(client: any, tenantId: string): Promise<number> {
     const r = await client.query(
-      `SELECT COALESCE(MAX(voucher_number), 0) + 1 AS next_num FROM vouchers WHERE tenant_id = $1`,
+      `SELECT COALESCE(MAX(voucher_number), 0) + 1 AS next_num FROM vouchers WHERE tenant_id = $1 FOR UPDATE`,
       [tenantId]
     );
     return Number(r.rows[0].next_num);

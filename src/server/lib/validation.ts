@@ -152,6 +152,42 @@ export function validateSaleBillLines(lines: any[]): ValidationResult {
 }
 
 /**
+ * Validate sale return DTO.
+ */
+export function validateSaleReturnDTO(body: any): ValidationResult {
+  if (!body || typeof body !== 'object') {
+    return { valid: false, error: 'Request body is required' };
+  }
+  return combineValidations(
+    validId(body.customerId, 'customerId'),
+    validId(body.warehouseId, 'warehouseId'),
+    validDate(body.date, 'date'),
+    nonEmptyArray(body.lines, 'lines'),
+  );
+}
+
+/**
+ * Validate sale return line items.
+ */
+export function validateSaleReturnLines(lines: any[]): ValidationResult {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const result = combineValidations(
+      validId(line.productId, `lines[${i}].productId`),
+      positiveNumber(line.packs, `lines[${i}].packs`),
+      nonNegativeNumber(line.rate, `lines[${i}].rate`),
+      nonNegativeNumber(line.tradeDiscountPercent, `lines[${i}].tradeDiscountPercent`),
+      validTaxRate(line.gstPercent, `lines[${i}].gstPercent`),
+      validTaxRate(line.furtherTaxPercent, `lines[${i}].furtherTaxPercent`),
+      validTaxRate(line.fedPercent, `lines[${i}].fedPercent`),
+      validTaxRate(line.advanceTaxPercent, `lines[${i}].advanceTaxPercent`),
+    );
+    if (!result.valid) return result;
+  }
+  return { valid: true };
+}
+
+/**
  * Validate purchase bill DTO.
  */
 export function validatePurchaseBillDTO(body: any): ValidationResult {

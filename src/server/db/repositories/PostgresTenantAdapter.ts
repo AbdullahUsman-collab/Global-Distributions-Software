@@ -57,13 +57,29 @@ export class PostgresTenantAdapter implements ITenantRepository {
     return this.mapRow(result.rows[0]);
   }
 
+  private static TENANT_UPDATE_COLUMNS: Record<string, string> = {
+    name: 'name',
+    displayName: 'display_name',
+    legalName: 'legal_name',
+    registrationNumber: 'registration_number',
+    taxNumber: 'tax_number',
+    address: 'address',
+    city: 'city',
+    province: 'province',
+    phone: 'phone',
+    email: 'email',
+    website: 'website',
+    logo: 'logo',
+    isActive: 'is_active',
+  };
+
   async updateTenant(id: string, payload: UpdateTenantPayload): Promise<Tenant> {
     const sets: string[] = [];
     const vals: any[] = [];
     let idx = 1;
     for (const [k, v] of Object.entries(payload)) {
-      if (v !== undefined) {
-        const col = k.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const col = PostgresTenantAdapter.TENANT_UPDATE_COLUMNS[k];
+      if (col && v !== undefined) {
         sets.push(`${col} = $${idx++}`);
         vals.push(v);
       }

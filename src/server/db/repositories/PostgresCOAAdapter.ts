@@ -81,14 +81,23 @@ export class PostgresCOAAdapter implements ICOARepository {
     return this.mapRow(result.rows[0]);
   }
 
+  private static ACCOUNT_UPDATE_COLUMNS: Record<string, string> = {
+    accountCode: 'account_code',
+    accountName: 'account_name',
+    accountType: 'account_type',
+    parentAccountId: 'parent_account_id',
+    description: 'description',
+    isActive: 'is_active',
+  };
+
   async updateAccount(tenantId: string, id: string, dto: UpdateAccountHeadDTO): Promise<AccountHead> {
     const sets: string[] = [];
     const values: any[] = [];
     let idx = 1;
 
     for (const [key, val] of Object.entries(dto)) {
-      if (val !== undefined) {
-        const col = this.camelToSnake(key);
+      const col = PostgresCOAAdapter.ACCOUNT_UPDATE_COLUMNS[key];
+      if (col && val !== undefined) {
         sets.push(`${col} = $${idx++}`);
         values.push(val);
       }

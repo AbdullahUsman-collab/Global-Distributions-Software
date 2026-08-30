@@ -19,7 +19,13 @@ import { SaleReturnService } from '../../domain/services/SaleReturnService';
 import { PurchaseReturnService } from '../../domain/services/PurchaseReturnService';
 import { BillDetailService } from '../../domain/services/BillDetailService';
 import { BillsListService } from '../../domain/services/BillsListService';
-import { validateSaleBillDTO, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO } from '../lib/validation';
+import { PartyBalanceService } from '../../domain/services/PartyBalanceService';
+import { AgingReportService } from '../../domain/services/AgingReportService';
+import { DashboardService } from '../../domain/services/DashboardService';
+import { ICOARepository } from '../../domain/repositories/ICOARepository';
+import { IVoucherRepository } from '../../domain/repositories/IVoucherRepository';
+import { IInventoryRepository } from '../../domain/repositories/IInventoryRepository';
+import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO, validId } from '../lib/validation';
 
 export function createProtectedRoutes(
   salesService: SalesService,
@@ -30,6 +36,12 @@ export function createProtectedRoutes(
   purchaseReturnService: PurchaseReturnService,
   billDetailService: BillDetailService,
   billsListService: BillsListService,
+  partyBalanceService: PartyBalanceService,
+  agingReportService: AgingReportService,
+  dashboardService: DashboardService,
+  coaRepo: ICOARepository,
+  voucherRepo: IVoucherRepository,
+  inventoryRepo: IInventoryRepository,
 ): Router {
   const router = Router();
 
@@ -277,7 +289,7 @@ export function createProtectedRoutes(
     async (req: Request, res: Response) => {
       try {
         const tenantId = req.user!.tenantId;
-        const vouchers = await billsListService.listBills(tenantId);
+        const vouchers = await billsListService.getAllBills(tenantId);
         res.json(vouchers);
       } catch (error) {
         console.error('List bills error:', error);
@@ -305,6 +317,305 @@ export function createProtectedRoutes(
       } catch (error) {
         console.error('Get bill detail error:', error);
         res.status(500).json({ error: 'Failed to get bill detail' });
+      }
+    }
+  );
+
+  // ─── Sale Return Routes ──────────────────────────────────────
+
+  /**
+   * POST /api/sale-returns
+   * Create a new sale return.
+   */
+  router.post('/sale-returns',
+    mutationRateLimiter,
+    requirePermissionMiddleware('returns.create'),
+    async (req: Request, res: Response) => {
+      try {
+        const validation = validateSaleReturnDTO(req.body);
+        if (!validation.valid) {
+          res.status(400).json({ error: validation.error });
+          return;
+        }
+        const lineValidation = validateSaleReturnLines(req.body.lines);
+        if (!lineValidation.valid) {
+          res.status(400).json({ error: lineValidation.error });
+          return;
+        }
+        const tenantId = req.user!.tenantId;
+        const createdBy = req.user!.username;
+        const role = req.user!.role;
+        const voucher = await saleReturnService.createSaleReturn(tenantId, req.body, createdBy, role);
+        res.status(201).json(voucher);
+      } catch (error: any) {
+        if (error.message?.startsWith('Unauthorized:')) {
+          res.status(403).json({ error: error.message });
+          return;
+        }
+        console.error('Create sale return error:', error);
+        res.status(500).json({ error: 'Failed to create sale return' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/sale-returns/:id/post
+   * Post a sale return.
+   */
+  router.post('/sale-returns/:id/post',
+    mutationRateLimiter,
+    requirePermissionMiddleware('returns.post'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const role = req.user!.role;
+        const voucher = await saleReturnService.postSaleReturn(tenantId, req.params.id, role);
+        res.json(voucher);
+      } catch (error: any) {
+        if (error.message?.startsWith('Unauthorized:')) {
+          res.status(403).json({ error: error.message });
+          return;
+        }
+        console.error('Post sale return error:', error);
+        res.status(500).json({ error: 'Failed to post sale return' });
+      }
+    }
+  );
+
+  /**
+   * DELETE /api/sale-returns/:id
+   * Delete a sale return (only DRAFT).
+   */
+  router.delete('/sale-returns/:id',
+    mutationRateLimiter,
+    requirePermissionMiddleware('returns.delete'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const role = req.user!.role;
+        await saleReturnService.deleteSaleReturn(tenantId, req.params.id, role);
+        res.json({ success: true });
+      } catch (error: any) {
+        if (error.message?.startsWith('Unauthorized:')) {
+          res.status(403).json({ error: error.message });
+          return;
+        }
+        if (error.message?.includes('POSTED')) {
+          res.status(409).json({ error: error.message });
+          return;
+        }
+        console.error('Delete sale return error:', error);
+        res.status(500).json({ error: 'Failed to delete sale return' });
+      }
+    }
+  );
+
+  // ─── Party Balance Routes ────────────────────────────────────
+
+  /**
+   * GET /api/customer-balances
+   * Get outstanding balances for all customers.
+   */
+  router.get('/customer-balances',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const balances = await partyBalanceService.getCustomerBalances(tenantId);
+        res.json(balances);
+      } catch (error) {
+        console.error('Get customer balances error:', error);
+        res.status(500).json({ error: 'Failed to get customer balances' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/supplier-balances
+   * Get outstanding balances for all suppliers.
+   */
+  router.get('/supplier-balances',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const balances = await partyBalanceService.getSupplierBalances(tenantId);
+        res.json(balances);
+      } catch (error) {
+        console.error('Get supplier balances error:', error);
+        res.status(500).json({ error: 'Failed to get supplier balances' });
+      }
+    }
+  );
+
+  // ─── Aging Report Route ──────────────────────────────────────
+
+  /**
+   * GET /api/aging-report
+   * Generate aging report for customers or suppliers.
+   */
+  router.get('/aging-report',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const mode = (req.query.mode as string) || 'customer';
+        const asOfDate = (req.query.asOfDate as string) || new Date().toISOString().split('T')[0];
+        const partyId = req.query.partyId as string | undefined;
+        const report = await agingReportService.generateReport(tenantId, mode as any, asOfDate, partyId);
+        res.json(report);
+      } catch (error) {
+        console.error('Generate aging report error:', error);
+        res.status(500).json({ error: 'Failed to generate aging report' });
+      }
+    }
+  );
+
+  // ─── Dashboard Route ─────────────────────────────────────────
+
+  /**
+   * GET /api/dashboard
+   * Get dashboard data for a given period.
+   */
+  router.get('/dashboard',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const period = (req.query.period as string) || 'month';
+        const customStart = req.query.customStart as string | undefined;
+        const customEnd = req.query.customEnd as string | undefined;
+        const data = await dashboardService.getDashboardData(tenantId, period as any, customStart, customEnd);
+        res.json(data);
+      } catch (error) {
+        console.error('Get dashboard error:', error);
+        res.status(500).json({ error: 'Failed to get dashboard data' });
+      }
+    }
+  );
+
+  // ─── Ledger Routes ───────────────────────────────────────────
+
+  /**
+   * GET /api/ledger
+   * Get ledger entries for the tenant.
+   */
+  router.get('/ledger',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const accountId = req.query.accountId as string | undefined;
+        const startDate = req.query.startDate as string | undefined;
+        const endDate = req.query.endDate as string | undefined;
+        const voucherType = req.query.voucherType as string | undefined;
+        const entries = await voucherRepo.getLedgerEntries(tenantId, {
+          accountId,
+          startDate,
+          endDate,
+          voucherType: voucherType as any,
+        });
+        res.json(entries);
+      } catch (error) {
+        console.error('Get ledger error:', error);
+        res.status(500).json({ error: 'Failed to get ledger entries' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/ledger/:accountId
+   * Get ledger for a specific account with running balance.
+   */
+  router.get('/ledger/:accountId',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const startDate = req.query.startDate as string | undefined;
+        const endDate = req.query.endDate as string | undefined;
+        const entries = await voucherRepo.getLedgerForAccount(tenantId, req.params.accountId, { startDate, endDate });
+        res.json(entries);
+      } catch (error) {
+        console.error('Get account ledger error:', error);
+        res.status(500).json({ error: 'Failed to get account ledger' });
+      }
+    }
+  );
+
+  // ─── COA Route ───────────────────────────────────────────────
+
+  /**
+   * GET /api/accounts
+   * Get chart of accounts for the tenant.
+   */
+  router.get('/accounts',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const accounts = await coaRepo.getAccountsByTenantId(tenantId);
+        res.json(accounts);
+      } catch (error) {
+        console.error('Get accounts error:', error);
+        res.status(500).json({ error: 'Failed to get accounts' });
+      }
+    }
+  );
+
+  // ─── Inventory Routes ────────────────────────────────────────
+
+  /**
+   * GET /api/products
+   * Get products for the tenant.
+   */
+  router.get('/products',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const products = await inventoryRepo.getProducts(tenantId);
+        res.json(products);
+      } catch (error) {
+        console.error('Get products error:', error);
+        res.status(500).json({ error: 'Failed to get products' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/stock-levels
+   * Get stock levels for the tenant.
+   */
+  router.get('/stock-levels',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const warehouseId = req.query.warehouseId as string | undefined;
+        const levels = await inventoryRepo.getStockLevels(tenantId, warehouseId);
+        res.json(levels);
+      } catch (error) {
+        console.error('Get stock levels error:', error);
+        res.status(500).json({ error: 'Failed to get stock levels' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/warehouses
+   * Get warehouses for the tenant.
+   */
+  router.get('/warehouses',
+    requirePermissionMiddleware('bills.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const warehouses = await inventoryRepo.getWarehouses(tenantId);
+        res.json(warehouses);
+      } catch (error) {
+        console.error('Get warehouses error:', error);
+        res.status(500).json({ error: 'Failed to get warehouses' });
       }
     }
   );

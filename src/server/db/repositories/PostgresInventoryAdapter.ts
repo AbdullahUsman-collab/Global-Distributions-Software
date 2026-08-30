@@ -9,7 +9,7 @@
 import { randomBytes } from 'crypto';
 import { Product, Warehouse, WarehouseLocation, StockLevel, StockMovement, ItemBatch, ItemSerial, CreateProductDTO, UpdateProductDTO } from '../../../domain/types/inventory';
 import { IInventoryRepository } from '../../../domain/repositories/IInventoryRepository';
-import { query } from '../pool.js';
+import { query, getClient } from '../pool.js';
 
 function uuid(): string { return randomBytes(16).toString('hex'); }
 
@@ -94,13 +94,33 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
     };
   }
 
+  private static PRODUCT_UPDATE_COLUMNS: Record<string, string> = {
+    name: 'name',
+    category: 'category',
+    unit: 'unit',
+    pcsPerCarton: 'pcs_per_carton',
+    saleRate: 'sale_rate',
+    purchaseRate: 'purchase_rate',
+    retailPrice: 'retail_price',
+    tradeDiscount: 'trade_discount',
+    tradeOffer: 'trade_offer',
+    minQuantity: 'min_quantity',
+    hsCode: 'hs_code',
+    gstType: 'gst_type',
+    gstPercent: 'gst_percent',
+    fedPercent: 'fed_percent',
+    advanceTaxSalePercent: 'advance_tax_sale_percent',
+    advanceTaxPurchasePercent: 'advance_tax_purchase_percent',
+    isActive: 'is_active',
+  };
+
   async updateProduct(tenantId: string, id: string, dto: UpdateProductDTO): Promise<Product> {
     const sets: string[] = [];
     const vals: any[] = [];
     let idx = 1;
     for (const [k, v] of Object.entries(dto)) {
-      if (v !== undefined) {
-        const col = k.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const col = PostgresInventoryAdapter.PRODUCT_UPDATE_COLUMNS[k];
+      if (col && v !== undefined) {
         sets.push(`${col} = $${idx++}`);
         vals.push(v);
       }
@@ -216,18 +236,234 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
   }
 
   async postStockMovement(tenantId: string, movementId: string): Promise<StockMovement> {
-    await query(
-      `UPDATE stock_movements SET status = 'POSTED', updated_at = NOW() WHERE tenant_id = $1 AND id = $2`,
-      [tenantId, movementId]
-    );
-    return (await this.getStockMovementById(tenantId, movementId))!;
+    const movement = await this.getStockMovementById(tenantId, movementId);
+    if (!movement) throw new Error('Stock movement not found');
+    if (movement.status === 'POSTED') throw new Error('Movement is already posted');
+    if (movement.status === 'CANCELLED') throw new Error('Cannot post a cancelled movement');
+
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
+
+      // Update movement status
+      await client.query(
+        `UPDATE stock_movements SET status = 'POSTED', updated_at = NOW() WHERE tenant_id = $1 AND id = $2`,
+        [tenantId, movementId]
+      );
+
+      // Update stock levels based on movement type
+      switch (movement.movementType) {
+        case 'GRN':
+        case 'RETURN': {
+          const targetWarehouseId = movement.warehouseId;
+          if (!targetWarehouseId) throw new Error('Target warehouse required for GRN/RETURN');
+
+          const existing = await client.query(
+            `SELECT id, quantity_on_hand, unit_cost FROM stock_levels
+             WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3 FOR UPDATE`,
+            [tenantId, movement.productId, targetWarehouseId]
+          );
+
+          if (existing.rows.length === 0) {
+            await client.query(
+              `INSERT INTO stock_levels (id, tenant_id, product_id, warehouse_id, quantity_on_hand, quantity_reserved, unit_cost)
+               VALUES ($1, $2, $3, $4, $5, 0, $6)`,
+              [uuid(), tenantId, movement.productId, targetWarehouseId, movement.quantity, movement.unitCost]
+            );
+          } else {
+            const level = existing.rows[0];
+            const currentQty = Number(level.quantity_on_hand);
+            const currentCost = Number(level.unit_cost);
+            // AVCO: New cost = (currentQty * currentCost + incomingQty * incomingCost) / (currentQty + incomingQty)
+            const newQty = currentQty + movement.quantity;
+            const newCost = newQty > 0
+              ? (currentQty * currentCost + movement.quantity * movement.unitCost) / newQty
+              : 0;
+            await client.query(
+              `UPDATE stock_levels SET quantity_on_hand = $1, unit_cost = $2, updated_at = NOW()
+               WHERE tenant_id = $3 AND product_id = $4 AND warehouse_id = $5`,
+              [newQty, newCost, tenantId, movement.productId, targetWarehouseId]
+            );
+          }
+          break;
+        }
+
+        case 'ISSUE': {
+          const sourceWarehouseId = movement.warehouseId;
+          if (!sourceWarehouseId) throw new Error('Source warehouse required for ISSUE');
+
+          const existing = await client.query(
+            `SELECT id, quantity_on_hand, unit_cost FROM stock_levels
+             WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3 FOR UPDATE`,
+            [tenantId, movement.productId, sourceWarehouseId]
+          );
+
+          if (existing.rows.length === 0) {
+            throw new Error('Insufficient inventory stock — No stock record found');
+          }
+
+          const level = existing.rows[0];
+          const currentQty = Number(level.quantity_on_hand);
+          if (currentQty < movement.quantity) {
+            throw new Error(`Insufficient inventory stock — Available: ${currentQty}, Requested: ${movement.quantity}`);
+          }
+
+          await client.query(
+            `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand - $1, updated_at = NOW()
+             WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
+            [movement.quantity, tenantId, movement.productId, sourceWarehouseId]
+          );
+          break;
+        }
+
+        case 'TRANSFER': {
+          // For transfers, the warehouseId is the source; we need to find the target from narration or reference
+          // Simplified: deduct from source warehouse
+          const sourceWarehouseId = movement.warehouseId;
+          if (!sourceWarehouseId) throw new Error('Source warehouse required for TRANSFER');
+
+          const existing = await client.query(
+            `SELECT id, quantity_on_hand FROM stock_levels
+             WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3 FOR UPDATE`,
+            [tenantId, movement.productId, sourceWarehouseId]
+          );
+
+          if (existing.rows.length === 0) {
+            throw new Error('Insufficient inventory stock — No stock record in source warehouse');
+          }
+
+          const level = existing.rows[0];
+          if (Number(level.quantity_on_hand) < movement.quantity) {
+            throw new Error(`Insufficient inventory stock in source warehouse — Available: ${Number(level.quantity_on_hand)}, Requested: ${movement.quantity}`);
+          }
+
+          await client.query(
+            `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand - $1, updated_at = NOW()
+             WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
+            [movement.quantity, tenantId, movement.productId, sourceWarehouseId]
+          );
+          break;
+        }
+
+        case 'ADJUSTMENT': {
+          const targetWarehouseId = movement.warehouseId;
+          if (!targetWarehouseId) throw new Error('Warehouse required for ADJUSTMENT');
+
+          const existing = await client.query(
+            `SELECT id FROM stock_levels
+             WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3 FOR UPDATE`,
+            [tenantId, movement.productId, targetWarehouseId]
+          );
+
+          if (existing.rows.length === 0) {
+            await client.query(
+              `INSERT INTO stock_levels (id, tenant_id, product_id, warehouse_id, quantity_on_hand, quantity_reserved, unit_cost)
+               VALUES ($1, $2, $3, $4, $5, 0, $6)`,
+              [uuid(), tenantId, movement.productId, targetWarehouseId, movement.quantity, movement.unitCost]
+            );
+          } else {
+            await client.query(
+              `UPDATE stock_levels SET quantity_on_hand = $1, updated_at = NOW()
+               WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
+              [movement.quantity, tenantId, movement.productId, targetWarehouseId]
+            );
+          }
+          break;
+        }
+      }
+
+      await client.query('COMMIT');
+      return (await this.getStockMovementById(tenantId, movementId))!;
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async cancelStockMovement(tenantId: string, movementId: string): Promise<StockMovement> {
-    await query(
-      `UPDATE stock_movements SET status = 'CANCELLED', updated_at = NOW() WHERE tenant_id = $1 AND id = $2`,
-      [tenantId, movementId]
-    );
+    const movement = await this.getStockMovementById(tenantId, movementId);
+    if (!movement) throw new Error('Stock movement not found');
+    if (movement.status === 'CANCELLED') throw new Error('Movement is already cancelled');
+
+    // Only posted movements have stock effects to reverse
+    if (movement.status === 'POSTED') {
+      const client = await getClient();
+      try {
+        await client.query('BEGIN');
+
+        // Reverse stock effects
+        switch (movement.movementType) {
+          case 'GRN':
+          case 'RETURN': {
+            const targetWarehouseId = movement.warehouseId;
+            if (targetWarehouseId) {
+              await client.query(
+                `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand - $1, updated_at = NOW()
+                 WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
+                [movement.quantity, tenantId, movement.productId, targetWarehouseId]
+              );
+            }
+            break;
+          }
+          case 'ISSUE': {
+            const sourceWarehouseId = movement.warehouseId;
+            if (sourceWarehouseId) {
+              await client.query(
+                `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand + $1, updated_at = NOW()
+                 WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
+                [movement.quantity, tenantId, movement.productId, sourceWarehouseId]
+              );
+            }
+            break;
+          }
+          case 'TRANSFER': {
+            const sourceWarehouseId = movement.warehouseId;
+            if (sourceWarehouseId) {
+              await client.query(
+                `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand + $1, updated_at = NOW()
+                 WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
+                [movement.quantity, tenantId, movement.productId, sourceWarehouseId]
+              );
+            }
+            break;
+          }
+          case 'ADJUSTMENT': {
+            // Cannot auto-reverse adjustment — set to 0
+            const targetWarehouseId = movement.warehouseId;
+            if (targetWarehouseId) {
+              await client.query(
+                `UPDATE stock_levels SET quantity_on_hand = 0, updated_at = NOW()
+                 WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3`,
+                [tenantId, movement.productId, targetWarehouseId]
+              );
+            }
+            break;
+          }
+        }
+
+        // Update movement status
+        await client.query(
+          `UPDATE stock_movements SET status = 'CANCELLED', updated_at = NOW() WHERE tenant_id = $1 AND id = $2`,
+          [tenantId, movementId]
+        );
+
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+    } else {
+      // DRAFT — just flip status
+      await query(
+        `UPDATE stock_movements SET status = 'CANCELLED', updated_at = NOW() WHERE tenant_id = $1 AND id = $2`,
+        [tenantId, movementId]
+      );
+    }
+
     return (await this.getStockMovementById(tenantId, movementId))!;
   }
 
