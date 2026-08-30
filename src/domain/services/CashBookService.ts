@@ -17,6 +17,8 @@ import { VoucherHeader, VoucherType, LedgerEntry, CreateVoucherDTO } from '../ty
 import { AccountHead } from '../types/coa';
 import { IVoucherRepository } from '../repositories/IVoucherRepository';
 import { ICOARepository } from '../repositories/ICOARepository';
+import { SystemRoleName } from '../types/rbac';
+import { requirePermission, Permissions } from './AuthorizationService';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -217,7 +219,9 @@ export class CashBookService {
       narration: string;
     },
     createdBy: string,
+    role: SystemRoleName = 'ADMIN',
   ): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.CASH_CREATE);
     if (dto.amount <= 0) throw new Error('Amount must be greater than zero');
     if (!dto.narration.trim()) throw new Error('Narration is required');
     if (!dto.date) throw new Error('Date is required');
@@ -273,7 +277,9 @@ export class CashBookService {
       narration: string;
     },
     createdBy: string,
+    role: SystemRoleName = 'ADMIN',
   ): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.CASH_CREATE);
     if (dto.amount <= 0) throw new Error('Amount must be greater than zero');
     if (!dto.narration.trim()) throw new Error('Narration is required');
     if (!dto.date) throw new Error('Date is required');
@@ -317,14 +323,16 @@ export class CashBookService {
   /**
    * Post a cash book voucher (CR or CP).
    */
-  async postVoucher(tenantId: string, voucherId: string): Promise<VoucherHeader> {
+  async postVoucher(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.CASH_POST);
     return this.voucherRepo.postVoucher(tenantId, voucherId);
   }
 
   /**
    * Delete a DRAFT cash book voucher.
    */
-  async deleteVoucher(tenantId: string, voucherId: string): Promise<void> {
+  async deleteVoucher(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<void> {
+    requirePermission(role, Permissions.CASH_DELETE);
     const voucher = await this.voucherRepo.getVoucherById(tenantId, voucherId);
     if (!voucher) throw new Error('Voucher not found');
     if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');

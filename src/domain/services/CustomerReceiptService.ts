@@ -22,6 +22,8 @@ import { AccountHead } from '../types/coa';
 import { IVoucherRepository } from '../repositories/IVoucherRepository';
 import { ICustomerRepository } from '../repositories/ICustomerRepository';
 import { ICOARepository } from '../repositories/ICOARepository';
+import { SystemRoleName } from '../types/rbac';
+import { requirePermission, Permissions } from './AuthorizationService';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -80,7 +82,9 @@ export class CustomerReceiptService {
     tenantId: string,
     dto: CreateReceiptDTO,
     createdBy: string,
+    role: SystemRoleName = 'ADMIN',
   ): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.RECEIPTS_CREATE);
     // Validate customer exists
     const customer = await this.customerRepo.getCustomerById(tenantId, dto.customerId);
     if (!customer) throw new Error('Customer not found');
@@ -178,7 +182,8 @@ export class CustomerReceiptService {
    * No revenue effect.
    * No tax entries.
    */
-  async postReceipt(tenantId: string, voucherId: string): Promise<VoucherHeader> {
+  async postReceipt(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.RECEIPTS_POST);
     return this.voucherRepo.postVoucher(tenantId, voucherId);
   }
 
@@ -223,7 +228,8 @@ export class CustomerReceiptService {
    * Delete a DRAFT customer receipt.
    * Source: audit/04_ACCOUNTING_ENGINE.md — delete only DRAFT
    */
-  async deleteReceipt(tenantId: string, id: string): Promise<void> {
+  async deleteReceipt(tenantId: string, id: string, role: SystemRoleName = 'ADMIN'): Promise<void> {
+    requirePermission(role, Permissions.RECEIPTS_DELETE);
     const voucher = await this.voucherRepo.getVoucherById(tenantId, id);
     if (!voucher) throw new Error('Voucher not found');
     if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');

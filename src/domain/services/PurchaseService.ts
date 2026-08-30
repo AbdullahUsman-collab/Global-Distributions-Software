@@ -27,6 +27,8 @@ import { IVoucherRepository } from '../repositories/IVoucherRepository';
 import { IInventoryRepository } from '../repositories/IInventoryRepository';
 import { ISupplierRepository } from '../repositories/ISupplierRepository';
 import { ICOARepository } from '../repositories/ICOARepository';
+import { SystemRoleName } from '../types/rbac';
+import { requirePermission, Permissions } from './AuthorizationService';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -208,7 +210,9 @@ export class PurchaseService {
     tenantId: string,
     dto: CreatePurchaseBillDTO,
     createdBy: string,
+    role: SystemRoleName = 'ADMIN',
   ): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.PURCHASES_CREATE);
     // Validate supplier exists
     const supplier = await this.supplierRepo.getById(dto.supplierId, tenantId);
     if (!supplier) throw new Error('Supplier not found');
@@ -312,7 +316,8 @@ export class PurchaseService {
    * Inventory effect (per audit/24):
    *   Stock INCREASED by received quantity
    */
-  async postPurchaseBill(tenantId: string, voucherId: string): Promise<VoucherHeader> {
+  async postPurchaseBill(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.PURCHASES_POST);
     // Post the voucher (generates LedgerEntry records)
     const postedVoucher = await this.voucherRepo.postVoucher(tenantId, voucherId);
 
@@ -376,7 +381,8 @@ export class PurchaseService {
   /**
    * Delete a DRAFT purchase bill.
    */
-  async deletePurchaseBill(tenantId: string, id: string): Promise<void> {
+  async deletePurchaseBill(tenantId: string, id: string, role: SystemRoleName = 'ADMIN'): Promise<void> {
+    requirePermission(role, Permissions.PURCHASES_DELETE);
     const voucher = await this.voucherRepo.getVoucherById(tenantId, id);
     if (!voucher) throw new Error('Voucher not found');
     if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');

@@ -7,6 +7,8 @@
  * RULE: No third-party auth providers (Auth0, Clerk, Firebase, Supabase).
  */
 
+import { SystemRoleName } from './rbac';
+
 /**
  * Public user entity exposed to UI and application services.
  * NEVER contains passwordHash or sensitive credential data.
@@ -20,6 +22,8 @@ export interface User {
   username: string;
   /** Display name for UI rendering */
   displayName: string;
+  /** System role determining permissions */
+  role: SystemRoleName;
   /** Whether user account is active */
   isActive: boolean;
   /** User creation timestamp */
@@ -98,6 +102,7 @@ export interface CreateUserPayload {
   username: string;
   displayName: string;
   password: string;
+  role?: SystemRoleName;
 }
 
 /**

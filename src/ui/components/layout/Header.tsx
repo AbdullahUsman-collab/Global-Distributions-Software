@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                   </div>
                   <div>
                     <div style={styles.dropdownName}>{user.displayName}</div>
-                    <div style={styles.dropdownUsername}>@{user.username}</div>
+                    <div style={styles.dropdownUsername}>@{user.username} &middot; {user.role}</div>
                   </div>
                 </div>
                 <div style={styles.dropdownDivider} />

@@ -25,6 +25,8 @@ import { Supplier } from '../types/supplier';
 import { IVoucherRepository } from '../repositories/IVoucherRepository';
 import { IInventoryRepository } from '../repositories/IInventoryRepository';
 import { ISupplierRepository } from '../repositories/ISupplierRepository';
+import { SystemRoleName } from '../types/rbac';
+import { requirePermission, Permissions } from './AuthorizationService';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -201,7 +203,9 @@ export class PurchaseReturnService {
     tenantId: string,
     dto: CreatePurchaseReturnDTO,
     createdBy: string,
+    role: SystemRoleName = 'ADMIN',
   ): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.RETURNS_CREATE);
     // Validate supplier exists
     const supplier = await this.supplierRepo.getById(dto.supplierId, tenantId);
     if (!supplier) throw new Error('Supplier not found');
@@ -294,7 +298,8 @@ export class PurchaseReturnService {
    * 1. Voucher posted → LedgerEntry records created
    * 2. Stock RETURN movement created and posted for each line (decreases stock)
    */
-  async postPurchaseReturn(tenantId: string, voucherId: string): Promise<VoucherHeader> {
+  async postPurchaseReturn(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.RETURNS_POST);
     // Post the voucher (generates LedgerEntry records)
     const postedVoucher = await this.voucherRepo.postVoucher(tenantId, voucherId);
 
@@ -359,7 +364,8 @@ export class PurchaseReturnService {
   /**
    * Delete a DRAFT purchase return bill.
    */
-  async deletePurchaseReturn(tenantId: string, id: string): Promise<void> {
+  async deletePurchaseReturn(tenantId: string, id: string, role: SystemRoleName = 'ADMIN'): Promise<void> {
+    requirePermission(role, Permissions.RETURNS_DELETE);
     const voucher = await this.voucherRepo.getVoucherById(tenantId, id);
     if (!voucher) throw new Error('Voucher not found');
     if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');

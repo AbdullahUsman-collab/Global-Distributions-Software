@@ -23,6 +23,8 @@ import { IVoucherRepository } from '../repositories/IVoucherRepository';
 import { IInventoryRepository } from '../repositories/IInventoryRepository';
 import { ICustomerRepository } from '../repositories/ICustomerRepository';
 import { ICOARepository } from '../repositories/ICOARepository';
+import { SystemRoleName } from '../types/rbac';
+import { requirePermission, Permissions } from './AuthorizationService';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -209,7 +211,9 @@ export class SalesService {
     tenantId: string,
     dto: CreateSaleBillDTO,
     createdBy: string,
+    role: SystemRoleName = 'ADMIN',
   ): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.SALES_CREATE);
     // Validate customer exists
     const customer = await this.customerRepo.getCustomerById(tenantId, dto.customerId);
     if (!customer) throw new Error('Customer not found');
@@ -317,7 +321,8 @@ export class SalesService {
    *   Stock DECREASED by sold quantity
    *   Stock Value DECREASED by cost [DEFERRED — Cost_rate not verified]
    */
-  async postSaleBill(tenantId: string, voucherId: string): Promise<VoucherHeader> {
+  async postSaleBill(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<VoucherHeader> {
+    requirePermission(role, Permissions.SALES_POST);
     // Post the voucher (generates LedgerEntry records)
     const postedVoucher = await this.voucherRepo.postVoucher(tenantId, voucherId);
 
@@ -384,7 +389,8 @@ export class SalesService {
    * Delete a DRAFT sale bill.
    * Source: audit/10_SALES_ENGINE.md — "Delete Bill" button exists
    */
-  async deleteSaleBill(tenantId: string, id: string): Promise<void> {
+  async deleteSaleBill(tenantId: string, id: string, role: SystemRoleName = 'ADMIN'): Promise<void> {
+    requirePermission(role, Permissions.SALES_DELETE);
     const voucher = await this.voucherRepo.getVoucherById(tenantId, id);
     if (!voucher) throw new Error('Voucher not found');
     if (voucher.status === 'POSTED') throw new Error('Cannot delete a posted voucher');
