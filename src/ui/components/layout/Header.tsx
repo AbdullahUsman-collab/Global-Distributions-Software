@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../auth/ProtectedRoute';
-import { clearSession } from '../../lib/session';
+import { clearSession, getSessionId } from '../../lib/session';
 import { services } from '../../services';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
 
   const handleLogout = async () => {
     try {
-      const sessionId = localStorage.getItem('erp_session_id');
+      const sessionId = getSessionId();
       if (sessionId) {
         await services.authService.logout(sessionId);
       }

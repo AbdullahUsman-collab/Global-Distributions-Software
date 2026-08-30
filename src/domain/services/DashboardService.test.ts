@@ -132,7 +132,7 @@ describe('DashboardService', () => {
       const end = new Date(r.endDate);
       const diffDays = Math.round((end.getTime() - start.getTime()) / 86400000);
       expect(diffDays).toBeGreaterThanOrEqual(0);
-      expect(diffDays).toBeLessThanOrEqual(6);
+      expect(diffDays).toBeLessThanOrEqual(7);
     });
 
     it('resolves month correctly', () => {

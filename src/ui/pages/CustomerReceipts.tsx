@@ -43,7 +43,7 @@ const CASH_BANK_CODES = new Set(['11101', '11102']);
 /* ═══════════════════════════════════════════════════════════ */
 
 export const CustomerReceipts: React.FC = () => {
-  const { tenant } = useAuth();
+  const { tenant, user } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -320,6 +320,7 @@ const ReceiptForm: React.FC<{
   onSaved: () => void;
   onCancel: () => void;
 }> = ({ tenantId, customers, cashAccounts, onSaved, onCancel }) => {
+  const { user } = useAuth();
   const [customerId, setCustomerId] = useState('');
   const [cashAccountId, setCashAccountId] = useState('');
   const [amount, setAmount] = useState<number>(0);
@@ -381,7 +382,7 @@ const ReceiptForm: React.FC<{
         amount,
         date,
         narration: narration.trim(),
-      }, 'admin');
+      }, user.username);
 
       // Auto-post
       await services.customerReceiptService.postReceipt(tenantId, voucher.id);

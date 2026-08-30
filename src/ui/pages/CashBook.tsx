@@ -33,7 +33,7 @@ const firstOfMonth = () => {
 /* ─── Component ────────────────────────────────────────────── */
 
 export const CashBook: React.FC = () => {
-  const { tenant } = useAuth();
+  const { tenant, user } = useAuth();
   const navigate = useNavigate();
   const tenantId = tenant.id;
 
@@ -125,7 +125,7 @@ export const CashBook: React.FC = () => {
             date: txDate,
             narration: txNarration.trim(),
           },
-          'admin',
+          user.username,
         );
       } else {
         await services.cashBookService.createCashPayment(
@@ -137,7 +137,7 @@ export const CashBook: React.FC = () => {
             date: txDate,
             narration: txNarration.trim(),
           },
-          'admin',
+          user.username,
         );
       }
       setShowNewModal(false);

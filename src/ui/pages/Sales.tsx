@@ -61,7 +61,7 @@ const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
 /* ═══════════════════════════════════════════════════════════ */
 
 export const Sales: React.FC = () => {
-  const { tenant } = useAuth();
+  const { tenant, user } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<SalesTab>('customers');
 
@@ -491,6 +491,7 @@ const SaleBillForm: React.FC<{
   onSaved: () => void;
   onCancel: () => void;
 }> = ({ tenantId, onSaved, onCancel }) => {
+  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -619,7 +620,7 @@ const SaleBillForm: React.FC<{
         date,
         narration: narration || undefined,
         lines,
-      }, 'admin');
+      }, user.username);
 
       // Auto-post
       await services.salesService.postSaleBill(tenantId, voucher.id);
@@ -931,6 +932,7 @@ const SaleReturnForm: React.FC<{
   onSaved: () => void;
   onCancel: () => void;
 }> = ({ tenantId, onSaved, onCancel }) => {
+  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -996,7 +998,7 @@ const SaleReturnForm: React.FC<{
         date,
         narration: narration || undefined,
         lines,
-      }, 'admin');
+      }, user.username);
       onSaved();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save');

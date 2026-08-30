@@ -60,7 +60,7 @@ const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
 /* ═══════════════════════════════════════════════════════════ */
 
 export const Purchases: React.FC = () => {
-  const { tenant } = useAuth();
+  const { tenant, user } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<PurchasesTab>('suppliers');
 
@@ -515,6 +515,7 @@ const PurchaseBillForm: React.FC<{
   onSaved: () => void;
   onCancel: () => void;
 }> = ({ tenantId, onSaved, onCancel }) => {
+  const { user } = useAuth();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -640,7 +641,7 @@ const PurchaseBillForm: React.FC<{
         date,
         narration: narration || undefined,
         lines,
-      }, 'admin');
+      }, user.username);
 
       // Auto-post
       await services.purchaseService.postPurchaseBill(tenantId, voucher.id);
@@ -952,6 +953,7 @@ const PurchaseReturnForm: React.FC<{
   onSaved: () => void;
   onCancel: () => void;
 }> = ({ tenantId, onSaved, onCancel }) => {
+  const { user } = useAuth();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -1017,7 +1019,7 @@ const PurchaseReturnForm: React.FC<{
         date,
         narration: narration || undefined,
         lines,
-      }, 'admin');
+      }, user.username);
       onSaved();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save');
