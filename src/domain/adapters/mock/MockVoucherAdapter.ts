@@ -102,10 +102,10 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'SV',
       date: '2026-08-02',
-      narration: 'Sale to Al-Fatah Traders — Invoice #1001',
+      narration: 'Sale to Al-Rehman Traders — Invoice #1001',
       posted: true,
       lines: [
-        { accountId: '11201', description: 'Al-Fatah Traders — AR',  debit: 185000, credit: 0, quantity: 100, productId: 'p1' },
+        { accountId: '11201', description: 'Al-Rehman Traders — AR',  debit: 185000, credit: 0, quantity: 100, productId: 'p1' },
         { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 160000 },
         { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 25000 },
       ],
@@ -113,10 +113,10 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'SV',
       date: '2026-08-05',
-      narration: 'Sale to Khan Brothers — Invoice #1002',
+      narration: 'Sale to Shaheen Enterprises — Invoice #1002',
       posted: true,
       lines: [
-        { accountId: '11201', description: 'Khan Brothers — AR',    debit: 92500,  credit: 0, quantity: 50, productId: 'p2' },
+        { accountId: '11202', description: 'Shaheen Enterprises — AR',    debit: 92500,  credit: 0, quantity: 50, productId: 'p2' },
         { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 80000 },
         { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 12500 },
       ],
@@ -124,10 +124,10 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'SV',
       date: '2026-08-10',
-      narration: 'Sale to City Mart — Invoice #1003',
+      narration: 'Sale to Bismillah Trading — Invoice #1003',
       posted: true,
       lines: [
-        { accountId: '11201', description: 'City Mart — AR',        debit: 277500, credit: 0, quantity: 150, productId: 'p3' },
+        { accountId: '11203', description: 'Bismillah Trading — AR',        debit: 277500, credit: 0, quantity: 150, productId: 'p3' },
         { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 240000 },
         { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 37500 },
       ],
@@ -135,10 +135,10 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'SV',
       date: '2026-08-15',
-      narration: 'Sale to United Super — Invoice #1004',
+      narration: 'Sale to Faisal Brothers — Invoice #1004',
       posted: true,
       lines: [
-        { accountId: '11201', description: 'United Super — AR',     debit: 138000, credit: 0, quantity: 80, productId: 'p4' },
+        { accountId: '11205', description: 'Faisal Brothers — AR',     debit: 138000, credit: 0, quantity: 80, productId: 'p4' },
         { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 120000 },
         { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 18000 },
       ],
@@ -147,11 +147,11 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'SRV',
       date: '2026-08-12',
-      narration: 'Sale return from Khan Brothers — damaged goods',
+      narration: 'Sale return from Shaheen Enterprises — damaged goods',
       posted: true,
       lines: [
         { accountId: '41104', description: 'Sales returns',         debit: 16000,  credit: 0 },
-        { accountId: '11201', description: 'Khan Brothers — AR',    debit: 0,      credit: 18720 },
+        { accountId: '11202', description: 'Shaheen Enterprises — AR',    debit: 0,      credit: 18720 },
         { accountId: '21201', description: 'Sales tax reversal',     debit: 2720,   credit: 0 },
       ],
     },
@@ -159,33 +159,33 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'PV',
       date: '2026-08-03',
-      narration: 'Purchase from Global Imports — PO #2001',
+      narration: 'Purchase from Global Trading Co. — PO #2001',
       posted: true,
       lines: [
         { accountId: '51101', description: 'Purchase cost',         debit: 320000, credit: 0, quantity: 200, productId: 'p1' },
         { accountId: '11401', description: 'Input tax (GST)',       debit: 54400,  credit: 0 },
-        { accountId: '21100', description: 'Accounts payable',      debit: 0,      credit: 374400 },
+        { accountId: '21101', description: 'Global Trading — AP',      debit: 0,      credit: 374400 },
       ],
     },
     {
       voucherType: 'PV',
       date: '2026-08-08',
-      narration: 'Purchase from Prime Wholesale — PO #2002',
+      narration: 'Purchase from Eastern Imports — PO #2002',
       posted: true,
       lines: [
         { accountId: '51101', description: 'Purchase cost',         debit: 180000, credit: 0, quantity: 150, productId: 'p2' },
         { accountId: '11401', description: 'Input tax (GST)',       debit: 30600,  credit: 0 },
-        { accountId: '21100', description: 'Accounts payable',      debit: 0,      credit: 210600 },
+        { accountId: '21102', description: 'Eastern Imports — AP',      debit: 0,      credit: 210600 },
       ],
     },
     // ─── Purchase Returns ─────────────────────────────────────
     {
       voucherType: 'PRV',
       date: '2026-08-14',
-      narration: 'Purchase return to Global Imports — defective batch',
+      narration: 'Purchase return to Global Trading Co. — defective batch',
       posted: true,
       lines: [
-        { accountId: '21100', description: 'Accounts payable',      debit: 74880,  credit: 0 },
+        { accountId: '21101', description: 'Global Trading — AP',      debit: 74880,  credit: 0 },
         { accountId: '51101', description: 'Purchase returns',      debit: 0,      credit: 64000 },
         { accountId: '11401', description: 'Input tax reversal',     debit: 0,      credit: 10880 },
       ],
@@ -194,32 +194,32 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'CR',
       date: '2026-08-18',
-      narration: 'Cash received from Al-Fatah Traders — partial payment',
+      narration: 'Cash received from Al-Rehman Traders — partial payment',
       posted: true,
       lines: [
         { accountId: '11101', description: 'Cash received',         debit: 100000, credit: 0 },
-        { accountId: '11201', description: 'Al-Fatah Traders — AR', debit: 0,      credit: 100000 },
+        { accountId: '11201', description: 'Al-Rehman Traders — AR', debit: 0,      credit: 100000 },
       ],
     },
     {
       voucherType: 'CR',
       date: '2026-08-20',
-      narration: 'Bank transfer from City Mart — full payment',
+      narration: 'Bank transfer from Bismillah Trading — full payment',
       posted: true,
       lines: [
         { accountId: '11102', description: 'Bank transfer received', debit: 277500, credit: 0 },
-        { accountId: '11201', description: 'City Mart — AR',        debit: 0,      credit: 277500 },
+        { accountId: '11203', description: 'Bismillah Trading — AR',        debit: 0,      credit: 277500 },
       ],
     },
     // ─── Supplier Payments ────────────────────────────────────
     {
       voucherType: 'PV',
       date: '2026-08-22',
-      narration: 'Bank payment to Prime Wholesale — PO #2002 settled',
+      narration: 'Bank payment to Eastern Imports — PO #2002 settled',
       posted: true,
       lines: [
-        { accountId: '21100', description: 'Accounts payable',      debit: 210600, credit: 0 },
-        { accountId: '11102', description: 'Bank transfer paid',    debit: 0,      credit: 210600 },
+        { accountId: '21102', description: 'Eastern Imports — AP',      debit: 110600,  credit: 0 },
+        { accountId: '11102', description: 'Bank transfer paid',    debit: 0,      credit: 110600 },
       ],
     },
     // ─── Office Expenses ──────────────────────────────────────
@@ -256,11 +256,11 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
     {
       voucherType: 'CRV',
       date: '2026-08-15',
-      narration: 'Bank receipt from United Super — partial settlement',
+      narration: 'Bank receipt from Faisal Brothers — partial settlement',
       posted: true,
       lines: [
         { accountId: '11102', description: 'Bank transfer received', debit: 80000, credit: 0 },
-        { accountId: '11201', description: 'United Super — AR',     debit: 0,     credit: 80000 },
+        { accountId: '11205', description: 'Faisal Brothers — AR',     debit: 0,     credit: 80000 },
       ],
     },
     // ─── Draft Vouchers ───────────────────────────────────────

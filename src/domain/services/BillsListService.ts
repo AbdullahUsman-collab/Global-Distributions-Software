@@ -17,6 +17,7 @@ import { IVoucherRepository } from '../repositories/IVoucherRepository';
 import { ICustomerRepository } from '../repositories/ICustomerRepository';
 import { ISupplierRepository } from '../repositories/ISupplierRepository';
 import { IInventoryRepository } from '../repositories/IInventoryRepository';
+import { ICOARepository } from '../repositories/ICOARepository';
 
 /* ─── Types ────────────────────────────────────────────────── */
 
@@ -83,6 +84,7 @@ export class BillsListService {
     private customerRepo: ICustomerRepository,
     private supplierRepo: ISupplierRepository,
     private inventoryRepo: IInventoryRepository,
+    private coaRepo?: ICOARepository,
   ) {}
 
   /**
@@ -108,15 +110,26 @@ export class BillsListService {
       this.inventoryRepo.getProducts(tenantId),
     ]);
 
-    // Build lookup maps: accountId → name
+    // Build COA id→code map if coaRepo available
+    let accountCodeById = new Map<string, string>();
+    if (this.coaRepo) {
+      const accounts = await this.coaRepo.getAccountsByTenantId(tenantId);
+      for (const a of accounts) {
+        accountCodeById.set(a.id, a.accountCode);
+      }
+    }
+
+    // Build lookup maps: accountId (code) → name
     const customerByAccount = new Map<string, { id: string; name: string }>();
     for (const c of customers) {
-      customerByAccount.set(c.accountHeadId, { id: c.id, name: c.name });
+      const code = accountCodeById.get(c.accountHeadId) || c.accountHeadId;
+      customerByAccount.set(code, { id: c.id, name: c.name });
     }
 
     const supplierByAccount = new Map<string, { id: string; name: string }>();
     for (const s of suppliers) {
-      supplierByAccount.set(s.accountHeadId, { id: s.id, name: s.name });
+      const code = accountCodeById.get(s.accountHeadId) || s.accountHeadId;
+      supplierByAccount.set(code, { id: s.id, name: s.name });
     }
 
     // productId → name

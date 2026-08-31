@@ -137,6 +137,16 @@ export function createAuthRoutes(
     res.json({ success: true });
   });
 
+  return router;
+}
+
+/**
+ * Tenant discovery routes (public, no auth required).
+ * Mounted at /api directly (not /api/auth).
+ */
+export function createTenantRoutes(tenantRepo: ITenantRepository): Router {
+  const router = Router();
+
   /**
    * GET /api/tenants
    * List public tenants (unauthenticated).

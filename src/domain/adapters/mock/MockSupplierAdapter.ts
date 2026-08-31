@@ -1,9 +1,9 @@
 /**
  * Mock Supplier Adapter
- * In-memory adapter for supplier records, mirroring MockCustomerAdapter.
- * Creates AP accounts under 21100 Accounts Payable for each supplier.
+ * DEVELOPMENT ONLY — In-memory mock implementation of ISupplierRepository.
+ * Creates AP posting accounts under 21100 (PAYABLE) for each supplier.
  *
- * DEVELOPMENT ONLY - Do not use in production.
+ * Mirrors MockCustomerAdapter pattern for proper COA integration.
  */
 
 import { ISupplierRepository } from '../../repositories/ISupplierRepository';
@@ -11,142 +11,137 @@ import { Supplier, CreateSupplierDTO, UpdateSupplierDTO } from '../../types/supp
 import { ICOARepository } from '../../repositories/ICOARepository';
 import { CreateAccountHeadDTO } from '../../types/coa';
 
-const SEED_SUPPLIERS: Supplier[] = [
-  {
-    id: 'supplier-001',
-    tenantId: 'tenant-demo-wholesale-001',
-    name: 'Global Trading Co.',
-    contactPerson: 'Ahmad Khan',
-    phone: '+92-21-34567890',
-    email: 'ahmad@globaltrading.com',
-    address: '456 Commerce Avenue',
-    city: 'Karachi',
-    accountHeadId: 'acc-ap-global-trading',
-    taxRegistrationNumber: 'TRN-555001',
-    paymentTerms: 'Net 30',
-    creditLimit: 500000,
-    isActive: true,
-    createdAt: new Date('2025-01-15'),
-    updatedAt: new Date('2025-01-15'),
-  },
-  {
-    id: 'supplier-002',
-    tenantId: 'tenant-demo-wholesale-001',
-    name: 'Eastern Imports Ltd.',
-    contactPerson: 'Sara Malik',
-    phone: '+92-21-35678901',
-    email: 'sara@easternimports.com',
-    address: '789 Import Street',
-    city: 'Lahore',
-    accountHeadId: 'acc-ap-eastern-imports',
-    taxRegistrationNumber: 'TRN-555002',
-    paymentTerms: 'Net 45',
-    creditLimit: 750000,
-    isActive: true,
-    createdAt: new Date('2025-02-10'),
-    updatedAt: new Date('2025-02-10'),
-  },
-  {
-    id: 'supplier-003',
-    tenantId: 'tenant-demo-wholesale-001',
-    name: 'Premier Wholesale Suppliers',
-    contactPerson: 'Usman Ali',
-    phone: '+92-21-36789012',
-    email: 'usman@premierwholesale.com',
-    address: '321 Market Road',
-    city: 'Faisalabad',
-    accountHeadId: 'acc-ap-premier-wholesale',
-    taxRegistrationNumber: 'TRN-555003',
-    paymentTerms: 'Net 30',
-    creditLimit: 1000000,
-    isActive: true,
-    createdAt: new Date('2025-03-05'),
-    updatedAt: new Date('2025-03-05'),
-  },
-  {
-    id: 'supplier-004',
-    tenantId: 'tenant-demo-wholesale-001',
-    name: 'National Distributors',
-    contactPerson: 'Fatima Noor',
-    phone: '+92-21-37890123',
-    email: 'fatima@nationaldistributors.com',
-    address: '654 Industrial Area',
-    city: 'Multan',
-    accountHeadId: 'acc-ap-national-dist',
-    taxRegistrationNumber: 'TRN-555004',
-    paymentTerms: 'Net 60',
-    creditLimit: 300000,
-    isActive: true,
-    createdAt: new Date('2025-04-20'),
-    updatedAt: new Date('2025-04-20'),
-  },
-  {
-    id: 'supplier-005',
-    tenantId: 'tenant-demo-wholesale-001',
-    name: 'Legacy Suppliers Corp.',
-    contactPerson: 'Omar Siddiqui',
-    phone: '+92-21-38901234',
-    email: 'omar@legacysuppliers.com',
-    address: '987 Old Quarter',
-    city: 'Peshawar',
-    accountHeadId: 'acc-ap-legacy-suppliers',
-    taxRegistrationNumber: 'TRN-555005',
-    paymentTerms: 'Net 30',
-    creditLimit: 200000,
-    isActive: false,
-    createdAt: new Date('2024-06-01'),
-    updatedAt: new Date('2025-01-01'),
-  },
+/* ─── Helpers ──────────────────────────────────────────────── */
+
+let nextId = 7000;
+
+function uid(): string {
+  return `supp-${nextId++}`;
+}
+
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+/* ─── Tenant Seed Map ──────────────────────────────────────── */
+
+const TENANT_IDS = [
+  'tenant-demo-wholesale-001',
+  'tenant-demo-distribution-002',
+  'tenant-apex-trading-003',
 ];
 
-export class MockSupplierAdapter implements ISupplierRepository {
-  private suppliers: Map<string, Supplier[]> = new Map();
-  private idCounter: number = 6;
+const suppliersStore: Map<string, Supplier[]> = new Map();
 
-  constructor(private coaRepository: ICOARepository) {
-    this.seedData();
+/* ─── Adapter Implementation ───────────────────────────────── */
+
+export class MockSupplierAdapter implements ISupplierRepository {
+  private coaRepo: ICOARepository;
+
+  constructor(coaRepo: ICOARepository) {
+    this.coaRepo = coaRepo;
+    this.initializeSeeds();
   }
 
-  private seedData(): void {
-    const tenantIds = ['tenant-demo-wholesale-001', 'tenant-demo-distribution-002', 'tenant-apex-trading-003'];
+  private async initializeSeeds(): Promise<void> {
+    for (const tid of TENANT_IDS) {
+      const accountHeadIds = new Map<string, string>();
 
-    for (const tenantId of tenantIds) {
-      const tenantSuppliers = SEED_SUPPLIERS
-        .filter(s => s.tenantId === 'tenant-demo-wholesale-001')
-        .map(s => ({
-          ...s,
-          id: `${s.id}-${tenantId.slice(-3)}`,
-          tenantId,
-          accountHeadId: `${s.accountHeadId}-${tenantId.slice(-3)}`,
-          createdAt: new Date(s.createdAt),
-          updatedAt: new Date(s.updatedAt),
-        }));
+      const accounts = await this.coaRepo.getAccountsByTenantId(tid);
+      const parentAccount = accounts.find(a => a.accountCode === '21100');
 
-      this.suppliers.set(tenantId, tenantSuppliers);
+      if (parentAccount) {
+        const supplierDefs = [
+          { code: '21101', name: 'Global Trading Co.' },
+          { code: '21102', name: 'Eastern Imports Ltd.' },
+          { code: '21103', name: 'Premier Wholesale Suppliers' },
+          { code: '21104', name: 'National Distributors' },
+          { code: '21105', name: 'Legacy Suppliers Corp.' },
+        ];
+
+        for (const sd of supplierDefs) {
+          const existing = accounts.find(a => a.accountCode === sd.code);
+          if (existing) {
+            accountHeadIds.set(sd.code, existing.id);
+          } else {
+            const dto: CreateAccountHeadDTO = {
+              accountCode: sd.code,
+              accountName: sd.name,
+              parentId: parentAccount.id,
+              level: 4,
+              accountType: 'LIABILITY',
+              controlCategory: 'PAYABLE',
+              legacyMainHeadNo: 8000,
+              accountEffect: 'Balance Sheet',
+            };
+            const created = await this.coaRepo.createAccount(tid, dto);
+            accountHeadIds.set(sd.code, created.id);
+          }
+        }
+      }
+
+      const seedSuppliers: Array<{
+        code: string; name: string; contactPerson: string;
+        phone: string; email: string; address: string; city: string;
+        stn: string; paymentTerms: string; creditLimit: number; isActive: boolean;
+        createdAt: string;
+      }> = [
+        { code: '21101', name: 'Global Trading Co.', contactPerson: 'Ahmad Khan', phone: '+92-21-34567890', email: 'ahmad@globaltrading.com', address: '456 Commerce Avenue', city: 'Karachi', stn: 'TRN-555001', paymentTerms: 'Net 30', creditLimit: 500000, isActive: true, createdAt: '2025-01-15' },
+        { code: '21102', name: 'Eastern Imports Ltd.', contactPerson: 'Sara Malik', phone: '+92-21-35678901', email: 'sara@easternimports.com', address: '789 Import Street', city: 'Lahore', stn: 'TRN-555002', paymentTerms: 'Net 45', creditLimit: 750000, isActive: true, createdAt: '2025-02-10' },
+        { code: '21103', name: 'Premier Wholesale Suppliers', contactPerson: 'Usman Ali', phone: '+92-21-36789012', email: 'usman@premierwholesale.com', address: '321 Market Road', city: 'Faisalabad', stn: 'TRN-555003', paymentTerms: 'Net 30', creditLimit: 1000000, isActive: true, createdAt: '2025-03-05' },
+        { code: '21104', name: 'National Distributors', contactPerson: 'Fatima Noor', phone: '+92-21-37890123', email: 'fatima@nationaldistributors.com', address: '654 Industrial Area', city: 'Multan', stn: 'TRN-555004', paymentTerms: 'Net 60', creditLimit: 300000, isActive: true, createdAt: '2025-04-20' },
+        { code: '21105', name: 'Legacy Suppliers Corp.', contactPerson: 'Omar Siddiqui', phone: '+92-21-38901234', email: 'omar@legacysuppliers.com', address: '987 Old Quarter', city: 'Peshawar', stn: 'TRN-555005', paymentTerms: 'Net 30', creditLimit: 200000, isActive: false, createdAt: '2024-06-01' },
+      ];
+
+      const suppliers: Supplier[] = seedSuppliers.map((sd) => {
+        const accountHeadId = accountHeadIds.get(sd.code) ?? '';
+        const now = new Date(sd.createdAt);
+        return {
+          id: uid(),
+          tenantId: tid,
+          name: sd.name,
+          contactPerson: sd.contactPerson,
+          phone: sd.phone,
+          email: sd.email,
+          address: sd.address,
+          city: sd.city,
+          accountHeadId,
+          taxRegistrationNumber: sd.stn,
+          paymentTerms: sd.paymentTerms,
+          creditLimit: sd.creditLimit,
+          isActive: sd.isActive,
+          createdAt: now,
+          updatedAt: now,
+        };
+      });
+
+      suppliersStore.set(tid, suppliers);
     }
   }
 
   async getSuppliers(tenantId: string): Promise<Supplier[]> {
-    const suppliers = this.suppliers.get(tenantId) || [];
-    return suppliers.filter(s => s.isActive);
+    const suppliers = suppliersStore.get(tenantId) || [];
+    return suppliers.filter(s => s.isActive).map(s => deepClone(s));
   }
 
   async getById(id: string, tenantId: string): Promise<Supplier | null> {
-    const suppliers = this.suppliers.get(tenantId) || [];
-    return suppliers.find(s => s.id === id) || null;
+    const suppliers = suppliersStore.get(tenantId) || [];
+    const found = suppliers.find(s => s.id === id);
+    return found ? deepClone(found) : null;
   }
 
   async getByAccountHeadId(accountHeadId: string, tenantId: string): Promise<Supplier | null> {
-    const suppliers = this.suppliers.get(tenantId) || [];
-    return suppliers.find(s => s.accountHeadId === accountHeadId) || null;
+    const suppliers = suppliersStore.get(tenantId) || [];
+    const found = suppliers.find(s => s.accountHeadId === accountHeadId);
+    return found ? deepClone(found) : null;
   }
 
   async create(supplierDTO: CreateSupplierDTO, tenantId: string): Promise<Supplier> {
-    const suppliers = this.suppliers.get(tenantId) || [];
-    const id = `supplier-${String(this.idCounter++).padStart(3, '0')}`;
+    const suppliers = suppliersStore.get(tenantId) || [];
+    const id = uid();
     const now = new Date();
 
-    const accountHeadId = `acc-ap-${supplierDTO.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${id.slice(-3)}`;
+    const accountHeadId = `acc-ap-${supplierDTO.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${id.slice(-4)}`;
 
     const newSupplier: Supplier = {
       id,
@@ -167,9 +162,9 @@ export class MockSupplierAdapter implements ISupplierRepository {
     };
 
     suppliers.push(newSupplier);
-    this.suppliers.set(tenantId, suppliers);
+    suppliersStore.set(tenantId, suppliers);
 
-    await this.coaRepository.createAccount(
+    await this.coaRepo.createAccount(
       tenantId,
       {
         accountCode: accountHeadId,
@@ -182,16 +177,13 @@ export class MockSupplierAdapter implements ISupplierRepository {
       }
     );
 
-    return newSupplier;
+    return deepClone(newSupplier);
   }
 
   async update(id: string, supplierDTO: UpdateSupplierDTO, tenantId: string): Promise<Supplier | null> {
-    const suppliers = this.suppliers.get(tenantId) || [];
+    const suppliers = suppliersStore.get(tenantId) || [];
     const index = suppliers.findIndex(s => s.id === id);
-
-    if (index === -1) {
-      return null;
-    }
+    if (index === -1) return null;
 
     const updatedSupplier: Supplier = {
       ...suppliers[index],
@@ -200,40 +192,29 @@ export class MockSupplierAdapter implements ISupplierRepository {
     };
 
     suppliers[index] = updatedSupplier;
-    this.suppliers.set(tenantId, suppliers);
-
-    return updatedSupplier;
+    suppliersStore.set(tenantId, suppliers);
+    return deepClone(updatedSupplier);
   }
 
   async deactivate(id: string, tenantId: string): Promise<boolean> {
-    const suppliers = this.suppliers.get(tenantId) || [];
+    const suppliers = suppliersStore.get(tenantId) || [];
     const index = suppliers.findIndex(s => s.id === id);
+    if (index === -1) return false;
 
-    if (index === -1) {
-      return false;
-    }
-
-    suppliers[index] = {
-      ...suppliers[index],
-      isActive: false,
-      updatedAt: new Date(),
-    };
-
-    this.suppliers.set(tenantId, suppliers);
-
+    suppliers[index] = { ...suppliers[index], isActive: false, updatedAt: new Date() };
+    suppliersStore.set(tenantId, suppliers);
     return true;
   }
 
   async search(query: string, tenantId: string): Promise<Supplier[]> {
-    const suppliers = this.suppliers.get(tenantId) || [];
+    const suppliers = suppliersStore.get(tenantId) || [];
     const lowerQuery = query.toLowerCase();
-
     return suppliers.filter(s =>
       s.isActive && (
         s.name.toLowerCase().includes(lowerQuery) ||
         (s.contactPerson?.toLowerCase().includes(lowerQuery) ?? false) ||
         (s.city?.toLowerCase().includes(lowerQuery) ?? false)
       )
-    );
+    ).map(s => deepClone(s));
   }
 }

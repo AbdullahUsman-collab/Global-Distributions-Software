@@ -11,9 +11,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:ui\"",
-    "dev:server": "tsc && node dist/server/index.js",
+    "dev:server": "tsx src/server/index.ts",
     "dev:ui": "vite",
-    "start": "node dist/server/index.js",
+    "start": "tsx src/server/index.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist"
   },
@@ -25,6 +25,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^4.1.11",
     "concurrently": "^9.2.4",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vite": "^6.4.3",
     "vitest": "^4.1.11"

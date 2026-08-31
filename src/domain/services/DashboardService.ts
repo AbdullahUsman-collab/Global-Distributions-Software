@@ -157,7 +157,7 @@ export class DashboardService {
     private cashBookService: CashBookService,
     private financialReportService: FinancialReportService,
   ) {
-    this.billsService = new BillsListService(voucherRepo, customerRepo, supplierRepo, inventoryRepo);
+    this.billsService = new BillsListService(voucherRepo, customerRepo, supplierRepo, inventoryRepo, coaRepo);
     this.agingService = new AgingReportService(voucherRepo, coaRepo, customerRepo, supplierRepo);
   }
 

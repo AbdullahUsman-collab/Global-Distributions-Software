@@ -22,7 +22,7 @@ import cookieParser from 'cookie-parser';
 import { createAuthMiddleware } from './middleware/auth';
 import { csrfProtection } from './middleware/csrf';
 import { apiRateLimiter } from './middleware/rateLimit';
-import { createAuthRoutes } from './routes/auth';
+import { createAuthRoutes, createTenantRoutes } from './routes/auth';
 import { createProtectedRoutes } from './routes/protected';
 
 // Domain adapters — mock
@@ -93,7 +93,7 @@ const cashBookService = new CashBookService(coaAdapter, voucherAdapter);
 const saleReturnService = new SaleReturnService(voucherAdapter, inventoryAdapter, customerAdapter);
 const purchaseReturnService = new PurchaseReturnService(voucherAdapter, inventoryAdapter, supplierAdapter);
 const billDetailService = new BillDetailService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter, inventoryAdapter);
-const billsListService = new BillsListService(voucherAdapter, customerAdapter, supplierAdapter, inventoryAdapter);
+const billsListService = new BillsListService(voucherAdapter, customerAdapter, supplierAdapter, inventoryAdapter, coaAdapter);
 const partyBalanceService = new PartyBalanceService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter);
 const agingReportService = new AgingReportService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter);
 const financialReportService = new FinancialReportService(coaAdapter, voucherAdapter);
@@ -171,7 +171,8 @@ const authMiddleware = createAuthMiddleware(sessionAdapter, userAdapter);
 // ─── Routes ────────────────────────────────────────────────────
 
 // Public routes (no auth required)
-app.use('/api', createAuthRoutes(authService, tenantAdapter));
+app.use('/api/auth', createAuthRoutes(authService, tenantAdapter));
+app.use('/api', createTenantRoutes(tenantAdapter));
 
 // Protected routes (auth + RBAC required)
 app.use('/api',

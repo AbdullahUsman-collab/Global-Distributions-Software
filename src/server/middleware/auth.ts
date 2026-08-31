@@ -11,6 +11,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ISessionRepository } from '../../domain/repositories/ISessionRepository';
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { UserSession, User } from '../../domain/types/auth';
+import { hasPermission } from '../../domain/services/AuthorizationService';
 
 declare global {
   namespace Express {
@@ -80,8 +81,6 @@ export function requirePermissionMiddleware(permission: string) {
       return;
     }
 
-    // Import dynamically to avoid circular dependency
-    const { hasPermission } = require('../../domain/services/AuthorizationService');
     if (!hasPermission(req.user.role, permission)) {
       res.status(403).json({
         error: `Insufficient permissions: requires "${permission}"`,
