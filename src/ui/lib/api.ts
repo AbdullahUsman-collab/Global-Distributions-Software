@@ -7,7 +7,13 @@
  * RULE: CSRF token included on state-changing requests.
  * RULE: No database access from browser.
  * RULE: Consistent error handling across all API calls.
+ *
+ * DEMO MODE: When running on Vercel (static hosting with no Express server),
+ * all API calls are intercepted and served from client-side deterministic
+ * mock data. This allows the full demo to work without a backend.
  */
+
+import { handleDemoRequest } from './demoData';
 
 const API_BASE = '/api';
 
@@ -65,29 +71,56 @@ async function apiRequest<T>(
     headers['Content-Type'] = 'application/json';
   }
 
-  const res = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
 
-  if (!res.ok) {
-    let message = `Request failed (${res.status})`;
-    try {
-      const data = await res.json();
-      message = data.error || message;
-    } catch {
-      // Ignore parse errors
+    if (!res.ok) {
+      // Try demo data fallback for GET failures (e.g. 404 on Vercel)
+      if (!isStateChanging) {
+        let body: any = undefined;
+        if (options.body && typeof options.body === 'string') {
+          try { body = JSON.parse(options.body); } catch { /* ignore */ }
+        }
+        const demoResult = handleDemoRequest(path, method, body);
+        if (demoResult !== null && demoResult !== undefined) {
+          return demoResult as T;
+        }
+      }
+      let message = `Request failed (${res.status})`;
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch {
+        // Ignore parse errors
+      }
+      throw { status: res.status, message } as ApiError;
     }
-    throw { status: res.status, message } as ApiError;
-  }
 
-  // Handle 204 No Content
-  if (res.status === 204) {
-    return undefined as T;
-  }
+    // Handle 204 No Content
+    if (res.status === 204) {
+      return undefined as T;
+    }
 
-  return res.json();
+    return res.json();
+  } catch (err) {
+    // Network error / server unavailable → fall back to demo data
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      let body: any = undefined;
+      if (options.body && typeof options.body === 'string') {
+        try { body = JSON.parse(options.body); } catch { /* ignore */ }
+      }
+      const demoResult = handleDemoRequest(path, method, body);
+      if (demoResult !== null && demoResult !== undefined) {
+        return demoResult as T;
+      }
+    }
+    // Re-throw if demo fallback didn't handle it
+    throw err;
+  }
 }
 
 // ─── Sales API ────────────────────────────────────────────────
