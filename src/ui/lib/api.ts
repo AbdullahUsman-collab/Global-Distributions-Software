@@ -85,7 +85,7 @@ async function apiRequest<T>(
         if (options.body && typeof options.body === 'string') {
           try { body = JSON.parse(options.body); } catch { /* ignore */ }
         }
-        const demoResult = handleDemoRequest(path, method, body);
+        const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, body);
         if (demoResult !== null && demoResult !== undefined) {
           return demoResult as T;
         }
@@ -113,7 +113,7 @@ async function apiRequest<T>(
       if (options.body && typeof options.body === 'string') {
         try { body = JSON.parse(options.body); } catch { /* ignore */ }
       }
-      const demoResult = handleDemoRequest(path, method, body);
+      const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, body);
       if (demoResult !== null && demoResult !== undefined) {
         return demoResult as T;
       }
