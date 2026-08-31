@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Tenant } from '../../domain/types/tenant';
 import { apiLogin, apiGetTenantBySlug } from '../lib/session';
+import { isDemoMode } from '../lib/config';
 
 export const Login: React.FC = () => {
   const { brandSlug } = useParams<{ brandSlug: string }>();
@@ -248,6 +249,22 @@ export const Login: React.FC = () => {
             )}
           </button>
         </form>
+
+        {/* Demo mode credentials hint */}
+        {isDemoMode() && (
+          <div style={styles.demoHint}>
+            <div style={styles.demoHintTitle}>Demo Credentials</div>
+            <div style={styles.demoHintRow}>
+              <code style={styles.demoHintCode}>admin</code> / <code style={styles.demoHintCode}>admin123</code> <span style={styles.demoHintRole}>Admin</span>
+            </div>
+            <div style={styles.demoHintRow}>
+              <code style={styles.demoHintCode}>manager</code> / <code style={styles.demoHintCode}>manager123</code> <span style={styles.demoHintRole}>Manager</span>
+            </div>
+            <div style={styles.demoHintRow}>
+              <code style={styles.demoHintCode}>clerk</code> / <code style={styles.demoHintCode}>clerk123</code> <span style={styles.demoHintRole}>Sales</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -418,5 +435,38 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: '500',
+  },
+  demoHint: {
+    marginTop: '20px',
+    padding: '12px 16px',
+    backgroundColor: '#fefce8',
+    border: '1px solid #fde68a',
+    borderRadius: '8px',
+    fontSize: '12px',
+    color: '#78350f',
+  },
+  demoHintTitle: {
+    fontWeight: '600',
+    marginBottom: '6px',
+    fontSize: '11px',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    color: '#92400e',
+  },
+  demoHintRow: {
+    lineHeight: '1.8',
+  },
+  demoHintCode: {
+    backgroundColor: '#fff',
+    padding: '1px 5px',
+    borderRadius: '3px',
+    border: '1px solid #e5e7eb',
+    fontFamily: 'monospace',
+    fontSize: '12px',
+  },
+  demoHintRole: {
+    color: '#92400e',
+    fontSize: '11px',
+    marginLeft: '4px',
   },
 };

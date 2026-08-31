@@ -181,8 +181,9 @@ function buildSeedStockLevels(
 
   for (const wh of warehouses) {
     for (const prod of products) {
-      // Main warehouse gets full stock, showroom gets partial
-      const qty = wh.code === 'WH-01' ? Math.floor(Math.random() * 500) + 100 : Math.floor(Math.random() * 50) + 10;
+      // Main warehouse gets full stock, showroom gets partial (deterministic based on product index)
+      const prodIdx = products.indexOf(prod);
+      const qty = wh.code === 'WH-01' ? 100 + (prodIdx * 37 % 400) : 10 + (prodIdx * 7 % 40);
       levels.push({
         id: uid(),
         tenantId,

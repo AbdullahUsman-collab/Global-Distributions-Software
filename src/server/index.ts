@@ -238,11 +238,12 @@ async function start() {
 
   app.listen(PORT, () => {
     const env = process.env.NODE_ENV || 'development';
+    const modeLabel = usePg ? 'PostgreSQL' : 'DEMO MODE (In-Memory)';
     console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║  Distribution Software ERP — ${env.toUpperCase()} Server${' '.repeat(Math.max(0, 18 - env.length))}║
 ║  Running on http://localhost:${PORT}                          ║
-║  Persistence: ${mode.padEnd(47)}║
+║  Persistence: ${modeLabel.padEnd(47)}║${!usePg ? '\n║  ⚠  DEMO MODE — Using in-memory mock data               ║' : ''}
 ║                                                              ║
 ║  Security Features:                                          ║
 ║  ✓ HTTP-only cookie sessions                                 ║

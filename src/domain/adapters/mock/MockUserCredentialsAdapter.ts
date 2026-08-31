@@ -93,10 +93,8 @@ export class MockUserCredentialsAdapter implements IUserCredentialsRepository {
     tenantId: string,
     username: string
   ): Promise<UserCredentials | null> {
-    // NOTE: In real implementation, this would join with users table.
-    // For mock, we assume username lookup is done via MockUserAdapter
-    // and this is called with the userId.
-    // For simplicity, we'll find by tenantId only (mock behavior).
+    // Find user by tenantId + username via user adapter
+    // For mock, we find by tenantId — the auth service resolves userId separately
     return (
       credentials.find((c) => c.tenantId === tenantId) || null
     );

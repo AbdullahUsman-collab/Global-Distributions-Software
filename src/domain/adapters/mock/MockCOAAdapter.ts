@@ -109,9 +109,9 @@ function buildSeedTree(tenantId: string): AccountHead[] {
   add('21200', 'Tax Payable',           3, 'LIABILITY', '21000', 'TAX');
   add('31100', 'Capital Accounts',      3, 'EQUITY',    '31000');
   add('31200', 'Retained Earnings Group', 3, 'EQUITY', '31000');
-  add('41100', 'Sales Revenue',         3, 'REVENUE',   '41100');
-  add('51100', 'Purchase Costs',        3, 'COGS',      '51100');
-  add('61100', 'General Administrative Expenses', 3, 'EXPENSE', '61100');
+  add('41100', 'Sales Revenue',         3, 'REVENUE',   '41000');
+  add('51100', 'Purchase Costs',        3, 'COGS',      '51000');
+  add('61100', 'General Administrative Expenses', 3, 'EXPENSE', '61000');
   add('62100', 'Salaries & Wages',      3, 'EXPENSE',   '62000');
   add('62200', 'Staff Benefits',        3, 'EXPENSE',   '62000');
 
@@ -128,6 +128,8 @@ function buildSeedTree(tenantId: string): AccountHead[] {
   add('12101', 'Office Equipment',      4, 'ASSET',     '12100');
   add('12102', 'Computer Equipment',    4, 'ASSET',     '12100');
   add('12201', 'Delivery Vehicles',     4, 'ASSET',     '12200');
+  add('11201', 'Trade Receivables',     4, 'ASSET',     '11200', 'RECEIVABLE', 500);
+  add('11501', 'Accumulated Depreciation', 4, 'ASSET',  '12100');
   add('21201', 'Sales Tax Output',      4, 'LIABILITY', '21200', 'TAX');
   add('21202', 'Withholding Tax Payable', 4, 'LIABILITY', '21200', 'TAX');
   add('21203', 'FED Payable',           4, 'LIABILITY', '21200', 'TAX');
@@ -144,6 +146,7 @@ function buildSeedTree(tenantId: string): AccountHead[] {
   add('61101', 'Rent Expense',          4, 'EXPENSE',   '61100');
   add('61102', 'Utilities Expense',     4, 'EXPENSE',   '61100');
   add('61103', 'Office Salaries',       4, 'EXPENSE',   '61100');
+  add('61104', 'Depreciation Expense',  4, 'EXPENSE',   '61100');
   add('62101', 'Monthly Salaries',      4, 'EXPENSE',   '62100');
   add('62102', 'Overtime Pay',          4, 'EXPENSE',   '62100');
   add('62201', 'Employee Benefits',     4, 'EXPENSE',   '62200');

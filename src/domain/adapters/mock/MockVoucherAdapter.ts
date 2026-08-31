@@ -87,7 +87,142 @@ interface SeedVoucher {
 
 function buildSeedVouchers(tenantId: string): SeedVoucher[] {
   return [
-    // JV — Office rent allocation
+    // ─── Opening Balance ──────────────────────────────────────
+    {
+      voucherType: 'JV',
+      date: '2026-07-01',
+      narration: 'Opening capital balance',
+      posted: true,
+      lines: [
+        { accountId: '11102', description: 'Bank opening balance',  debit: 500000, credit: 0 },
+        { accountId: '31101', description: 'Owner equity / capital', debit: 0,      credit: 500000 },
+      ],
+    },
+    // ─── Sales ────────────────────────────────────────────────
+    {
+      voucherType: 'SV',
+      date: '2026-08-02',
+      narration: 'Sale to Al-Fatah Traders — Invoice #1001',
+      posted: true,
+      lines: [
+        { accountId: '11201', description: 'Al-Fatah Traders — AR',  debit: 185000, credit: 0, quantity: 100, productId: 'p1' },
+        { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 160000 },
+        { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 25000 },
+      ],
+    },
+    {
+      voucherType: 'SV',
+      date: '2026-08-05',
+      narration: 'Sale to Khan Brothers — Invoice #1002',
+      posted: true,
+      lines: [
+        { accountId: '11201', description: 'Khan Brothers — AR',    debit: 92500,  credit: 0, quantity: 50, productId: 'p2' },
+        { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 80000 },
+        { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 12500 },
+      ],
+    },
+    {
+      voucherType: 'SV',
+      date: '2026-08-10',
+      narration: 'Sale to City Mart — Invoice #1003',
+      posted: true,
+      lines: [
+        { accountId: '11201', description: 'City Mart — AR',        debit: 277500, credit: 0, quantity: 150, productId: 'p3' },
+        { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 240000 },
+        { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 37500 },
+      ],
+    },
+    {
+      voucherType: 'SV',
+      date: '2026-08-15',
+      narration: 'Sale to United Super — Invoice #1004',
+      posted: true,
+      lines: [
+        { accountId: '11201', description: 'United Super — AR',     debit: 138000, credit: 0, quantity: 80, productId: 'p4' },
+        { accountId: '41101', description: 'Wholesale sales',        debit: 0,      credit: 120000 },
+        { accountId: '21201', description: 'Sales tax output',       debit: 0,      credit: 18000 },
+      ],
+    },
+    // ─── Sale Returns ─────────────────────────────────────────
+    {
+      voucherType: 'SRV',
+      date: '2026-08-12',
+      narration: 'Sale return from Khan Brothers — damaged goods',
+      posted: true,
+      lines: [
+        { accountId: '41104', description: 'Sales returns',         debit: 16000,  credit: 0 },
+        { accountId: '11201', description: 'Khan Brothers — AR',    debit: 0,      credit: 18720 },
+        { accountId: '21201', description: 'Sales tax reversal',     debit: 2720,   credit: 0 },
+      ],
+    },
+    // ─── Purchases ────────────────────────────────────────────
+    {
+      voucherType: 'PV',
+      date: '2026-08-03',
+      narration: 'Purchase from Global Imports — PO #2001',
+      posted: true,
+      lines: [
+        { accountId: '51101', description: 'Purchase cost',         debit: 320000, credit: 0, quantity: 200, productId: 'p1' },
+        { accountId: '11401', description: 'Input tax (GST)',       debit: 54400,  credit: 0 },
+        { accountId: '21100', description: 'Accounts payable',      debit: 0,      credit: 374400 },
+      ],
+    },
+    {
+      voucherType: 'PV',
+      date: '2026-08-08',
+      narration: 'Purchase from Prime Wholesale — PO #2002',
+      posted: true,
+      lines: [
+        { accountId: '51101', description: 'Purchase cost',         debit: 180000, credit: 0, quantity: 150, productId: 'p2' },
+        { accountId: '11401', description: 'Input tax (GST)',       debit: 30600,  credit: 0 },
+        { accountId: '21100', description: 'Accounts payable',      debit: 0,      credit: 210600 },
+      ],
+    },
+    // ─── Purchase Returns ─────────────────────────────────────
+    {
+      voucherType: 'PRV',
+      date: '2026-08-14',
+      narration: 'Purchase return to Global Imports — defective batch',
+      posted: true,
+      lines: [
+        { accountId: '21100', description: 'Accounts payable',      debit: 74880,  credit: 0 },
+        { accountId: '51101', description: 'Purchase returns',      debit: 0,      credit: 64000 },
+        { accountId: '11401', description: 'Input tax reversal',     debit: 0,      credit: 10880 },
+      ],
+    },
+    // ─── Customer Receipts ────────────────────────────────────
+    {
+      voucherType: 'CR',
+      date: '2026-08-18',
+      narration: 'Cash received from Al-Fatah Traders — partial payment',
+      posted: true,
+      lines: [
+        { accountId: '11101', description: 'Cash received',         debit: 100000, credit: 0 },
+        { accountId: '11201', description: 'Al-Fatah Traders — AR', debit: 0,      credit: 100000 },
+      ],
+    },
+    {
+      voucherType: 'CR',
+      date: '2026-08-20',
+      narration: 'Bank transfer from City Mart — full payment',
+      posted: true,
+      lines: [
+        { accountId: '11102', description: 'Bank transfer received', debit: 277500, credit: 0 },
+        { accountId: '11201', description: 'City Mart — AR',        debit: 0,      credit: 277500 },
+      ],
+    },
+    // ─── Supplier Payments ────────────────────────────────────
+    {
+      voucherType: 'PV',
+      date: '2026-08-22',
+      narration: 'Bank payment to Prime Wholesale — PO #2002 settled',
+      posted: true,
+      lines: [
+        { accountId: '21100', description: 'Accounts payable',      debit: 210600, credit: 0 },
+        { accountId: '11102', description: 'Bank transfer paid',    debit: 0,      credit: 210600 },
+      ],
+    },
+    // ─── Office Expenses ──────────────────────────────────────
     {
       voucherType: 'JV',
       date: '2026-08-01',
@@ -95,32 +230,9 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
       posted: true,
       lines: [
         { accountId: '61101', description: 'August office rent', debit: 50000, credit: 0 },
-        { accountId: '11101', description: 'Cash paid for rent',   debit: 0,    credit: 50000, contraAccountId: '61101' },
+        { accountId: '11101', description: 'Cash paid for rent',   debit: 0,    credit: 50000 },
       ],
     },
-    // CV — Cash voucher (Cash ↔ Any) per audit/04_ACCOUNTING_ENGINE.md
-    {
-      voucherType: 'CV',
-      date: '2026-08-03',
-      narration: 'Cash received from walk-in customer',
-      posted: true,
-      lines: [
-        { accountId: '11101', description: 'Cash received',       debit: 25000,  credit: 0 },
-        { accountId: '41102', description: 'Retail sale income',  debit: 0,      credit: 25000, contraAccountId: '11101' },
-      ],
-    },
-    // CR — Cash receipt (Cash ↔ Income/Party) per audit/04_ACCOUNTING_ENGINE.md
-    {
-      voucherType: 'CR',
-      date: '2026-08-05',
-      narration: 'Cash received from wholesale customer',
-      posted: true,
-      lines: [
-        { accountId: '11101', description: 'Cash received',       debit: 120000, credit: 0 },
-        { accountId: '41101', description: 'Wholesale sale income', debit: 0,     credit: 120000, contraAccountId: '11101' },
-      ],
-    },
-    // CP — Cash payment (Expense/Party ↔ Cash) per audit/04_ACCOUNTING_ENGINE.md
     {
       voucherType: 'CP',
       date: '2026-08-07',
@@ -128,65 +240,30 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
       posted: true,
       lines: [
         { accountId: '61102', description: 'Office supplies',     debit: 15000, credit: 0 },
-        { accountId: '11101', description: 'Cash paid',            debit: 0,     credit: 15000, contraAccountId: '61102' },
+        { accountId: '11101', description: 'Cash paid',            debit: 0,     credit: 15000 },
       ],
     },
-    // CPV — Legacy compatibility alias for CP
-    {
-      voucherType: 'CPV',
-      date: '2026-08-10',
-      narration: 'Cash purchase of inventory (legacy compat)',
-      posted: true,
-      lines: [
-        { accountId: '11301', description: 'Inventory received',   debit: 80000, credit: 0 },
-        { accountId: '11101', description: 'Cash paid',            debit: 0,     credit: 80000, contraAccountId: '11301' },
-      ],
-    },
-    // PV — Payment Voucher (Any ↔ Bank) per audit/04_ACCOUNTING_ENGINE.md
-    {
-      voucherType: 'PV',
-      date: '2026-08-12',
-      narration: 'Bank payment to supplier for July purchases',
-      posted: true,
-      lines: [
-        { accountId: '21100', description: 'Supplier payment',     debit: 350000, credit: 0 },
-        { accountId: '11102', description: 'Bank transfer paid',   debit: 0,      credit: 350000, contraAccountId: '21100' },
-      ],
-    },
-    // CRV — Legacy compatibility alias for CR
-    {
-      voucherType: 'CRV',
-      date: '2026-08-15',
-      narration: 'Bank transfer received from Apex Trading (legacy compat)',
-      posted: true,
-      lines: [
-        { accountId: '11102', description: 'Bank transfer received', debit: 250000, credit: 0 },
-        { accountId: '41101', description: 'Wholesale sale income',  debit: 0,      credit: 250000, contraAccountId: '11102' },
-      ],
-    },
-    // BPV — Legacy compatibility alias for PV
     {
       voucherType: 'BPV',
       date: '2026-08-20',
-      narration: 'Monthly salaries via bank transfer (legacy compat)',
+      narration: 'Monthly salaries via bank transfer',
       posted: true,
       lines: [
         { accountId: '61103', description: 'Office salaries August', debit: 180000, credit: 0 },
-        { accountId: '11102', description: 'Bank transfer paid',     debit: 0,      credit: 180000, contraAccountId: '61103' },
+        { accountId: '11102', description: 'Bank transfer paid',     debit: 0,      credit: 180000 },
       ],
     },
-    // BRV — Legacy compatibility alias (preserved, not in authoritative source)
     {
-      voucherType: 'BRV',
-      date: '2026-08-22',
-      narration: 'Bank receipt from distributor (legacy compat)',
+      voucherType: 'CRV',
+      date: '2026-08-15',
+      narration: 'Bank receipt from United Super — partial settlement',
       posted: true,
       lines: [
-        { accountId: '11102', description: 'Bank receipt',          debit: 95000, credit: 0 },
-        { accountId: '41101', description: 'Wholesale sale income', debit: 0,     credit: 95000, contraAccountId: '11102' },
+        { accountId: '11102', description: 'Bank transfer received', debit: 80000, credit: 0 },
+        { accountId: '11201', description: 'United Super — AR',     debit: 0,     credit: 80000 },
       ],
     },
-    // JV — Unposted draft voucher
+    // ─── Draft Vouchers ───────────────────────────────────────
     {
       voucherType: 'JV',
       date: '2026-08-24',
@@ -195,6 +272,16 @@ function buildSeedVouchers(tenantId: string): SeedVoucher[] {
       lines: [
         { accountId: '61102', description: 'Utility bill accrual', debit: 15000, credit: 0 },
         { accountId: '21201', description: 'Tax output liability',  debit: 0,    credit: 15000 },
+      ],
+    },
+    {
+      voucherType: 'JV',
+      date: '2026-08-25',
+      narration: 'Depreciation entry — pending approval',
+      posted: false,
+      lines: [
+        { accountId: '61104', description: 'Depreciation expense', debit: 25000, credit: 0 },
+        { accountId: '11501', description: 'Accumulated depreciation', debit: 0, credit: 25000 },
       ],
     },
   ];

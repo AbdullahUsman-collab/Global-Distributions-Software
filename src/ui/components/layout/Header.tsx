@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../auth/ProtectedRoute';
 import { apiLogout } from '../../lib/session';
 import { useNavigate } from 'react-router-dom';
+import { isDemoMode } from '../../lib/config';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -55,6 +56,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
             {tenant.brandName.charAt(0)}
           </div>
           <span className="brand-name" style={styles.brandName}>{tenant.brandName}</span>
+          {isDemoMode() && (
+            <span style={styles.demoBadge}>DEMO</span>
+          )}
         </div>
       </div>
 
@@ -351,5 +355,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     cursor: 'pointer',
     textAlign: 'left',
+  },
+  demoBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '2px 8px',
+    backgroundColor: '#fef3c7',
+    color: '#92400e',
+    fontSize: '10px',
+    fontWeight: '700',
+    borderRadius: '4px',
+    letterSpacing: '0.05em',
+    border: '1px solid #fcd34d',
+    marginLeft: '8px',
   },
 };
