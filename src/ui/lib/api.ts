@@ -433,3 +433,97 @@ export async function getBalanceSheet(filters?: { asOfDate?: string }) {
   const qs = params.toString();
   return apiRequest<any>(`/reports/balance-sheet${qs ? '?' + qs : ''}`);
 }
+
+// ─── Voucher API (Finance) ───────────────────────────────────
+
+export async function getVouchers(filters?: { voucherType?: string; status?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.voucherType) params.set('voucherType', filters.voucherType);
+  if (filters?.status) params.set('status', filters.status);
+  const qs = params.toString();
+  return apiRequest<any[]>(`/vouchers${qs ? '?' + qs : ''}`);
+}
+
+export async function createVoucher(dto: any) {
+  return apiRequest<any>('/vouchers', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateVoucher(id: string, dto: any) {
+  return apiRequest<any>(`/vouchers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function deleteVoucher(id: string) {
+  return apiRequest<any>(`/vouchers/${id}`, { method: 'DELETE' });
+}
+
+export async function postVoucher(id: string) {
+  return apiRequest<any>(`/vouchers/${id}/post`, { method: 'POST' });
+}
+
+export async function getVoucherLines(voucherId: string) {
+  return apiRequest<any[]>(`/vouchers/${voucherId}/lines`);
+}
+
+// ─── Inventory Mutation API ──────────────────────────────────
+
+export async function createProduct(dto: any) {
+  return apiRequest<any>('/products', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateProduct(id: string, dto: any) {
+  return apiRequest<any>(`/products/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function deleteProduct(id: string) {
+  return apiRequest<any>(`/products/${id}`, { method: 'DELETE' });
+}
+
+export async function getProductBatches(productId: string) {
+  return apiRequest<any[]>(`/products/${productId}/batches`);
+}
+
+export async function getProductSerials(productId: string) {
+  return apiRequest<any[]>(`/products/${productId}/serials`);
+}
+
+export async function getWarehouseLocations(warehouseId: string) {
+  return apiRequest<any[]>(`/warehouses/${warehouseId}/locations`);
+}
+
+export async function getStockMovements(productId?: string) {
+  const params = productId ? `?productId=${productId}` : '';
+  return apiRequest<any[]>(`/stock-movements${params}`);
+}
+
+export async function createStockMovement(dto: any) {
+  return apiRequest<any>('/stock-movements', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function postStockMovement(id: string) {
+  return apiRequest<any>(`/stock-movements/${id}/post`, { method: 'POST' });
+}
+
+export async function cancelStockMovement(id: string) {
+  return apiRequest<any>(`/stock-movements/${id}/cancel`, { method: 'POST' });
+}
+
+// ─── Customer AR Balance API ─────────────────────────────────
+
+export async function getCustomerARBalance(customerId: string) {
+  return apiRequest<any>(`/customers/${customerId}/ar-balance`);
+}

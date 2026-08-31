@@ -8,8 +8,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
-import { getAccounts, createAccount, updateAccount, deleteAccount, getAccountLedger, getProducts } from '../lib/api';
+import { getAccounts, createAccount, updateAccount, deleteAccount, getAccountLedger, getProducts, getVouchers, postVoucher, deleteVoucher, createVoucher, updateVoucher, getVoucherLines } from '../lib/api';
 import {
   AccountHead,
   AccountType,
@@ -365,7 +364,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
     setLoading(true);
     try {
       const [v, a] = await Promise.all([
-        services.voucherRepository.getVouchersByTenantId(tenantId, {
+        getVouchers({
           voucherType: typeFilter || undefined,
           status: statusFilter || undefined,
         }),
@@ -391,7 +390,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
   const handlePost = async (id: string) => {
     if (!confirm('Post this voucher? It will become immutable and cannot be edited or deleted.')) return;
     try {
-      await services.voucherRepository.postVoucher(tenantId, id);
+      await postVoucher(id);
       await load();
     } catch (err: any) {
       alert(err.message || 'Failed to post voucher. Ensure the voucher is balanced (Debit = Credit).');
@@ -401,7 +400,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this draft voucher? This cannot be undone.')) return;
     try {
-      await services.voucherRepository.deleteVoucher(tenantId, id);
+      await deleteVoucher(id);
       await load();
     } catch (err) {
       console.error('Failed to delete voucher:', err);
@@ -418,13 +417,13 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
   };
 
   const handleCreate = async (dto: CreateVoucherDTO) => {
-    await services.voucherRepository.createVoucher(tenantId, dto, user);
+    await createVoucher(dto);
     setShowCreate(false);
     await load();
   };
 
   const handleUpdate = async (id: string, dto: UpdateVoucherDTO) => {
-    await services.voucherRepository.updateVoucher(tenantId, id, dto);
+    await updateVoucher(id, dto);
     setEditVoucher(null);
     await load();
   };
@@ -545,7 +544,7 @@ const VoucherRow: React.FC<{
 
   useEffect(() => {
     if (expanded && lines.length === 0) {
-      services.voucherRepository.getVoucherLines(tenantId, v.id).then(raw => setLines(raw ?? []));
+      getVoucherLines(v.id).then(raw => setLines(raw ?? []));
     }
   }, [expanded, v.id, tenantId, lines.length]);
 
@@ -676,7 +675,7 @@ const VoucherModal: React.FC<{
   // Load existing lines for edit mode + products
   useEffect(() => {
     if (isEdit && voucher) {
-      services.voucherRepository.getVoucherLines(tenantId, voucher.id).then(raw => {
+      getVoucherLines(voucher.id).then(raw => {
         setLines((raw ?? []).map(l => ({
           accountId: l.accountId, description: l.description, debit: l.debit, credit: l.credit,
           contraAccountId: l.contraAccountId, quantity: l.quantity, productId: l.productId, branch: l.branch,

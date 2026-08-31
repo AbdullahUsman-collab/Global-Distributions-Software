@@ -151,5 +151,28 @@ export function createAuthRoutes(
     }
   });
 
+  /**
+   * GET /api/tenants/:slug
+   * Get a single public tenant by slug (unauthenticated).
+   */
+  router.get('/tenants/:slug', async (req: Request, res: Response) => {
+    try {
+      const slug = req.params.slug;
+      if (!slug || slug.length > 128) {
+        res.status(400).json({ error: 'Invalid slug' });
+        return;
+      }
+      const tenant = await tenantRepo.getTenantBySlug(slug);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+      res.json(tenant);
+    } catch (error) {
+      console.error('Error fetching tenant by slug:', error);
+      res.status(500).json({ error: 'Failed to fetch tenant' });
+    }
+  });
+
   return router;
 }

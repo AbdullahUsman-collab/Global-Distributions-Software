@@ -29,7 +29,7 @@ import { ICustomerRepository } from '../../domain/repositories/ICustomerReposito
 import { ISupplierRepository } from '../../domain/repositories/ISupplierRepository';
 import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository';
 import { FinancialReportService } from '../../domain/services/FinancialReportService';
-import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO, validId } from '../lib/validation';
+import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO, validId, validDate, requiredString, positiveNumber, nonEmptyArray, validEnum, combineValidations } from '../lib/validation';
 
 export function createProtectedRoutes(
   salesService: SalesService,
@@ -1353,6 +1353,483 @@ export function createProtectedRoutes(
       } catch (error: any) {
         console.error('Delete account error:', error);
         res.status(500).json({ error: 'Failed to delete account' });
+      }
+    }
+  );
+
+  // ─── Voucher Routes (Finance) ────────────────────────────────
+
+  /**
+   * GET /api/vouchers
+   * List vouchers with optional filters.
+   */
+  router.get('/vouchers',
+    requirePermissionMiddleware('finance.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const filters: { voucherType?: any; status?: any } = {};
+        if (req.query.voucherType && typeof req.query.voucherType === 'string') {
+          filters.voucherType = req.query.voucherType;
+        }
+        if (req.query.status && typeof req.query.status === 'string') {
+          filters.status = req.query.status;
+        }
+        const vouchers = await voucherRepo.getVouchersByTenantId(tenantId, filters);
+        res.json(vouchers);
+      } catch (error) {
+        console.error('List vouchers error:', error);
+        res.status(500).json({ error: 'Failed to list vouchers' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/vouchers
+   * Create a new DRAFT voucher.
+   */
+  router.post('/vouchers',
+    mutationRateLimiter,
+    requirePermissionMiddleware('finance.create'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const createdBy = req.user!.username;
+        const { voucherType, date, narration, lines } = req.body;
+
+        if (!voucherType || !date || !narration || !Array.isArray(lines) || lines.length === 0) {
+          res.status(400).json({ error: 'Missing required fields: voucherType, date, narration, lines' });
+          return;
+        }
+
+        for (const line of lines) {
+          if (!line.accountId || typeof line.debit !== 'number' || typeof line.credit !== 'number') {
+            res.status(400).json({ error: 'Each line requires accountId, debit, and credit' });
+            return;
+          }
+        }
+
+        const voucher = await voucherRepo.createVoucher(tenantId, { voucherType, date, narration, lines }, createdBy);
+        res.status(201).json(voucher);
+      } catch (error) {
+        console.error('Create voucher error:', error);
+        res.status(500).json({ error: 'Failed to create voucher' });
+      }
+    }
+  );
+
+  /**
+   * PUT /api/vouchers/:id
+   * Update an existing DRAFT voucher.
+   */
+  router.put('/vouchers/:id',
+    mutationRateLimiter,
+    requirePermissionMiddleware('finance.create'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await voucherRepo.getVoucherById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Voucher not found' });
+          return;
+        }
+        if (existing.status === 'POSTED') {
+          res.status(409).json({ error: 'Cannot edit a posted voucher' });
+          return;
+        }
+        const voucher = await voucherRepo.updateVoucher(tenantId, id, req.body);
+        res.json(voucher);
+      } catch (error) {
+        console.error('Update voucher error:', error);
+        res.status(500).json({ error: 'Failed to update voucher' });
+      }
+    }
+  );
+
+  /**
+   * DELETE /api/vouchers/:id
+   * Delete a DRAFT voucher.
+   */
+  router.delete('/vouchers/:id',
+    mutationRateLimiter,
+    requirePermissionMiddleware('finance.delete'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await voucherRepo.getVoucherById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Voucher not found' });
+          return;
+        }
+        if (existing.status === 'POSTED') {
+          res.status(409).json({ error: 'Cannot delete a posted voucher' });
+          return;
+        }
+        await voucherRepo.deleteVoucher(tenantId, id);
+        res.json({ success: true });
+      } catch (error) {
+        console.error('Delete voucher error:', error);
+        res.status(500).json({ error: 'Failed to delete voucher' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/vouchers/:id/post
+   * Post a DRAFT voucher (creates ledger entries, becomes immutable).
+   */
+  router.post('/vouchers/:id/post',
+    mutationRateLimiter,
+    requirePermissionMiddleware('finance.post'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await voucherRepo.getVoucherById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Voucher not found' });
+          return;
+        }
+        if (existing.status === 'POSTED') {
+          res.status(409).json({ error: 'Voucher is already posted' });
+          return;
+        }
+        const voucher = await voucherRepo.postVoucher(tenantId, id);
+        res.json(voucher);
+      } catch (error: any) {
+        if (error.message?.includes('balanced') || error.message?.includes('debit') || error.message?.includes('credit')) {
+          res.status(400).json({ error: error.message });
+          return;
+        }
+        console.error('Post voucher error:', error);
+        res.status(500).json({ error: 'Failed to post voucher' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/vouchers/:id/lines
+   * Get line items for a voucher.
+   */
+  router.get('/vouchers/:id/lines',
+    requirePermissionMiddleware('finance.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await voucherRepo.getVoucherById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Voucher not found' });
+          return;
+        }
+        const lines = await voucherRepo.getVoucherLines(tenantId, id);
+        res.json(lines);
+      } catch (error) {
+        console.error('Get voucher lines error:', error);
+        res.status(500).json({ error: 'Failed to get voucher lines' });
+      }
+    }
+  );
+
+  // ─── Inventory Mutation Routes ───────────────────────────────
+
+  /**
+   * POST /api/products
+   * Create a new product.
+   */
+  router.post('/products',
+    mutationRateLimiter,
+    requirePermissionMiddleware('inventory.adjust'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const { sku, name, category, unit, pcsPerCarton, saleRate, purchaseRate, retailPrice } = req.body;
+        if (!sku || !name || !category || !unit) {
+          res.status(400).json({ error: 'Missing required fields: sku, name, category, unit' });
+          return;
+        }
+        if (typeof pcsPerCarton !== 'number' || pcsPerCarton <= 0) {
+          res.status(400).json({ error: 'pcsPerCarton must be a positive number' });
+          return;
+        }
+        if (typeof saleRate !== 'number' || typeof purchaseRate !== 'number') {
+          res.status(400).json({ error: 'saleRate and purchaseRate must be numbers' });
+          return;
+        }
+        const product = await inventoryRepo.createProduct(tenantId, req.body);
+        res.status(201).json(product);
+      } catch (error) {
+        console.error('Create product error:', error);
+        res.status(500).json({ error: 'Failed to create product' });
+      }
+    }
+  );
+
+  /**
+   * PUT /api/products/:id
+   * Update an existing product.
+   */
+  router.put('/products/:id',
+    mutationRateLimiter,
+    requirePermissionMiddleware('inventory.adjust'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await inventoryRepo.getProductById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Product not found' });
+          return;
+        }
+        const product = await inventoryRepo.updateProduct(tenantId, id, req.body);
+        res.json(product);
+      } catch (error) {
+        console.error('Update product error:', error);
+        res.status(500).json({ error: 'Failed to update product' });
+      }
+    }
+  );
+
+  /**
+   * DELETE /api/products/:id
+   * Soft-deactivate a product.
+   */
+  router.delete('/products/:id',
+    mutationRateLimiter,
+    requirePermissionMiddleware('inventory.adjust'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await inventoryRepo.getProductById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Product not found' });
+          return;
+        }
+        await inventoryRepo.deactivateProduct(tenantId, id);
+        res.json({ success: true });
+      } catch (error) {
+        console.error('Deactivate product error:', error);
+        res.status(500).json({ error: 'Failed to deactivate product' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/products/:id/batches
+   * Get batches for a product.
+   */
+  router.get('/products/:id/batches',
+    requirePermissionMiddleware('inventory.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await inventoryRepo.getProductById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Product not found' });
+          return;
+        }
+        const batches = await inventoryRepo.getBatches(tenantId, id);
+        res.json(batches);
+      } catch (error) {
+        console.error('Get batches error:', error);
+        res.status(500).json({ error: 'Failed to get batches' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/products/:id/serials
+   * Get serials for a product.
+   */
+  router.get('/products/:id/serials',
+    requirePermissionMiddleware('inventory.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await inventoryRepo.getProductById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Product not found' });
+          return;
+        }
+        const serials = await inventoryRepo.getSerials(tenantId, id);
+        res.json(serials);
+      } catch (error) {
+        console.error('Get serials error:', error);
+        res.status(500).json({ error: 'Failed to get serials' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/warehouses/:id/locations
+   * Get locations for a warehouse.
+   */
+  router.get('/warehouses/:id/locations',
+    requirePermissionMiddleware('inventory.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const warehouseId = req.params.id;
+        const locations = await inventoryRepo.getWarehouseLocations(tenantId, warehouseId);
+        res.json(locations);
+      } catch (error) {
+        console.error('Get warehouse locations error:', error);
+        res.status(500).json({ error: 'Failed to get warehouse locations' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/stock-movements
+   * List stock movements, optionally filtered by product.
+   */
+  router.get('/stock-movements',
+    requirePermissionMiddleware('inventory.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const productId = req.query.productId as string | undefined;
+        if (productId && productId.length > 128) {
+          res.status(400).json({ error: 'productId is too long' });
+          return;
+        }
+        const movements = await inventoryRepo.getStockMovements(tenantId, productId);
+        res.json(movements);
+      } catch (error) {
+        console.error('Get stock movements error:', error);
+        res.status(500).json({ error: 'Failed to get stock movements' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/stock-movements
+   * Create a new DRAFT stock movement.
+   */
+  router.post('/stock-movements',
+    mutationRateLimiter,
+    requirePermissionMiddleware('inventory.adjust'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const createdBy = req.user!.username;
+        const { movementType, movementDate, fromWarehouseId, toWarehouseId, productId, quantity, unitCost, totalCost, narration } = req.body;
+
+        if (!movementType || !movementDate || !productId) {
+          res.status(400).json({ error: 'Missing required fields: movementType, movementDate, productId' });
+          return;
+        }
+        if (typeof quantity !== 'number' || quantity <= 0) {
+          res.status(400).json({ error: 'quantity must be a positive number' });
+          return;
+        }
+
+        const movement = await inventoryRepo.createStockMovement(tenantId, {
+          tenantId,
+          movementType,
+          movementDate,
+          fromWarehouseId: fromWarehouseId || undefined,
+          toWarehouseId: toWarehouseId || undefined,
+          productId,
+          quantity,
+          unitCost,
+          totalCost,
+          narration: narration || undefined,
+          status: 'DRAFT',
+          createdBy,
+        });
+        res.status(201).json(movement);
+      } catch (error) {
+        console.error('Create stock movement error:', error);
+        res.status(500).json({ error: 'Failed to create stock movement' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/stock-movements/:id/post
+   * Post a DRAFT stock movement (updates stock levels).
+   */
+  router.post('/stock-movements/:id/post',
+    mutationRateLimiter,
+    requirePermissionMiddleware('inventory.adjust'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await inventoryRepo.getStockMovementById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Stock movement not found' });
+          return;
+        }
+        if (existing.status !== 'DRAFT') {
+          res.status(409).json({ error: `Cannot post a ${existing.status} movement` });
+          return;
+        }
+        const movement = await inventoryRepo.postStockMovement(tenantId, id);
+        res.json(movement);
+      } catch (error) {
+        console.error('Post stock movement error:', error);
+        res.status(500).json({ error: 'Failed to post stock movement' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/stock-movements/:id/cancel
+   * Cancel a DRAFT stock movement.
+   */
+  router.post('/stock-movements/:id/cancel',
+    mutationRateLimiter,
+    requirePermissionMiddleware('inventory.adjust'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const id = req.params.id;
+        const existing = await inventoryRepo.getStockMovementById(tenantId, id);
+        if (!existing) {
+          res.status(404).json({ error: 'Stock movement not found' });
+          return;
+        }
+        if (existing.status !== 'DRAFT') {
+          res.status(409).json({ error: `Cannot cancel a ${existing.status} movement` });
+          return;
+        }
+        const movement = await inventoryRepo.cancelStockMovement(tenantId, id);
+        res.json(movement);
+      } catch (error) {
+        console.error('Cancel stock movement error:', error);
+        res.status(500).json({ error: 'Failed to cancel stock movement' });
+      }
+    }
+  );
+
+  // ─── Customer AR Balance Route ───────────────────────────────
+
+  /**
+   * GET /api/customers/:id/ar-balance
+   * Get customer's current AR balance from ledger entries.
+   */
+  router.get('/customers/:id/ar-balance',
+    requirePermissionMiddleware('receipts.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const customerId = req.params.id;
+        const balance = await customerReceiptService.getCustomerARBalance(tenantId, customerId);
+        res.json({ balance });
+      } catch (error: any) {
+        if (error.message?.includes('not found')) {
+          res.status(404).json({ error: error.message });
+          return;
+        }
+        console.error('Get customer AR balance error:', error);
+        res.status(500).json({ error: 'Failed to get customer AR balance' });
       }
     }
   );

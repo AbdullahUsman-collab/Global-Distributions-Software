@@ -8,8 +8,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
-import { getProducts, getWarehouses, getStockLevels } from '../lib/api';
+import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getWarehouseLocations, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   Product,
@@ -145,19 +144,19 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   }, [products]);
 
   const handleCreate = async (dto: CreateProductDTO) => {
-    await services.inventoryRepository.createProduct(tenantId, dto);
+    await createProduct(dto);
     setShowCreate(false);
     await load();
   };
 
   const handleUpdate = async (id: string, dto: UpdateProductDTO) => {
-    await services.inventoryRepository.updateProduct(tenantId, id, dto);
+    await updateProduct(id, dto);
     setEditProduct(null);
     await load();
   };
 
   const handleDeactivate = async (id: string) => {
-    await services.inventoryRepository.deactivateProduct(tenantId, id);
+    await deleteProduct(id);
     setEditProduct(null);
     await load();
   };
@@ -527,8 +526,8 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     } else {
       setExpandedProduct(productId);
       const [b, s] = await Promise.all([
-        services.inventoryRepository.getBatches(tenantId, productId),
-        services.inventoryRepository.getSerials(tenantId, productId),
+        getProductBatches(productId),
+        getProductSerials(productId),
       ]);
       setBatches(b);
       setSerials(s);
@@ -691,7 +690,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       // Load locations for all warehouses
       const allLocs: WarehouseLocation[] = [];
       for (const wh of w) {
-        const locs = await services.inventoryRepository.getWarehouseLocations(tenantId, wh.id);
+        const locs = await getWarehouseLocations(wh.id);
         allLocs.push(...locs);
       }
       setLocations(allLocs);
@@ -813,7 +812,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const [m, p, w] = await Promise.all([
-        services.inventoryRepository.getStockMovements(tenantId),
+        getStockMovements(),
         getProducts(),
         getWarehouses(),
       ]);
@@ -849,7 +848,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handlePost = async (id: string) => {
     if (!confirm('Post this stock movement? Stock levels will be updated.')) return;
     try {
-      await services.inventoryRepository.postStockMovement(tenantId, id);
+      await postStockMovement(id);
       await load();
     } catch (err: any) {
       alert(err.message || 'Failed to post movement');
@@ -859,7 +858,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleCancel = async (id: string) => {
     if (!confirm('Cancel this draft movement?')) return;
     try {
-      await services.inventoryRepository.cancelStockMovement(tenantId, id);
+      await cancelStockMovement(id);
       await load();
     } catch (err: any) {
       alert(err.message || 'Failed to cancel movement');
@@ -1044,8 +1043,7 @@ const CreateMovementModal: React.FC<{
 
     setSaving(true);
     try {
-      await services.inventoryRepository.createStockMovement(tenantId, {
-        tenantId,
+      await createStockMovement({
         movementType,
         movementDate,
         fromWarehouseId: fromWarehouseId || undefined,
@@ -1055,8 +1053,6 @@ const CreateMovementModal: React.FC<{
         unitCost,
         totalCost,
         narration: narration || undefined,
-        status: 'DRAFT',
-        createdBy: 'user',
       });
       onCreated();
     } catch (err: any) {

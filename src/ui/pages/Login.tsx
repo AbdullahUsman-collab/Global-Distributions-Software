@@ -14,7 +14,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Tenant } from '../../domain/types/tenant';
-import { apiLogin } from '../lib/session';
+import { apiLogin, apiGetTenantBySlug } from '../lib/session';
 
 export const Login: React.FC = () => {
   const { brandSlug } = useParams<{ brandSlug: string }>();
@@ -38,14 +38,13 @@ export const Login: React.FC = () => {
       }
 
       try {
-        const res = await fetch(`/api/tenants/${brandSlug}`, { credentials: 'include' });
-        if (!res.ok) {
+        const data = await apiGetTenantBySlug(brandSlug);
+        if (!data) {
           setTenant(null);
           setError('Brand not found');
           return;
         }
-        const data = await res.json();
-        setTenant(data);
+        setTenant(data as Tenant);
       } catch (err) {
         setError('Failed to load brand information');
         console.error('Error fetching tenant:', err);

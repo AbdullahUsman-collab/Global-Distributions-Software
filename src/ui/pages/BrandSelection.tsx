@@ -9,10 +9,11 @@
  * - Navigates to /login/[brand-slug] on selection
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TenantPublicConfig } from '../../domain/types/tenant';
 import { BrandCard } from '../components/BrandCard';
+import { apiGetTenants } from '../lib/session';
 
 export const BrandSelection: React.FC = () => {
   const [tenants, setTenants] = useState<TenantPublicConfig[]>([]);
@@ -20,23 +21,21 @@ export const BrandSelection: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchTenants = async () => {
-      try {
-        const res = await fetch('/api/tenants', { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to load brands');
-        const data = await res.json();
-        setTenants(data);
-      } catch (err) {
-        setError('Failed to load brands. Please try again.');
-        console.error('Error fetching tenants:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTenants();
+  const fetchTenants = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiGetTenants();
+      setTenants(data);
+    } catch (err) {
+      setError('Failed to load brands. Please try again.');
+      console.error('Error fetching tenants:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { fetchTenants(); }, [fetchTenants]);
 
   const handleBrandSelect = (tenant: TenantPublicConfig) => {
     navigate(`/login/${tenant.slug}`);
@@ -76,7 +75,7 @@ export const BrandSelection: React.FC = () => {
           <h2 style={styles.errorTitle}>Something went wrong</h2>
           <p style={styles.errorMessage}>{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={fetchTenants}
             style={styles.retryButton}
           >
             Try Again

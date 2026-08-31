@@ -11,9 +11,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
 import { emitDataRefresh } from '../utils/dataRefresh';
-import { getBills, getCustomers, getAccounts, createCustomerReceipt, postCustomerReceipt, deleteCustomerReceipt } from '../lib/api';
+import { getBills, getCustomers, getAccounts, createCustomerReceipt, postCustomerReceipt, deleteCustomerReceipt, getVoucherLines, getCustomerARBalance } from '../lib/api';
 import {
   Customer,
 } from '../../domain/types/customer';
@@ -212,7 +211,7 @@ const ReceiptList: React.FC<{
     // Load lines if not cached
     if (!lineCache.has(voucherId)) {
       try {
-        const lines = await services.voucherRepository.getVoucherLines(tenantId, voucherId);
+        const lines = await getVoucherLines(voucherId);
         setLineCache(prev => new Map(prev).set(voucherId, lines));
       } catch (err) {
         console.error('Failed to load voucher lines:', err);
@@ -346,7 +345,7 @@ const ReceiptForm: React.FC<{
     }
     const loadBalance = async () => {
       try {
-        const balance = await services.customerReceiptService.getCustomerARBalance(tenantId, customerId);
+        const balance = await getCustomerARBalance(customerId);
         setCustomerBalance(balance);
       } catch (err) {
         console.error('Failed to load customer balance:', err);

@@ -200,6 +200,58 @@ export function hasSession(): boolean {
   return hasLocalSession();
 }
 
+// ─── Tenant Discovery (Vercel fallback) ──────────────────────
+
+/**
+ * DEMO_TENANTS keyed by tenant ID — used for client-side fallback
+ * when the Express API is not available (e.g. Vercel static hosting).
+ */
+const DEMO_TENANT_LIST: Array<{ id: string; slug: string; brandName: string; logoUrl: string; primaryColor: string; accentColor: string; isActive: boolean; createdAt: Date; updatedAt: Date }> = Object.values(DEMO_TENANTS);
+
+/**
+ * Get public tenants (brand selection).
+ * Tries the server API first; falls back to client-side mock data.
+ */
+export async function apiGetTenants(): Promise<Array<{ id: string; slug: string; brandName: string; logoUrl: string; primaryColor: string }>> {
+  try {
+    const res = await fetch(`${API_BASE}/tenants`, { credentials: 'include' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) return data;
+    throw new Error('Empty tenant list');
+  } catch {
+    // Server unavailable — return client-side demo tenants
+    return DEMO_TENANT_LIST.map(t => ({
+      id: t.id,
+      slug: t.slug,
+      brandName: t.brandName,
+      logoUrl: t.logoUrl,
+      primaryColor: t.primaryColor,
+    }));
+  }
+}
+
+/**
+ * Get a single tenant by slug (login page).
+ * Tries the server API first; falls back to client-side mock data.
+ */
+export async function apiGetTenantBySlug(slug: string): Promise<{ id: string; slug: string; brandName: string; logoUrl: string; primaryColor: string; accentColor: string; isActive: boolean; createdAt: Date; updatedAt: Date } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/tenants/${encodeURIComponent(slug)}`, { credentials: 'include' });
+    if (res.status === 404) {
+      // Try client-side fallback
+      const fallback = DEMO_TENANT_LIST.find(t => t.slug === slug);
+      return fallback || null;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    // Server unavailable — find in client-side mock data
+    const fallback = DEMO_TENANT_LIST.find(t => t.slug === slug);
+    return fallback || null;
+  }
+}
+
 // ─── Client-Side Mock Login (Vercel fallback) ──────────────────
 
 const DEMO_USERS: Record<string, { username: string; password: string; userId: string; displayName: string; role: string; tenantId: string }> = {
