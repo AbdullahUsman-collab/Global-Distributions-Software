@@ -17,7 +17,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import { getSettings, updateSettings } from '../lib/api';
 import {
   TenantSettings,
   TenantBusinessProfile,
@@ -100,9 +100,9 @@ export const Settings: React.FC = () => {
     setLoading(true);
     setErrorMessage(null);
     try {
-      let existing = await services.settingsRepository.getSettingsByTenantId(tenant.id);
+      let existing = await getSettings();
       if (!existing) {
-        existing = await services.settingsRepository.updateSettings(tenant.id, {});
+        existing = await updateSettings({});
       }
       setSettings(existing);
       setDraftProfile(existing.profile ?? { businessName: '', tradeName: '', ntn: '', stn: '', email: '', phone: '', address: '', baseCurrency: 'PKR' });
@@ -126,7 +126,7 @@ export const Settings: React.FC = () => {
     setSaveMessage(null);
     setErrorMessage(null);
     try {
-      const updated = await services.settingsRepository.updateSettings(tenant.id, {
+      const updated = await updateSettings({
         profile: draftProfile,
         salesTax: draftSalesTax,
         furtherTax: draftFurtherTax,

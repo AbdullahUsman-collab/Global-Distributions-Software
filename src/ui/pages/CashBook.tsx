@@ -10,7 +10,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import { getAccounts, createCashBookVoucher, postCashBookVoucher, deleteCashBookVoucher, getLedger } from '../lib/api';
 import { emitDataRefresh } from '../utils/dataRefresh';
 import { AccountHead } from '../../domain/types/coa';
 import { VoucherHeader, VOUCHER_TYPE_LABELS, VOUCHER_STATUS_LABELS } from '../../domain/types/voucher';
@@ -67,13 +67,13 @@ export const CashBook: React.FC = () => {
     if (!tenantId) return;
     (async () => {
       try {
-        const cashAccounts = await services.cashBookService.getCashBankAccounts(tenantId);
+        const allAcctData = await getAccounts();
+        const cashAccounts = allAcctData.filter((a: any) => a.isPosting && ['11101', '11102'].includes(a.accountCode) && a.isActive);
         setAccounts(cashAccounts);
         if (cashAccounts.length > 0) {
           setSelectedAccountId(cashAccounts[0].id);
         }
-        const allAccts = await services.coaRepository.getAccountsByTenantId(tenantId);
-        setAllAccounts(allAccts.filter(a => a.isPosting && a.isActive));
+        setAllAccounts(allAcctData.filter((a: any) => a.isPosting && a.isActive));
       } catch (err: any) {
         console.error('Failed to load cash accounts:', err);
       } finally {
@@ -86,13 +86,30 @@ export const CashBook: React.FC = () => {
     if (!tenantId || !selectedAccountId) return;
     setLoadingBook(true);
     try {
-      const s = await services.cashBookService.getCashBook(
-        tenantId,
-        selectedAccountId,
-        startDate,
-        endDate,
-      );
-      setSummary(s);
+      const entries = await getLedger({ accountId: selectedAccountId, startDate, endDate });
+      let totalReceipts = 0;
+      let totalPayments = 0;
+      const transactions: CashBookTransaction[] = (entries as any[]).map((entry: any) => {
+        if (entry.debit > 0) totalReceipts += entry.debit;
+        if (entry.credit > 0) totalPayments += entry.credit;
+        return { ledgerEntry: entry, voucher: {} as any, runningBalance: 0 };
+      });
+      let running = 0;
+      for (const tx of transactions) {
+        running += tx.ledgerEntry.debit - tx.ledgerEntry.credit;
+        tx.runningBalance = running;
+      }
+      const selectedAccount = accounts.find(a => a.id === selectedAccountId);
+      const summary: CashBookSummary = {
+        account: selectedAccount as any ?? {} as any,
+        openingBalance: -totalReceipts + totalPayments + running,
+        totalReceipts,
+        totalPayments,
+        closingBalance: running,
+        transactionCount: transactions.length,
+        transactions,
+      };
+      setSummary(summary);
     } catch (err: any) {
       console.error('Failed to load cash book:', err);
     } finally {
@@ -116,29 +133,23 @@ export const CashBook: React.FC = () => {
     setSaving(true);
     try {
       if (newType === 'CR') {
-        await services.cashBookService.createCashReceipt(
-          tenantId,
-          {
-            cashAccountId: selectedAccountId,
-            creditAccountId: counterAccountId,
-            amount: amt,
-            date: txDate,
-            narration: txNarration.trim(),
-          },
-          user.username,
-        );
+        await createCashBookVoucher({
+          type: 'CR',
+          cashAccountId: selectedAccountId,
+          counterAccountId: counterAccountId,
+          amount: amt,
+          date: txDate,
+          narration: txNarration.trim(),
+        });
       } else {
-        await services.cashBookService.createCashPayment(
-          tenantId,
-          {
-            cashAccountId: selectedAccountId,
-            debitAccountId: counterAccountId,
-            amount: amt,
-            date: txDate,
-            narration: txNarration.trim(),
-          },
-          user.username,
-        );
+        await createCashBookVoucher({
+          type: 'CP',
+          cashAccountId: selectedAccountId,
+          counterAccountId: counterAccountId,
+          amount: amt,
+          date: txDate,
+          narration: txNarration.trim(),
+        });
       }
       setShowNewModal(false);
       setCounterAccountId('');
@@ -155,7 +166,7 @@ export const CashBook: React.FC = () => {
 
   const handlePost = async (voucherId: string) => {
     try {
-      await services.cashBookService.postVoucher(tenantId, voucherId);
+      await postCashBookVoucher(voucherId);
       emitDataRefresh('payment-posted');
       await loadCashBook();
     } catch (err: any) {
@@ -166,7 +177,7 @@ export const CashBook: React.FC = () => {
   const handleDelete = async (voucherId: string) => {
     if (!confirm('Delete this draft voucher?')) return;
     try {
-      await services.cashBookService.deleteVoucher(tenantId, voucherId);
+      await deleteCashBookVoucher(voucherId);
       emitDataRefresh('payment-deleted');
       await loadCashBook();
     } catch (err: any) {

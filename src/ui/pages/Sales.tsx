@@ -14,7 +14,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import {
+  getCustomers, createCustomer, updateCustomer, deleteCustomer,
+  getAccounts, getLedger, getProducts, getWarehouses, getStockLevels,
+  getSales, createSaleBill, postSaleBill, deleteSaleBill,
+  getSaleReturns, createSaleReturn, postSaleReturn, deleteSaleReturn,
+} from '../lib/api';
 import { emitDataRefresh } from '../utils/dataRefresh';
 import {
   Customer,
@@ -61,7 +66,7 @@ const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
 /* ═══════════════════════════════════════════════════════════ */
 
 export const Sales: React.FC = () => {
-  const { tenant, user } = useAuth();
+  const { tenant } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<SalesTab>('customers');
 
@@ -115,8 +120,8 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const [data, accounts] = await Promise.all([
-        services.customerRepository.getCustomersByTenantId(tenantId),
-        services.coaRepository.getAccountsByTenantId(tenantId),
+        getCustomers(),
+        getAccounts(),
       ]);
       setCustomers(data);
       // Build accountHeadId → accountCode map for ledger navigation
@@ -127,7 +132,7 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       setAccountCodeMap(map);
 
       // Load balances from ledger entries
-      const allEntries = await services.voucherRepository.getLedgerEntries(tenantId, {});
+      const allEntries = await getLedger();
       const bMap = new Map<string, { outstanding: number; sales: number; returns: number; receipts: number }>();
       for (const c of data) {
         const acc = accounts.find(a => a.id === c.accountHeadId);
@@ -177,9 +182,9 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleSave = async (dto: CreateCustomerDTO | UpdateCustomerDTO) => {
     try {
       if (editingCustomer) {
-        await services.customerRepository.updateCustomer(tenantId, editingCustomer.id, dto as UpdateCustomerDTO);
+        await updateCustomer(editingCustomer.id, dto as UpdateCustomerDTO);
       } else {
-        await services.customerRepository.createCustomer(tenantId, dto as CreateCustomerDTO);
+        await createCustomer(dto as CreateCustomerDTO);
       }
       setShowForm(false);
       setEditingCustomer(null);
@@ -193,7 +198,7 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleDeactivate = async (id: string) => {
     if (!confirm('Deactivate this customer?')) return;
     try {
-      await services.customerRepository.deactivateCustomer(tenantId, id);
+      await deleteCustomer(id);
       await loadCustomers();
     } catch (err) {
       console.error('Failed to deactivate customer:', err);
@@ -381,7 +386,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const loadBills = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await services.salesService.getSaleBills(tenantId);
+      const data = await getSales();
       if (data) setBills(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load bills:', err);
@@ -395,7 +400,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handlePost = async (id: string) => {
     if (!confirm('Post this sale bill? This will create GL entries and deduct stock.')) return;
     try {
-      await services.salesService.postSaleBill(tenantId, id);
+      await postSaleBill(id);
       emitDataRefresh('sale-posted');
       await loadBills();
     } catch (err) {
@@ -407,7 +412,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this draft bill?')) return;
     try {
-      await services.salesService.deleteSaleBill(tenantId, id);
+      await deleteSaleBill(id);
       emitDataRefresh('sale-deleted');
       await loadBills();
     } catch (err) {
@@ -491,7 +496,6 @@ const SaleBillForm: React.FC<{
   onSaved: () => void;
   onCancel: () => void;
 }> = ({ tenantId, onSaved, onCancel }) => {
-  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -508,10 +512,10 @@ const SaleBillForm: React.FC<{
   useEffect(() => {
     const load = async () => {
       const [custs, prods, whs, lvls] = await Promise.all([
-        services.customerRepository.getCustomersByTenantId(tenantId, { isActive: true }),
-        services.inventoryRepository.getProducts(tenantId),
-        services.inventoryRepository.getWarehouses(tenantId),
-        services.inventoryRepository.getStockLevels(tenantId),
+        getCustomers().then(c => c.filter((c: any) => c.isActive)),
+        getProducts(),
+        getWarehouses(),
+        getStockLevels(),
       ]);
       setCustomers(custs);
       setProducts(prods.filter(p => p.isActive));
@@ -614,16 +618,16 @@ const SaleBillForm: React.FC<{
 
     setSaving(true);
     try {
-      const voucher = await services.salesService.createSaleBill(tenantId, {
+      const voucher = await createSaleBill({
         customerId,
         warehouseId,
         date,
         narration: narration || undefined,
         lines,
-      }, user.username);
+      });
 
       // Auto-post
-      await services.salesService.postSaleBill(tenantId, voucher.id);
+      await postSaleBill(voucher.id);
       onSaved();
     } catch (err) {
       console.error('Failed to save bill:', err);
@@ -825,7 +829,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const loadReturns = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await services.saleReturnService.getSaleReturns(tenantId);
+      const data = await getSaleReturns();
       if (data) setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load sale returns:', err);
@@ -839,7 +843,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handlePost = async (id: string) => {
     if (!confirm('Post this sale return? This will create GL entries and restore stock.')) return;
     try {
-      await services.saleReturnService.postSaleReturn(tenantId, id);
+      await postSaleReturn(id);
       emitDataRefresh('sale-return-posted');
       await loadReturns();
     } catch (err) {
@@ -851,7 +855,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this draft sale return?')) return;
     try {
-      await services.saleReturnService.deleteSaleReturn(tenantId, id);
+      await deleteSaleReturn(id);
       emitDataRefresh('sale-return-deleted');
       await loadReturns();
     } catch (err) {
@@ -932,7 +936,6 @@ const SaleReturnForm: React.FC<{
   onSaved: () => void;
   onCancel: () => void;
 }> = ({ tenantId, onSaved, onCancel }) => {
-  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -947,9 +950,9 @@ const SaleReturnForm: React.FC<{
   useEffect(() => {
     const load = async () => {
       const [custs, prods, whs] = await Promise.all([
-        services.customerRepository.getCustomersByTenantId(tenantId, { isActive: true }),
-        services.inventoryRepository.getProducts(tenantId),
-        services.inventoryRepository.getWarehouses(tenantId),
+        getCustomers().then(c => c.filter((c: any) => c.isActive)),
+        getProducts(),
+        getWarehouses(),
       ]);
       setCustomers(custs);
       setProducts(prods.filter(p => p.isActive));
@@ -992,13 +995,13 @@ const SaleReturnForm: React.FC<{
     }
     setSaving(true);
     try {
-      await services.saleReturnService.createSaleReturn(tenantId, {
+      await createSaleReturn({
         customerId,
         warehouseId,
         date,
         narration: narration || undefined,
         lines,
-      }, user.username);
+      });
       onSaved();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save');

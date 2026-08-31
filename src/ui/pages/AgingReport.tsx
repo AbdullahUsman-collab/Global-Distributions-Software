@@ -10,10 +10,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import { getAgingReport, getCustomers, getSuppliers } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
-  AgingReportService,
   AgingMode,
   AgingReportDTO,
   AgingRow,
@@ -57,20 +56,12 @@ export const AgingReport: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
-  // Service instance
-  const agingService = useMemo(() => new AgingReportService(
-    services.voucherRepository,
-    services.coaRepository,
-    services.customerRepository,
-    services.supplierRepository,
-  ), []);
-
   // Load lookup data
   useEffect(() => {
     const load = async () => {
       const [custs, sups] = await Promise.all([
-        services.customerRepository.getCustomersByTenantId(tenant.id),
-        services.supplierRepository.getSuppliers(tenant.id),
+        getCustomers(),
+        getSuppliers(),
       ]);
       setCustomers(custs);
       setSuppliers(sups);
@@ -82,12 +73,7 @@ export const AgingReport: React.FC = () => {
   const generateReport = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await agingService.generateReport(
-        tenant.id,
-        mode,
-        asOfDate,
-        partyId || undefined,
-      );
+      const result = await getAgingReport(mode, asOfDate, partyId || undefined);
       setReport(result);
     } catch (err) {
       console.error('Failed to generate aging report:', err);
@@ -95,7 +81,7 @@ export const AgingReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [tenant.id, mode, asOfDate, partyId, agingService]);
+  }, [mode, asOfDate, partyId]);
 
   // Auto-generate on mount and when filters change
   useEffect(() => { generateReport(); }, [generateReport]);

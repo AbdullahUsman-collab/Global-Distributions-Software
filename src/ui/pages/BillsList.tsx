@@ -10,11 +10,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import { getBills, deleteSaleBill, deletePurchaseBill, getCustomers, getSuppliers, getProducts } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   BillRecord,
-  BillsListService,
   BILL_VOUCHER_TYPES,
   BILL_TYPE_LABELS,
   BILL_TYPE_COLORS,
@@ -65,20 +64,12 @@ export const BillsList: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
 
-  // Create service instance once
-  const billsService = useMemo(() => new BillsListService(
-    services.voucherRepository,
-    services.customerRepository,
-    services.supplierRepository,
-    services.inventoryRepository,
-  ), []);
-
   // Load bills
   const loadBills = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await billsService.getAllBills(tenant.id);
+      const data = await getBills();
       setBills(data);
     } catch (err) {
       console.error('Failed to load bills:', err);
@@ -86,15 +77,15 @@ export const BillsList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [tenant.id, billsService]);
+  }, [tenant.id]);
 
   // Load lookup data for filter dropdowns
   const loadLookups = useCallback(async () => {
     try {
       const [custs, sups, prods] = await Promise.all([
-        services.customerRepository.getCustomersByTenantId(tenant.id),
-        services.supplierRepository.getSuppliers(tenant.id),
-        services.inventoryRepository.getProducts(tenant.id),
+        getCustomers(),
+        getSuppliers(),
+        getProducts(),
       ]);
       setCustomers(custs);
       setSuppliers(sups);
@@ -172,13 +163,21 @@ export const BillsList: React.FC = () => {
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm('Delete this draft bill?')) return;
     try {
-      await billsService.deleteBill(tenant.id, id);
+      const bill = bills.find(b => b.voucher.id === id);
+      if (bill) {
+        const vt = bill.voucher.voucherType;
+        if (vt === 'SV' || vt === 'SRV') {
+          await deleteSaleBill(id);
+        } else {
+          await deletePurchaseBill(id);
+        }
+      }
       await loadBills();
     } catch (err) {
       console.error('Failed to delete bill:', err);
       alert(err instanceof Error ? err.message : 'Failed to delete bill');
     }
-  }, [tenant.id, billsService, loadBills]);
+  }, [tenant.id, loadBills, bills]);
 
   // Open/navigate to bill detail
   const handleOpen = useCallback((record: BillRecord) => {

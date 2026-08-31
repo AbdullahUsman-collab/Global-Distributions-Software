@@ -9,6 +9,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { getProducts, getWarehouses, getStockLevels } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   Product,
@@ -113,7 +114,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await services.inventoryRepository.getProducts(tenantId);
+      const data = await getProducts();
       setProducts(data);
     } finally {
       setLoading(false);
@@ -441,9 +442,9 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const [p, w, s] = await Promise.all([
-        services.inventoryRepository.getProducts(tenantId),
-        services.inventoryRepository.getWarehouses(tenantId),
-        services.inventoryRepository.getStockLevels(tenantId),
+        getProducts(),
+        getWarehouses(),
+        getStockLevels(),
       ]);
       setProducts(p);
       setWarehouses(w);
@@ -685,7 +686,7 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const w = await services.inventoryRepository.getWarehouses(tenantId);
+      const w = await getWarehouses();
       setWarehouses(w);
       // Load locations for all warehouses
       const allLocs: WarehouseLocation[] = [];
@@ -813,8 +814,8 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     try {
       const [m, p, w] = await Promise.all([
         services.inventoryRepository.getStockMovements(tenantId),
-        services.inventoryRepository.getProducts(tenantId),
-        services.inventoryRepository.getWarehouses(tenantId),
+        getProducts(),
+        getWarehouses(),
       ]);
       setMovements(m);
       setProducts(p);

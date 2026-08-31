@@ -9,6 +9,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
+import { getAccounts, createAccount, updateAccount, deleteAccount, getAccountLedger, getProducts } from '../lib/api';
 import {
   AccountHead,
   AccountType,
@@ -156,7 +157,7 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await services.coaRepository.getAccountsByTenantId(tenantId);
+      const data = await getAccounts();
       setAccounts(data);
       setExpanded(new Set(data.filter(a => a.level === 1).map(a => a.id)));
     } finally {
@@ -233,20 +234,20 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   };
 
   const handleCreate = async (dto: CreateAccountHeadDTO) => {
-    await services.coaRepository.createAccount(tenantId, dto);
+    await createAccount(dto);
     setShowCreate(false);
     setCreateParent(null);
     await load();
   };
 
   const handleUpdate = async (id: string, dto: UpdateAccountDTO) => {
-    await services.coaRepository.updateAccount(tenantId, id, dto);
+    await updateAccount(id, dto);
     setEditAccount(null);
     await load();
   };
 
   const handleDeactivate = async (id: string) => {
-    await services.coaRepository.deactivateAccount(tenantId, id);
+    await deleteAccount(id);
     setEditAccount(null);
     await load();
   };
@@ -368,7 +369,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
           voucherType: typeFilter || undefined,
           status: statusFilter || undefined,
         }),
-        services.coaRepository.getAccountsByTenantId(tenantId),
+        getAccounts(),
       ]);
       setVouchers(v.sort((a, b) => b.voucherNumber - a.voucherNumber));
       setAccounts(a);
@@ -684,7 +685,7 @@ const VoucherModal: React.FC<{
         setLoading(false);
       });
     }
-    services.inventoryRepository.getProducts(tenantId).then(setProducts);
+    getProducts().then(setProducts);
   }, [isEdit, voucher, tenantId]);
 
   // Filtered accounts for search dropdown
@@ -1025,7 +1026,7 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
   const postingAccounts = useMemo(() => accounts.filter(a => a.isPosting), [accounts]);
 
   useEffect(() => {
-    services.coaRepository.getAccountsByTenantId(tenantId).then(setAccounts);
+    getAccounts().then(setAccounts);
   }, [tenantId]);
 
   // Auto-load ledger when initialAccountId is provided and accounts are loaded
@@ -1044,7 +1045,7 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
     if (!accountCode) return;
     setLoading(true);
     try {
-      const entries = await services.voucherRepository.getLedgerForAccount(tenantId, accountCode);
+      const entries = await getAccountLedger(accountCode);
       setLedgerEntries(entries);
       setLoaded(true);
     } finally {
@@ -1056,10 +1057,7 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
     if (!accountFilter) return;
     setLoading(true);
     try {
-      const entries = await services.voucherRepository.getLedgerForAccount(tenantId, accountFilter, {
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-      });
+      const entries = await getAccountLedger(accountFilter, startDate || undefined, endDate || undefined);
       setLedgerEntries(entries);
       setLoaded(true);
     } finally {

@@ -12,20 +12,18 @@
  * All data sourced from existing services — no duplicate accounting logic.
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import { getDashboard } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
-  DashboardService,
   DashboardPeriod,
   DashboardData,
   KpiCard,
   AgingSummary,
   RecentTransaction,
 } from '../../domain/services/DashboardService';
-import { VoucherType } from '../../domain/types/voucher';
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -76,18 +74,11 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const dashboardService = useMemo(() => services.dashboardService, []);
-
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await dashboardService.getDashboardData(
-        tenant.id,
-        period,
-        customStart || undefined,
-        customEnd || undefined,
-      );
+      const result = await getDashboard(period, customStart || undefined, customEnd || undefined);
       setData(result);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
@@ -95,7 +86,7 @@ export const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [tenant.id, period, customStart, customEnd, dashboardService]);
+  }, [period, customStart, customEnd]);
 
   useEffect(() => { loadData(); }, [loadData]);
 

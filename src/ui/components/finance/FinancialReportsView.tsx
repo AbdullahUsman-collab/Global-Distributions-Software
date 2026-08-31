@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { services } from '../../services';
+import { getTrialBalance, getProfitAndLoss, getBalanceSheet } from '../../lib/api';
 import {
   ReportFilterDTO,
   TrialBalanceRowDTO,
@@ -116,7 +116,7 @@ const TrialBalanceReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
   const generate = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await services.financialReportService.generateTrialBalance(filter);
+      const result = await getTrialBalance({ startDate: filter.startDate, endDate: filter.endDate });
       setReport(result);
     } finally {
       setLoading(false);
@@ -241,7 +241,7 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
   const generate = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await services.financialReportService.generateProfitAndLoss(filter);
+      const result = await getProfitAndLoss({ startDate: filter.startDate, endDate: filter.endDate });
       setReport(result);
     } finally {
       setLoading(false);
@@ -385,7 +385,7 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
   const generate = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await services.financialReportService.generateBalanceSheet(filter);
+      const result = await getBalanceSheet({ asOfDate: filter.endDate });
       setReport(result);
     } finally {
       setLoading(false);

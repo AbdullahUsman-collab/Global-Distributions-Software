@@ -331,6 +331,20 @@ export function createProtectedRoutes(
 
   // ─── Sale Return Routes ──────────────────────────────────────
 
+  router.get('/sale-returns',
+    requirePermissionMiddleware('returns.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const vouchers = await voucherRepo.getVouchersByTenantId(tenantId, { voucherType: 'SRV' });
+        res.json(vouchers);
+      } catch (error) {
+        console.error('Get sale returns error:', error);
+        res.status(500).json({ error: 'Failed to get sale returns' });
+      }
+    }
+  );
+
   /**
    * POST /api/sale-returns
    * Create a new sale return.
@@ -870,6 +884,20 @@ export function createProtectedRoutes(
   );
 
   // ─── Purchase Return Routes ──────────────────────────────────
+
+  router.get('/purchase-returns',
+    requirePermissionMiddleware('returns.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const vouchers = await voucherRepo.getVouchersByTenantId(tenantId, { voucherType: 'PRV' });
+        res.json(vouchers);
+      } catch (error) {
+        console.error('Get purchase returns error:', error);
+        res.status(500).json({ error: 'Failed to get purchase returns' });
+      }
+    }
+  );
 
   /**
    * POST /api/purchase-returns

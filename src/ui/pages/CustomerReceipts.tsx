@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { services } from '../services';
 import { emitDataRefresh } from '../utils/dataRefresh';
+import { getBills, getCustomers, getAccounts, createCustomerReceipt, postCustomerReceipt, deleteCustomerReceipt } from '../lib/api';
 import {
   Customer,
 } from '../../domain/types/customer';
@@ -78,14 +79,15 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [receiptData, customerData, coaData] = await Promise.all([
-        services.customerReceiptService.getReceipts(tenantId),
-        services.customerRepository.getCustomersByTenantId(tenantId, { isActive: true }),
-        services.coaRepository.getAccountsByTenantId(tenantId),
+      const [allBills, customerData, coaData] = await Promise.all([
+        getBills(),
+        getCustomers(),
+        getAccounts(),
       ]);
-      setReceipts(receiptData.sort((a, b) => b.date.localeCompare(a.date)));
-      setCustomers(customerData);
-      setCashAccounts(coaData.filter(a => a.isPosting && CASH_BANK_CODES.has(a.accountCode) && a.isActive));
+      const receiptData = (allBills as any[]).filter((b: any) => b.voucher?.voucherType === 'CR');
+      setReceipts(receiptData.sort((a: any, b: any) => (b.date ?? b.voucher?.date ?? '').localeCompare(a.date ?? a.voucher?.date ?? '')));
+      setCustomers((customerData as any[]).filter((c: any) => c.isActive));
+      setCashAccounts((coaData as any[]).filter((a: any) => a.isPosting && CASH_BANK_CODES.has(a.accountCode) && a.isActive));
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -116,7 +118,7 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handlePost = async (id: string) => {
     if (!confirm('Post this receipt? This will create GL entries and update customer AR balance.')) return;
     try {
-      await services.customerReceiptService.postReceipt(tenantId, id);
+      await postCustomerReceipt(id);
       emitDataRefresh('receipt-posted');
       await loadData();
     } catch (err) {
@@ -128,7 +130,7 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this draft receipt?')) return;
     try {
-      await services.customerReceiptService.deleteReceipt(tenantId, id);
+      await deleteCustomerReceipt(id);
       emitDataRefresh('receipt-deleted');
       await loadData();
     } catch (err) {
@@ -376,16 +378,16 @@ const ReceiptForm: React.FC<{
 
     setSaving(true);
     try {
-      const voucher = await services.customerReceiptService.createReceipt(tenantId, {
+      const voucher = await createCustomerReceipt({
         customerId,
         cashAccountId,
         amount,
         date,
         narration: narration.trim(),
-      }, user.username);
+      });
 
       // Auto-post
-      await services.customerReceiptService.postReceipt(tenantId, voucher.id);
+      await postCustomerReceipt(voucher.id);
       onSaved();
     } catch (err) {
       console.error('Failed to create receipt:', err);

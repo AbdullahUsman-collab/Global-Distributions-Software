@@ -13,12 +13,11 @@
  * - Navigation to party ledger, aging, bills list
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import { getBillDetail } from '../lib/api';
 import {
-  BillDetailService,
   BillDetail,
   BillLineDetail,
   BillAccountingEntry,
@@ -50,8 +49,6 @@ export const BillDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const billDetailService = useMemo(() => services.billDetailService, []);
-
   useEffect(() => {
     if (!voucherId) {
       setError('No voucher ID provided');
@@ -63,7 +60,7 @@ export const BillDetailPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const result = await billDetailService.getBillDetail(tenant.id, voucherId);
+        const result = await getBillDetail(voucherId);
         if (!result) {
           setError('Bill not found or access denied');
         } else {
@@ -78,7 +75,7 @@ export const BillDetailPage: React.FC = () => {
     };
 
     load();
-  }, [tenant.id, voucherId, billDetailService]);
+  }, [tenant.id, voucherId]);
 
   // Navigation helpers
   const navigateToLedger = () => {

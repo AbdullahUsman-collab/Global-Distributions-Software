@@ -6,6 +6,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { BrandSelection } from './pages/BrandSelection';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -24,28 +25,30 @@ import { Layout } from './components/layout/Layout';
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<BrandSelection />} />
-        <Route path="/login/:brandSlug" element={<Login />} />
+      <ErrorBoundary fallbackTitle="Application Error" fallbackMessage="The application encountered an unexpected error.">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<ErrorBoundary><BrandSelection /></ErrorBoundary>} />
+          <Route path="/login/:brandSlug" element={<ErrorBoundary><Login /></ErrorBoundary>} />
 
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/finance" element={<Finance />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/purchases" element={<Purchases />} />
-            <Route path="/bills" element={<BillsList />} />
-            <Route path="/bills/:voucherId" element={<BillDetailPage />} />
-            <Route path="/aging" element={<AgingReport />} />
-            <Route path="/customer-receipts" element={<CustomerReceipts />} />
-            <Route path="/cash-book" element={<CashBook />} />
-            <Route path="/settings" element={<Settings />} />
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+              <Route path="/finance" element={<ErrorBoundary><Finance /></ErrorBoundary>} />
+              <Route path="/inventory" element={<ErrorBoundary><Inventory /></ErrorBoundary>} />
+              <Route path="/sales" element={<ErrorBoundary><Sales /></ErrorBoundary>} />
+              <Route path="/purchases" element={<ErrorBoundary><Purchases /></ErrorBoundary>} />
+              <Route path="/bills" element={<ErrorBoundary><BillsList /></ErrorBoundary>} />
+              <Route path="/bills/:voucherId" element={<ErrorBoundary><BillDetailPage /></ErrorBoundary>} />
+              <Route path="/aging" element={<ErrorBoundary><AgingReport /></ErrorBoundary>} />
+              <Route path="/customer-receipts" element={<ErrorBoundary><CustomerReceipts /></ErrorBoundary>} />
+              <Route path="/cash-book" element={<ErrorBoundary><CashBook /></ErrorBoundary>} />
+              <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+            </Route>
           </Route>
-        </Route>
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 };

@@ -14,7 +14,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { services } from '../services';
+import {
+  getSuppliers, createSupplier, updateSupplier, deleteSupplier,
+  getAccounts, getLedger, getProducts, getWarehouses,
+  getPurchases, createPurchaseBill, postPurchaseBill, deletePurchaseBill,
+  getPurchaseReturns, createPurchaseReturn, postPurchaseReturn, deletePurchaseReturn,
+} from '../lib/api';
 import { emitDataRefresh } from '../utils/dataRefresh';
 import {
   Supplier,
@@ -114,8 +119,8 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const [data, accounts] = await Promise.all([
-        services.supplierRepository.getSuppliers(tenantId),
-        services.coaRepository.getAccountsByTenantId(tenantId),
+        getSuppliers(),
+        getAccounts(),
       ]);
       setSuppliers(data);
       // Build accountHeadId → accountCode map for ledger navigation
@@ -126,7 +131,7 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       setAccountCodeMap(map);
 
       // Load balances from ledger entries
-      const allEntries = await services.voucherRepository.getLedgerEntries(tenantId, {});
+      const allEntries = await getLedger();
       const bMap = new Map<string, { outstanding: number; purchases: number; returns: number; payments: number }>();
       for (const s of data) {
         const acc = accounts.find(a => a.id === s.accountHeadId);
@@ -175,9 +180,9 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleSave = async (dto: CreateSupplierDTO | UpdateSupplierDTO) => {
     try {
       if (editingSupplier) {
-        await services.supplierRepository.update(editingSupplier.id, dto as UpdateSupplierDTO, tenantId);
+        await updateSupplier(editingSupplier.id, dto);
       } else {
-        await services.supplierRepository.create(dto as CreateSupplierDTO, tenantId);
+        await createSupplier(dto);
       }
       setShowForm(false);
       setEditingSupplier(null);
@@ -191,7 +196,7 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleDeactivate = async (id: string) => {
     if (!confirm('Deactivate this supplier?')) return;
     try {
-      await services.supplierRepository.deactivate(id, tenantId);
+      await deleteSupplier(id);
       await loadSuppliers();
     } catch (err) {
       console.error('Failed to deactivate supplier:', err);
@@ -405,7 +410,7 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const loadBills = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await services.purchaseService.getPurchaseBills(tenantId);
+      const data = await getPurchases();
       if (data) setBills(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load bills:', err);
@@ -419,7 +424,7 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handlePost = async (id: string) => {
     if (!confirm('Post this purchase bill? This will create GL entries and add stock.')) return;
     try {
-      await services.purchaseService.postPurchaseBill(tenantId, id);
+      await postPurchaseBill(id);
       emitDataRefresh('purchase-posted');
       await loadBills();
     } catch (err) {
@@ -431,7 +436,7 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this draft bill?')) return;
     try {
-      await services.purchaseService.deletePurchaseBill(tenantId, id);
+      await deletePurchaseBill(id);
       emitDataRefresh('purchase-deleted');
       await loadBills();
     } catch (err) {
@@ -531,9 +536,9 @@ const PurchaseBillForm: React.FC<{
   useEffect(() => {
     const load = async () => {
       const [supps, prods, whs] = await Promise.all([
-        services.supplierRepository.getSuppliers(tenantId),
-        services.inventoryRepository.getProducts(tenantId),
-        services.inventoryRepository.getWarehouses(tenantId),
+        getSuppliers(),
+        getProducts(),
+        getWarehouses(),
       ]);
       setSuppliers(supps);
       setProducts(prods.filter(p => p.isActive));
@@ -635,16 +640,16 @@ const PurchaseBillForm: React.FC<{
 
     setSaving(true);
     try {
-      const voucher = await services.purchaseService.createPurchaseBill(tenantId, {
+      const voucher = await createPurchaseBill({
         supplierId,
         warehouseId,
         date,
         narration: narration || undefined,
         lines,
-      }, user.username);
+      });
 
       // Auto-post
-      await services.purchaseService.postPurchaseBill(tenantId, voucher.id);
+      await postPurchaseBill(voucher.id);
       onSaved();
     } catch (err) {
       console.error('Failed to save bill:', err);
@@ -846,7 +851,7 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const loadReturns = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await services.purchaseReturnService.getPurchaseReturns(tenantId);
+      const data = await getPurchaseReturns();
       if (data) setReturns(data.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       console.error('Failed to load purchase returns:', err);
@@ -860,7 +865,7 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handlePost = async (id: string) => {
     if (!confirm('Post this purchase return? This will create GL entries and deduct stock.')) return;
     try {
-      await services.purchaseReturnService.postPurchaseReturn(tenantId, id);
+      await postPurchaseReturn(id);
       emitDataRefresh('purchase-return-posted');
       await loadReturns();
     } catch (err) {
@@ -872,7 +877,7 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this draft purchase return?')) return;
     try {
-      await services.purchaseReturnService.deletePurchaseReturn(tenantId, id);
+      await deletePurchaseReturn(id);
       emitDataRefresh('purchase-return-deleted');
       await loadReturns();
     } catch (err) {
@@ -968,9 +973,9 @@ const PurchaseReturnForm: React.FC<{
   useEffect(() => {
     const load = async () => {
       const [sups, prods, whs] = await Promise.all([
-        services.supplierRepository.getSuppliers(tenantId),
-        services.inventoryRepository.getProducts(tenantId),
-        services.inventoryRepository.getWarehouses(tenantId),
+        getSuppliers(),
+        getProducts(),
+        getWarehouses(),
       ]);
       setSuppliers(sups);
       setProducts(prods.filter(p => p.isActive));
@@ -1013,13 +1018,13 @@ const PurchaseReturnForm: React.FC<{
     }
     setSaving(true);
     try {
-      await services.purchaseReturnService.createPurchaseReturn(tenantId, {
+      await createPurchaseReturn({
         supplierId,
         warehouseId,
         date,
         narration: narration || undefined,
         lines,
-      }, user.username);
+      });
       onSaved();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save');

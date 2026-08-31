@@ -12,7 +12,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TenantPublicConfig } from '../../domain/types/tenant';
-import { services } from '../services';
 import { BrandCard } from '../components/BrandCard';
 
 export const BrandSelection: React.FC = () => {
@@ -24,7 +23,9 @@ export const BrandSelection: React.FC = () => {
   useEffect(() => {
     const fetchTenants = async () => {
       try {
-        const data = await services.tenantRepository.getPublicTenants();
+        const res = await fetch('/api/tenants', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load brands');
+        const data = await res.json();
         setTenants(data);
       } catch (err) {
         setError('Failed to load brands. Please try again.');
