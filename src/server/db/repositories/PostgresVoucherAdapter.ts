@@ -225,19 +225,26 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
 
   async getLedgerEntries(
     tenantId: string,
-    filters?: { accountId?: string; startDate?: string; endDate?: string; voucherType?: VoucherType }
+    filters?: { accountId?: string; startDate?: string; endDate?: string; voucherType?: VoucherType; status?: VoucherStatus }
   ): Promise<LedgerEntry[]> {
-    let sql = `SELECT id, tenant_id, voucher_id, voucher_line_id, account_id, debit, credit, entry_date, voucher_type, voucher_number, narration
-               FROM ledger_entries WHERE tenant_id = $1`;
+    let sql = `SELECT le.id, le.tenant_id, le.voucher_id, le.voucher_line_id, le.account_id, le.debit, le.credit, le.entry_date, le.voucher_type, le.voucher_number, le.narration
+               FROM ledger_entries le`;
     const params: any[] = [tenantId];
     let idx = 2;
 
-    if (filters?.accountId) { sql += ` AND account_id = $${idx++}`; params.push(filters.accountId); }
-    if (filters?.startDate) { sql += ` AND entry_date >= $${idx++}`; params.push(filters.startDate); }
-    if (filters?.endDate) { sql += ` AND entry_date <= $${idx++}`; params.push(filters.endDate); }
-    if (filters?.voucherType) { sql += ` AND voucher_type = $${idx++}`; params.push(filters.voucherType); }
+    if (filters?.status) {
+      sql += ` INNER JOIN voucher_headers vh ON vh.id = le.voucher_id AND vh.tenant_id = le.tenant_id`;
+    }
 
-    sql += ` ORDER BY entry_date, voucher_number`;
+    sql += ` WHERE le.tenant_id = $1`;
+
+    if (filters?.accountId) { sql += ` AND le.account_id = $${idx++}`; params.push(filters.accountId); }
+    if (filters?.startDate) { sql += ` AND le.entry_date >= $${idx++}`; params.push(filters.startDate); }
+    if (filters?.endDate) { sql += ` AND le.entry_date <= $${idx++}`; params.push(filters.endDate); }
+    if (filters?.voucherType) { sql += ` AND le.voucher_type = $${idx++}`; params.push(filters.voucherType); }
+    if (filters?.status) { sql += ` AND vh.status = $${idx++}`; params.push(filters.status); }
+
+    sql += ` ORDER BY le.entry_date, le.voucher_number`;
     const result = await query(sql, params);
     return result.rows.map(r => this.mapLedgerRow(r));
   }

@@ -45,10 +45,10 @@ export class FinancialReportService {
   async generateTrialBalance(filter: ReportFilterDTO): Promise<TrialBalanceReportDTO> {
     const accounts = await this.coaRepo.getAccountsByTenantId(filter.tenantId);
 
-    // Get all ledger entries for this tenant (no date filter — we need all for opening)
-    const allEntries = await this.voucherRepo.getLedgerEntries(filter.tenantId);
+    // Get all POSTED ledger entries for this tenant (no date filter — we need all for opening)
+    const allEntries = await this.voucherRepo.getLedgerEntries(filter.tenantId, { status: 'POSTED' });
 
-    // Only POSTED entries
+    // Only POSTED entries — filtered at repository level
     const postedEntries = allEntries;
 
     // Build account map by code
@@ -176,7 +176,7 @@ export class FinancialReportService {
 
   async generateProfitAndLoss(filter: ReportFilterDTO): Promise<ProfitAndLossReportDTO> {
     const accounts = await this.coaRepo.getAccountsByTenantId(filter.tenantId);
-    const allEntries = await this.voucherRepo.getLedgerEntries(filter.tenantId);
+    const allEntries = await this.voucherRepo.getLedgerEntries(filter.tenantId, { status: 'POSTED' });
 
     // Only period activity (no opening for P&L — P&L is period-based)
     const periodEntries = allEntries.filter(
@@ -276,7 +276,7 @@ export class FinancialReportService {
     const accounts = await this.coaRepo.getAccountsByTenantId(filter.tenantId);
 
     // Get all posted entries up to endDate
-    const allEntries = await this.voucherRepo.getLedgerEntries(filter.tenantId);
+    const allEntries = await this.voucherRepo.getLedgerEntries(filter.tenantId, { status: 'POSTED' });
     const periodEntries = allEntries.filter(e => e.entryDate <= filter.endDate);
 
     // Build account map

@@ -53,7 +53,7 @@ export interface IVoucherRepository {
 
   /* ─── Ledger Queries ───────────────────────────────────── */
 
-  /** Get all ledger entries for a tenant, optionally filtered by account, date range, and/or voucher type */
+  /** Get all ledger entries for a tenant, optionally filtered by account, date range, voucher type, and/or voucher status */
   getLedgerEntries(
     tenantId: string,
     filters?: {
@@ -61,6 +61,7 @@ export interface IVoucherRepository {
       startDate?: string;
       endDate?: string;
       voucherType?: VoucherType;
+      status?: VoucherStatus;
     },
   ): Promise<LedgerEntry[]>;
 

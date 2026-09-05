@@ -116,7 +116,7 @@ const TrialBalanceReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
   const generate = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getTrialBalance({ startDate: filter.startDate, endDate: filter.endDate });
+      const result = await getTrialBalance({ startDate: filter.startDate, endDate: filter.endDate, showZeroBalance: filter.showZeroBalance });
       setReport(result);
     } finally {
       setLoading(false);
@@ -241,7 +241,7 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
   const generate = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getProfitAndLoss({ startDate: filter.startDate, endDate: filter.endDate });
+      const result = await getProfitAndLoss({ startDate: filter.startDate, endDate: filter.endDate, showZeroBalance: filter.showZeroBalance });
       setReport(result);
     } finally {
       setLoading(false);
@@ -385,7 +385,7 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
   const generate = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getBalanceSheet({ asOfDate: filter.endDate });
+      const result = await getBalanceSheet({ startDate: filter.startDate, endDate: filter.endDate, showZeroBalance: filter.showZeroBalance });
       setReport(result);
     } finally {
       setLoading(false);

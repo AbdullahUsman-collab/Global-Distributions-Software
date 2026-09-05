@@ -590,6 +590,7 @@ export class MockVoucherAdapter implements IVoucherRepository {
       startDate?: string;
       endDate?: string;
       voucherType?: VoucherType;
+      status?: VoucherStatus;
     },
   ): Promise<LedgerEntry[]> {
     let result = ledgerStore.get(tenantId) ?? [];
@@ -605,6 +606,12 @@ export class MockVoucherAdapter implements IVoucherRepository {
     }
     if (filters?.voucherType) {
       result = result.filter(e => e.voucherType === filters.voucherType);
+    }
+    if (filters?.status) {
+      const voucherIds = (headersStore.get(tenantId) ?? [])
+        .filter(v => v.status === filters.status)
+        .map(v => v.id);
+      result = result.filter(e => voucherIds.includes(e.voucherId));
     }
 
     return result

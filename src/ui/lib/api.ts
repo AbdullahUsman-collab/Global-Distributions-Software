@@ -453,25 +453,29 @@ export async function updateSettings(dto: any) {
 
 // ─── Financial Reports API ────────────────────────────────────
 
-export async function getTrialBalance(filters?: { startDate?: string; endDate?: string }) {
+export async function getTrialBalance(filters?: { startDate?: string; endDate?: string; showZeroBalance?: boolean }) {
   const params = new URLSearchParams();
   if (filters?.startDate) params.set('startDate', filters.startDate);
   if (filters?.endDate) params.set('endDate', filters.endDate);
+  if (filters?.showZeroBalance) params.set('showZeroBalance', 'true');
   const qs = params.toString();
   return apiRequest<any>(`/reports/trial-balance${qs ? '?' + qs : ''}`);
 }
 
-export async function getProfitAndLoss(filters?: { startDate?: string; endDate?: string }) {
+export async function getProfitAndLoss(filters?: { startDate?: string; endDate?: string; showZeroBalance?: boolean }) {
   const params = new URLSearchParams();
   if (filters?.startDate) params.set('startDate', filters.startDate);
   if (filters?.endDate) params.set('endDate', filters.endDate);
+  if (filters?.showZeroBalance) params.set('showZeroBalance', 'true');
   const qs = params.toString();
   return apiRequest<any>(`/reports/profit-and-loss${qs ? '?' + qs : ''}`);
 }
 
-export async function getBalanceSheet(filters?: { asOfDate?: string }) {
+export async function getBalanceSheet(filters?: { startDate?: string; endDate?: string; showZeroBalance?: boolean }) {
   const params = new URLSearchParams();
-  if (filters?.asOfDate) params.set('asOfDate', filters.asOfDate);
+  if (filters?.startDate) params.set('startDate', filters.startDate);
+  if (filters?.endDate) params.set('endDate', filters.endDate);
+  if (filters?.showZeroBalance) params.set('showZeroBalance', 'true');
   const qs = params.toString();
   return apiRequest<any>(`/reports/balance-sheet${qs ? '?' + qs : ''}`);
 }
