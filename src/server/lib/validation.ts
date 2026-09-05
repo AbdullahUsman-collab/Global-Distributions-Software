@@ -218,15 +218,18 @@ export function validateCustomerReceiptDTO(body: any): ValidationResult {
 
 /**
  * Validate cash book voucher DTO.
+ * Accepts: { type: 'CR'|'CP', cashAccountId, counterAccountId, amount, date, narration }
  */
 export function validateCashBookDTO(body: any): ValidationResult {
   if (!body || typeof body !== 'object') {
     return { valid: false, error: 'Request body is required' };
   }
   return combineValidations(
-    validId(body.accountCode, 'accountCode'),
-    validDate(body.date, 'date'),
+    validEnum(body.type, 'type', ['CR', 'CP'] as const),
+    validId(body.cashAccountId, 'cashAccountId'),
+    validId(body.counterAccountId, 'counterAccountId'),
     positiveNumber(body.amount, 'amount'),
+    validDate(body.date, 'date'),
     requiredString(body.narration, 'narration'),
   );
 }

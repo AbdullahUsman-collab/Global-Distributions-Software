@@ -567,6 +567,39 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
       return DEMO_LEDGER.filter(l => l.voucherId === voucherLines.groups!.id);
     }
 
+    // Cash Book accounts
+    if (cleanPath === '/api/cash-book/accounts') {
+      return DEMO_ACCOUNTS.filter(a => a.isPosting && ['11101', '11102'].includes(a.accountCode) && a.isActive);
+    }
+
+    // Cash Book summary
+    if (cleanPath === '/api/cash-book') {
+      const accountId = query.get('accountId') || '';
+      const startDate = query.get('startDate') || '2026-08-01';
+      const endDate = query.get('endDate') || '2026-08-31';
+      const account = DEMO_ACCOUNTS.find(a => a.id === accountId) || DEMO_ACCOUNTS[0];
+      const entries = DEMO_LEDGER.filter(e => e.accountId === account.accountCode && e.entryDate >= startDate && e.entryDate <= endDate);
+      const openingEntries = DEMO_LEDGER.filter(e => e.accountId === account.accountCode && e.entryDate < startDate);
+      const openingBalance = openingEntries.reduce((bal, e) => bal + e.debit - e.credit, 0);
+      let running = openingBalance;
+      const transactions = entries.sort((a, b) => a.entryDate.localeCompare(b.entryDate) || a.voucherNumber - b.voucherNumber).map(entry => {
+        running += entry.debit - entry.credit;
+        const voucher = DEMO_VOUCHERS.find(v => v.id === entry.voucherId);
+        return { ledgerEntry: entry, voucher: voucher || null, runningBalance: running };
+      });
+      const totalReceipts = entries.reduce((sum, e) => sum + e.debit, 0);
+      const totalPayments = entries.reduce((sum, e) => sum + e.credit, 0);
+      return {
+        account,
+        openingBalance,
+        closingBalance: openingBalance + totalReceipts - totalPayments,
+        totalReceipts,
+        totalPayments,
+        transactionCount: transactions.length,
+        transactions,
+      };
+    }
+
     // Settings
     if (cleanPath === '/api/settings') return DEMO_SETTINGS;
 

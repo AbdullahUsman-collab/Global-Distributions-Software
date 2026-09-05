@@ -299,6 +299,15 @@ export async function createCustomerReceipt(dto: any) {
 
 // ─── Cash Book API ────────────────────────────────────────────
 
+export async function getCashBookAccounts() {
+  return apiRequest<any[]>('/cash-book/accounts');
+}
+
+export async function getCashBookSummary(accountId: string, startDate: string, endDate: string) {
+  const params = new URLSearchParams({ accountId, startDate, endDate });
+  return apiRequest<any>(`/cash-book?${params.toString()}`);
+}
+
 export async function createCashBookVoucher(dto: any) {
   return apiRequest<any>('/cash-book', {
     method: 'POST',

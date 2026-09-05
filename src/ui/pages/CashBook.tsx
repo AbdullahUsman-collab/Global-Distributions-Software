@@ -1,24 +1,36 @@
 /**
  * Cash Book Page
- * Shows cash/bank account ledger with opening/closing balance and transaction list.
+ * Cash/bank account ledger with opening/closing balance and transaction list.
  *
- * Source of Truth:
- *   - audit/13_CASH_BANK.md (Cash Book pages)
- *   - audit/MASTER_REVERSE_ENGINEERED_SPEC.md (cash book pages)
+ * Architecture:
+ *   React UI → api.ts → Express API → CashBookService → IVoucherRepository
+ *
+ * Accounting:
+ *   Cash Receipt (CR): DEBIT cash/bank, CREDIT counter-account
+ *   Cash Payment (CP): DEBIT counter-account, CREDIT cash/bank
+ *   Opening = Σ(all debits before startDate) - Σ(all credits before startDate)
+ *   Closing = Opening + Σ(debits in range) - Σ(credits in range)
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { getAccounts, createCashBookVoucher, postCashBookVoucher, deleteCashBookVoucher, getLedger } from '../lib/api';
+import {
+  getCashBookAccounts,
+  getCashBookSummary,
+  createCashBookVoucher,
+  postCashBookVoucher,
+  deleteCashBookVoucher,
+  getAccounts,
+} from '../lib/api';
 import { emitDataRefresh } from '../utils/dataRefresh';
 import { AccountHead } from '../../domain/types/coa';
-import { VoucherHeader, VOUCHER_TYPE_LABELS, VOUCHER_STATUS_LABELS } from '../../domain/types/voucher';
+import { VOUCHER_TYPE_LABELS } from '../../domain/types/voucher';
 import { CashBookSummary, CashBookTransaction } from '../../domain/services/CashBookService';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 
-const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPKR = (n: number) => 'PKR ' + n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const today = () => {
   const d = new Date();
@@ -30,6 +42,8 @@ const firstOfMonth = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
 };
 
+const RECEIPT_TYPES = new Set(['CR', 'CRV', 'BRV']);
+
 /* ─── Component ────────────────────────────────────────────── */
 
 export const CashBook: React.FC = () => {
@@ -38,7 +52,7 @@ export const CashBook: React.FC = () => {
   const tenantId = tenant.id;
 
   // Data
-  const [accounts, setAccounts] = useState<AccountHead[]>([]);
+  const [cashAccounts, setCashAccounts] = useState<AccountHead[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [startDate, setStartDate] = useState(firstOfMonth());
   const [endDate, setEndDate] = useState(today());
@@ -56,10 +70,16 @@ export const CashBook: React.FC = () => {
   const [txDate, setTxDate] = useState(today());
   const [txNarration, setTxNarration] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
 
-  // Accounts for counter-account dropdown
+  // All posting accounts for counter-account dropdown
   const [allAccounts, setAllAccounts] = useState<AccountHead[]>([]);
+
+  // Focus refs for keyboard navigation
+  const counterAccountRef = useRef<HTMLSelectElement>(null);
+  const amountRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const narrationRef = useRef<HTMLInputElement>(null);
 
   /* ─── Load Data ──────────────────────────────────────────── */
 
@@ -67,11 +87,13 @@ export const CashBook: React.FC = () => {
     if (!tenantId) return;
     (async () => {
       try {
-        const allAcctData = await getAccounts();
-        const cashAccounts = allAcctData.filter((a: any) => a.isPosting && ['11101', '11102'].includes(a.accountCode) && a.isActive);
-        setAccounts(cashAccounts);
-        if (cashAccounts.length > 0) {
-          setSelectedAccountId(cashAccounts[0].id);
+        const [cashAccts, allAcctData] = await Promise.all([
+          getCashBookAccounts(),
+          getAccounts(),
+        ]);
+        setCashAccounts(cashAccts);
+        if (cashAccts.length > 0) {
+          setSelectedAccountId(cashAccts[0].id);
         }
         setAllAccounts(allAcctData.filter((a: any) => a.isPosting && a.isActive));
       } catch (err: any) {
@@ -86,30 +108,8 @@ export const CashBook: React.FC = () => {
     if (!tenantId || !selectedAccountId) return;
     setLoadingBook(true);
     try {
-      const entries = await getLedger({ accountId: selectedAccountId, startDate, endDate });
-      let totalReceipts = 0;
-      let totalPayments = 0;
-      const transactions: CashBookTransaction[] = (entries as any[]).map((entry: any) => {
-        if (entry.debit > 0) totalReceipts += entry.debit;
-        if (entry.credit > 0) totalPayments += entry.credit;
-        return { ledgerEntry: entry, voucher: {} as any, runningBalance: 0 };
-      });
-      let running = 0;
-      for (const tx of transactions) {
-        running += tx.ledgerEntry.debit - tx.ledgerEntry.credit;
-        tx.runningBalance = running;
-      }
-      const selectedAccount = accounts.find(a => a.id === selectedAccountId);
-      const summary: CashBookSummary = {
-        account: selectedAccount as any ?? {} as any,
-        openingBalance: -totalReceipts + totalPayments + running,
-        totalReceipts,
-        totalPayments,
-        closingBalance: running,
-        transactionCount: transactions.length,
-        transactions,
-      };
-      setSummary(summary);
+      const result = await getCashBookSummary(selectedAccountId, startDate, endDate);
+      setSummary(result);
     } catch (err: any) {
       console.error('Failed to load cash book:', err);
     } finally {
@@ -121,44 +121,50 @@ export const CashBook: React.FC = () => {
     loadCashBook();
   }, [loadCashBook]);
 
+  /* ─── Validation ─────────────────────────────────────────── */
+
+  const validateForm = (): string | null => {
+    const amt = parseFloat(txAmount);
+    if (!txAmount || isNaN(amt) || amt <= 0) return 'Amount must be greater than zero.';
+    if (!Number.isFinite(amt)) return 'Amount is not a valid number.';
+    if (Math.round(amt * 100) !== amt * 100) return 'Amount must have at most 2 decimal places.';
+    if (!counterAccountId) return 'Please select a counter account.';
+    if (!txDate) return 'Date is required.';
+    if (!txNarration.trim()) return 'Narration/description is required.';
+    if (txNarration.trim().length < 3) return 'Narration must be at least 3 characters.';
+    return null;
+  };
+
   /* ─── Handlers ───────────────────────────────────────────── */
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    const amt = parseFloat(txAmount);
-    if (!amt || amt <= 0) { setError('Amount must be greater than zero.'); return; }
-    if (!counterAccountId) { setError('Please select a counter account.'); return; }
-    if (!txNarration.trim()) { setError('Narration is required.'); return; }
+    setFormError('');
+    const validationError = validateForm();
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
     setSaving(true);
     try {
-      if (newType === 'CR') {
-        await createCashBookVoucher({
-          type: 'CR',
-          cashAccountId: selectedAccountId,
-          counterAccountId: counterAccountId,
-          amount: amt,
-          date: txDate,
-          narration: txNarration.trim(),
-        });
-      } else {
-        await createCashBookVoucher({
-          type: 'CP',
-          cashAccountId: selectedAccountId,
-          counterAccountId: counterAccountId,
-          amount: amt,
-          date: txDate,
-          narration: txNarration.trim(),
-        });
-      }
+      await createCashBookVoucher({
+        type: newType,
+        cashAccountId: selectedAccountId,
+        counterAccountId,
+        amount: parseFloat(txAmount),
+        date: txDate,
+        narration: txNarration.trim(),
+      });
       setShowNewModal(false);
       setCounterAccountId('');
       setTxAmount('');
       setTxNarration('');
       setTxDate(today());
+      setFormError('');
+      emitDataRefresh('payment-posted');
       await loadCashBook();
     } catch (err: any) {
-      setError(err.message || 'Failed to create transaction.');
+      setFormError(err.message || 'Failed to create transaction.');
     } finally {
       setSaving(false);
     }
@@ -175,7 +181,7 @@ export const CashBook: React.FC = () => {
   };
 
   const handleDelete = async (voucherId: string) => {
-    if (!confirm('Delete this draft voucher?')) return;
+    if (!confirm('Delete this draft voucher? This cannot be undone.')) return;
     try {
       await deleteCashBookVoucher(voucherId);
       emitDataRefresh('payment-deleted');
@@ -185,14 +191,36 @@ export const CashBook: React.FC = () => {
     }
   };
 
+  const openNewModal = (type: 'CR' | 'CP') => {
+    setNewType(type);
+    setCounterAccountId('');
+    setTxAmount('');
+    setTxNarration('');
+    setTxDate(today());
+    setFormError('');
+    setShowNewModal(true);
+    // Focus first field after render
+    setTimeout(() => counterAccountRef.current?.focus(), 100);
+  };
+
   /* ─── Filter accounts for counter-account dropdown ───────── */
 
   const counterAccounts = allAccounts.filter(a => a.id !== selectedAccountId);
+  const selectedAccount = cashAccounts.find(a => a.id === selectedAccountId);
 
   /* ─── Render ─────────────────────────────────────────────── */
 
   if (loading) {
     return <div style={styles.loading}>Loading cash accounts...</div>;
+  }
+
+  if (cashAccounts.length === 0) {
+    return (
+      <div style={styles.page}>
+        <h1 style={styles.title}>Cash Book</h1>
+        <div style={styles.empty}>No cash or bank accounts found. Please set up your Chart of Accounts first.</div>
+      </div>
+    );
   }
 
   return (
@@ -201,22 +229,26 @@ export const CashBook: React.FC = () => {
       <div style={styles.header}>
         <div>
           <h1 style={styles.title}>Cash Book</h1>
-          <p style={styles.subtitle}>Cash and bank account ledger</p>
+          <p style={styles.subtitle}>
+            {selectedAccount ? `${selectedAccount.accountCode} — ${selectedAccount.accountName}` : 'Cash and bank account ledger'}
+          </p>
         </div>
-        <button
-          style={styles.primaryBtn}
-          onClick={() => { setNewType('CR'); setShowNewModal(true); setError(''); }}
-          disabled={!selectedAccountId}
-        >
-          + New Receipt
-        </button>
-        <button
-          style={{ ...styles.primaryBtn, backgroundColor: '#7c3aed' }}
-          onClick={() => { setNewType('CP'); setShowNewModal(true); setError(''); }}
-          disabled={!selectedAccountId}
-        >
-          + New Payment
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            style={styles.receiptBtn}
+            onClick={() => openNewModal('CR')}
+            disabled={!selectedAccountId}
+          >
+            + Receipt
+          </button>
+          <button
+            style={styles.paymentBtn}
+            onClick={() => openNewModal('CP')}
+            disabled={!selectedAccountId}
+          >
+            + Payment
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -228,8 +260,7 @@ export const CashBook: React.FC = () => {
             onChange={e => setSelectedAccountId(e.target.value)}
             style={styles.select}
           >
-            {accounts.length === 0 && <option value="">No cash/bank accounts</option>}
-            {accounts.map(a => (
+            {cashAccounts.map(a => (
               <option key={a.id} value={a.id}>
                 {a.accountCode} — {a.accountName}
               </option>
@@ -238,11 +269,30 @@ export const CashBook: React.FC = () => {
         </div>
         <div style={styles.field}>
           <label style={styles.label}>From</label>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={styles.input} />
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+            style={styles.input}
+          />
         </div>
         <div style={styles.field}>
           <label style={styles.label}>To</label>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={styles.input} />
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            style={styles.input}
+          />
+        </div>
+        <div style={styles.field}>
+          <label style={styles.label}>&nbsp;</label>
+          <button
+            style={styles.clearBtn}
+            onClick={() => { setStartDate(firstOfMonth()); setEndDate(today()); }}
+          >
+            Clear Filters
+          </button>
         </div>
       </div>
 
@@ -252,21 +302,21 @@ export const CashBook: React.FC = () => {
           <div style={styles.summaryCard}>
             <div style={styles.summaryLabel}>Opening Balance</div>
             <div style={{ ...styles.summaryValue, color: summary.openingBalance >= 0 ? '#15803d' : '#dc2626' }}>
-              {fmt(summary.openingBalance)}
+              {fmtPKR(summary.openingBalance)}
             </div>
           </div>
           <div style={styles.summaryCard}>
-            <div style={styles.summaryLabel}>Total Receipts</div>
-            <div style={{ ...styles.summaryValue, color: '#15803d' }}>+{fmt(summary.totalReceipts)}</div>
+            <div style={styles.summaryLabel}>Money In (Debits)</div>
+            <div style={{ ...styles.summaryValue, color: '#15803d' }}>+{fmtPKR(summary.totalReceipts)}</div>
           </div>
           <div style={styles.summaryCard}>
-            <div style={styles.summaryLabel}>Total Payments</div>
-            <div style={{ ...styles.summaryValue, color: '#dc2626' }}>-{fmt(summary.totalPayments)}</div>
+            <div style={styles.summaryLabel}>Money Out (Credits)</div>
+            <div style={{ ...styles.summaryValue, color: '#dc2626' }}>-{fmtPKR(summary.totalPayments)}</div>
           </div>
           <div style={styles.summaryCard}>
             <div style={styles.summaryLabel}>Closing Balance</div>
             <div style={{ ...styles.summaryValue, color: summary.closingBalance >= 0 ? '#15803d' : '#dc2626', fontWeight: 700 }}>
-              {fmt(summary.closingBalance)}
+              {fmtPKR(summary.closingBalance)}
             </div>
           </div>
         </div>
@@ -291,6 +341,7 @@ export const CashBook: React.FC = () => {
                   <th style={{ ...styles.th, textAlign: 'right' }}>Credit</th>
                   <th style={{ ...styles.th, textAlign: 'right' }}>Balance</th>
                   <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -303,63 +354,89 @@ export const CashBook: React.FC = () => {
                   <td style={{ ...styles.td, textAlign: 'right' }}></td>
                   <td style={{ ...styles.td, textAlign: 'right' }}></td>
                   <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: summary.openingBalance >= 0 ? '#15803d' : '#dc2626' }}>
-                    {fmt(summary.openingBalance)}
+                    {fmtPKR(summary.openingBalance)}
                   </td>
                   <td style={styles.td}></td>
+                  <td style={styles.td}></td>
                 </tr>
-                {summary.transactions.map((tx) => (
-                  <tr key={tx.ledgerEntry.id} style={styles.tr}>
-                    <td style={styles.td}>{tx.ledgerEntry.entryDate}</td>
-                    <td style={styles.td}>
-                      <span style={{
-                        ...styles.typeBadge,
-                        backgroundColor: ['CR', 'CRV', 'BRV'].includes(tx.ledgerEntry.voucherType) ? '#dcfce7' : '#fee2e2',
-                        color: ['CR', 'CRV', 'BRV'].includes(tx.ledgerEntry.voucherType) ? '#15803d' : '#dc2626',
-                      }}>
-                        {VOUCHER_TYPE_LABELS[tx.ledgerEntry.voucherType] ?? tx.ledgerEntry.voucherType}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <button
-                        onClick={() => navigate(`/bills/${tx.ledgerEntry.voucherId}`)}
-                        style={{ ...styles.voucherLink }}
-                        title="View bill detail"
-                      >
-                        #{tx.ledgerEntry.voucherNumber}
-                      </button>
-                    </td>
-                    <td style={styles.td}>{tx.ledgerEntry.narration || '—'}</td>
-                    <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.debit > 0 ? '#15803d' : '#94a3b8' }}>
-                      {tx.ledgerEntry.debit > 0 ? fmt(tx.ledgerEntry.debit) : '—'}
-                    </td>
-                    <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.credit > 0 ? '#dc2626' : '#94a3b8' }}>
-                      {tx.ledgerEntry.credit > 0 ? fmt(tx.ledgerEntry.credit) : '—'}
-                    </td>
-                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: tx.runningBalance >= 0 ? '#15803d' : '#dc2626' }}>
-                      {fmt(tx.runningBalance)}
-                    </td>
-                    <td style={styles.td}>
-                      <span style={{
-                        ...styles.statusBadge,
-                        backgroundColor: '#dcfce7',
-                        color: '#15803d',
-                      }}>
-                        Posted
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {summary.transactions.map((tx) => {
+                  const isReceipt = RECEIPT_TYPES.has(tx.ledgerEntry.voucherType);
+                  const isDraft = tx.voucher?.status === 'DRAFT';
+                  return (
+                    <tr key={tx.ledgerEntry.id} style={styles.tr}>
+                      <td style={styles.td}>{tx.ledgerEntry.entryDate}</td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.typeBadge,
+                          backgroundColor: isReceipt ? '#dcfce7' : '#fee2e2',
+                          color: isReceipt ? '#15803d' : '#dc2626',
+                        }}>
+                          {VOUCHER_TYPE_LABELS[tx.ledgerEntry.voucherType] ?? tx.ledgerEntry.voucherType}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <button
+                          onClick={() => navigate(`/bills/${tx.ledgerEntry.voucherId}`)}
+                          style={styles.voucherLink}
+                          title="View bill detail"
+                        >
+                          #{tx.ledgerEntry.voucherNumber}
+                        </button>
+                      </td>
+                      <td style={styles.td}>{tx.ledgerEntry.narration || '—'}</td>
+                      <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.debit > 0 ? '#15803d' : '#94a3b8', fontFamily: 'monospace' }}>
+                        {tx.ledgerEntry.debit > 0 ? fmtPKR(tx.ledgerEntry.debit) : '—'}
+                      </td>
+                      <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.credit > 0 ? '#dc2626' : '#94a3b8', fontFamily: 'monospace' }}>
+                        {tx.ledgerEntry.credit > 0 ? fmtPKR(tx.ledgerEntry.credit) : '—'}
+                      </td>
+                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: tx.runningBalance >= 0 ? '#15803d' : '#dc2626', fontFamily: 'monospace' }}>
+                        {fmtPKR(tx.runningBalance)}
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.statusBadge,
+                          backgroundColor: isDraft ? '#fef3c7' : '#dcfce7',
+                          color: isDraft ? '#92400e' : '#15803d',
+                        }}>
+                          {isDraft ? 'Draft' : 'Posted'}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        {isDraft && (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button
+                              onClick={() => handlePost(tx.ledgerEntry.voucherId)}
+                              style={styles.postBtn}
+                              title="Post voucher"
+                            >
+                              Post
+                            </button>
+                            <button
+                              onClick={() => handleDelete(tx.ledgerEntry.voucherId)}
+                              style={styles.deleteBtn}
+                              title="Delete draft"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
                 {/* Closing balance row */}
                 <tr style={styles.closingRow}>
                   <td style={styles.td}>{endDate}</td>
                   <td style={styles.td}></td>
                   <td style={styles.td}></td>
                   <td style={{ ...styles.td, fontStyle: 'italic', fontWeight: 700, color: '#1e293b' }}>Closing Balance</td>
-                  <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: '#15803d' }}>{fmt(summary.totalReceipts)}</td>
-                  <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: '#dc2626' }}>{fmt(summary.totalPayments)}</td>
-                  <td style={{ ...styles.td, textAlign: 'right', fontWeight: 700, color: summary.closingBalance >= 0 ? '#15803d' : '#dc2626' }}>
-                    {fmt(summary.closingBalance)}
+                  <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: '#15803d', fontFamily: 'monospace' }}>{fmtPKR(summary.totalReceipts)}</td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: '#dc2626', fontFamily: 'monospace' }}>{fmtPKR(summary.totalPayments)}</td>
+                  <td style={{ ...styles.td, textAlign: 'right', fontWeight: 700, color: summary.closingBalance >= 0 ? '#15803d' : '#dc2626', fontFamily: 'monospace' }}>
+                    {fmtPKR(summary.closingBalance)}
                   </td>
+                  <td style={styles.td}></td>
                   <td style={styles.td}></td>
                 </tr>
               </tbody>
@@ -377,20 +454,27 @@ export const CashBook: React.FC = () => {
             </h2>
             <form onSubmit={handleCreate} style={styles.form}>
               <div style={styles.formRow}>
-                <div style={styles.field}>
+                <div style={{ ...styles.field, flex: 2 }}>
                   <label style={styles.label}>
-                    {newType === 'CR' ? 'Credit Account (Income/Party)' : 'Debit Account (Expense/Party)'}
+                    {newType === 'CR' ? 'Received From (Account)' : 'Paid To (Account)'}
                   </label>
-                  <select value={counterAccountId} onChange={e => setCounterAccountId(e.target.value)} style={styles.select}>
+                  <select
+                    ref={counterAccountRef}
+                    value={counterAccountId}
+                    onChange={e => setCounterAccountId(e.target.value)}
+                    style={styles.select}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); amountRef.current?.focus(); } }}
+                  >
                     <option value="">Select account...</option>
                     {counterAccounts.map(a => (
                       <option key={a.id} value={a.id}>{a.accountCode} — {a.accountName}</option>
                     ))}
                   </select>
                 </div>
-                <div style={styles.field}>
-                  <label style={styles.label}>Amount</label>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label style={styles.label}>Amount (PKR)</label>
                   <input
+                    ref={amountRef}
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -398,28 +482,38 @@ export const CashBook: React.FC = () => {
                     onChange={e => setTxAmount(e.target.value)}
                     style={styles.input}
                     placeholder="0.00"
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); dateRef.current?.focus(); } }}
                   />
                 </div>
               </div>
               <div style={styles.formRow}>
                 <div style={styles.field}>
                   <label style={styles.label}>Date</label>
-                  <input type="date" value={txDate} onChange={e => setTxDate(e.target.value)} style={styles.input} />
-                </div>
-                <div style={styles.field}>
-                  <label style={styles.label}>Narration</label>
                   <input
+                    ref={dateRef}
+                    type="date"
+                    value={txDate}
+                    onChange={e => setTxDate(e.target.value)}
+                    style={styles.input}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); narrationRef.current?.focus(); } }}
+                  />
+                </div>
+                <div style={{ ...styles.field, flex: 2 }}>
+                  <label style={styles.label}>Narration / Description</label>
+                  <input
+                    ref={narrationRef}
                     value={txNarration}
                     onChange={e => setTxNarration(e.target.value)}
                     style={styles.input}
-                    placeholder="Description..."
+                    placeholder="e.g. Cash received from Al-Noor Super Store"
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCreate(e as any); } }}
                   />
                 </div>
               </div>
-              {error && <div style={styles.error}>{error}</div>}
+              {formError && <div style={styles.error}>{formError}</div>}
               <div style={styles.modalActions}>
                 <button type="button" onClick={() => setShowNewModal(false)} style={styles.cancelBtn}>Cancel</button>
-                <button type="submit" style={styles.primaryBtn} disabled={saving}>
+                <button type="submit" style={newType === 'CR' ? styles.receiptBtn : styles.paymentBtn} disabled={saving}>
                   {saving ? 'Saving...' : newType === 'CR' ? 'Create Receipt' : 'Create Payment'}
                 </button>
               </div>
@@ -427,6 +521,18 @@ export const CashBook: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Responsive CSS */}
+      <style>{`
+        .cashbook-filters { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+        @media (max-width: 768px) {
+          .cashbook-summary { grid-template-columns: 1fr 1fr !important; }
+          .cashbook-header { flex-direction: column; align-items: flex-start !important; }
+        }
+        @media (max-width: 480px) {
+          .cashbook-summary { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 };
@@ -436,7 +542,7 @@ export const CashBook: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   page: {
     padding: 24,
-    maxWidth: 1200,
+    maxWidth: 1400,
     margin: '0 auto',
   },
   loading: {
@@ -448,6 +554,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   header: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
     marginBottom: 24,
     flexWrap: 'wrap',
@@ -465,7 +572,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   filters: {
     display: 'flex',
-    gap: 16,
+    gap: 12,
     marginBottom: 20,
     flexWrap: 'wrap',
     alignItems: 'flex-end',
@@ -474,7 +581,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
-    minWidth: 160,
+    minWidth: 140,
   },
   label: {
     fontSize: 12,
@@ -498,9 +605,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: '#fff',
     minWidth: 200,
   },
+  clearBtn: {
+    padding: '8px 12px',
+    backgroundColor: '#f1f5f9',
+    color: '#475569',
+    border: '1px solid #d1d5db',
+    borderRadius: 6,
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+  },
   summaryRow: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: 16,
     marginBottom: 24,
   },
@@ -517,9 +634,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: 4,
   },
   summaryValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 700,
     color: '#1e293b',
+    fontFamily: 'monospace',
   },
   tableWrap: {
     overflowX: 'auto',
@@ -530,7 +648,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    fontSize: 14,
+    fontSize: 13,
   },
   th: {
     padding: '10px 12px',
@@ -540,9 +658,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: '#f8fafc',
     borderBottom: '2px solid #e2e8f0',
     whiteSpace: 'nowrap',
+    fontSize: 12,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
   },
   td: {
-    padding: '10px 12px',
+    padding: '8px 12px',
     borderBottom: '1px solid #f1f5f9',
     color: '#334155',
     whiteSpace: 'nowrap',
@@ -554,7 +675,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'inline-block',
     padding: '2px 8px',
     borderRadius: 4,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 600,
     whiteSpace: 'nowrap',
   },
@@ -562,7 +683,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'inline-block',
     padding: '2px 8px',
     borderRadius: 4,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 600,
   },
   openingRow: {
@@ -578,13 +699,43 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#94a3b8',
     fontSize: 14,
   },
-  primaryBtn: {
+  receiptBtn: {
     padding: '8px 16px',
-    backgroundColor: '#2563eb',
+    backgroundColor: '#16a34a',
     color: '#fff',
     border: 'none',
     borderRadius: 6,
     fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  paymentBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#7c3aed',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 6,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  postBtn: {
+    padding: '4px 8px',
+    backgroundColor: '#dcfce7',
+    color: '#15803d',
+    border: '1px solid #bbf7d0',
+    borderRadius: 4,
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  deleteBtn: {
+    padding: '4px 8px',
+    backgroundColor: '#fee2e2',
+    color: '#dc2626',
+    border: '1px solid #fecaca',
+    borderRadius: 4,
+    fontSize: 11,
     fontWeight: 600,
     cursor: 'pointer',
   },
@@ -646,7 +797,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: 'none',
     color: '#2563eb',
     cursor: 'pointer',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 600,
     padding: 0,
     textDecoration: 'none',

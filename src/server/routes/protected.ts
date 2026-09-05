@@ -257,8 +257,57 @@ export function createProtectedRoutes(
   );
 
   /**
+   * GET /api/cash-book/accounts
+   * Get cash/bank accounts for the tenant.
+   */
+  router.get('/cash-book/accounts',
+    requirePermissionMiddleware('cash.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const accounts = await cashBookService.getCashBankAccounts(tenantId);
+        res.json(accounts);
+      } catch (error) {
+        console.error('Get cash accounts error:', error);
+        res.status(500).json({ error: 'Failed to get cash accounts' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/cash-book
+   * Get cash book summary for an account and date range.
+   */
+  router.get('/cash-book',
+    requirePermissionMiddleware('cash.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const { accountId, startDate, endDate } = req.query;
+        if (!accountId || typeof accountId !== 'string') {
+          res.status(400).json({ error: 'accountId is required' });
+          return;
+        }
+        if (!startDate || typeof startDate !== 'string') {
+          res.status(400).json({ error: 'startDate is required' });
+          return;
+        }
+        if (!endDate || typeof endDate !== 'string') {
+          res.status(400).json({ error: 'endDate is required' });
+          return;
+        }
+        const summary = await cashBookService.getCashBook(tenantId, accountId, startDate, endDate);
+        res.json(summary);
+      } catch (error: any) {
+        console.error('Get cash book error:', error);
+        res.status(500).json({ error: error.message || 'Failed to get cash book' });
+      }
+    }
+  );
+
+  /**
    * POST /api/cash-book
-   * Create a cash book voucher.
+   * Create a cash book voucher (CR or CP).
    */
   router.post('/cash-book',
     mutationRateLimiter,
@@ -274,8 +323,24 @@ export function createProtectedRoutes(
         const tenantId = req.user!.tenantId;
         const createdBy = req.user!.username;
         const role = req.user!.role;
+        const { type, cashAccountId, counterAccountId, amount, date, narration } = req.body;
 
-        const voucher = await cashBookService.createCashReceipt(tenantId, req.body, createdBy, role);
+        let voucher;
+        if (type === 'CP') {
+          voucher = await cashBookService.createCashPayment(
+            tenantId,
+            { cashAccountId, debitAccountId: counterAccountId, amount, date, narration },
+            createdBy,
+            role,
+          );
+        } else {
+          voucher = await cashBookService.createCashReceipt(
+            tenantId,
+            { cashAccountId, creditAccountId: counterAccountId, amount, date, narration },
+            createdBy,
+            role,
+          );
+        }
         res.status(201).json(voucher);
       } catch (error: any) {
         if (error.message?.startsWith('Unauthorized:')) {
@@ -283,7 +348,7 @@ export function createProtectedRoutes(
           return;
         }
         console.error('Create cash voucher error:', error);
-        res.status(500).json({ error: 'Failed to create cash voucher' });
+        res.status(500).json({ error: error.message || 'Failed to create cash voucher' });
       }
     }
   );
