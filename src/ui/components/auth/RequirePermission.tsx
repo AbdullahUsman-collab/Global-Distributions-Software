@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { useAuth } from './ProtectedRoute';
-import { hasPermission, Permission } from '../../../domain/services/AuthorizationService';
+import { hasPermission, Permission } from '../../lib/auth';
 
 interface RequirePermissionProps {
   permission: Permission;

@@ -12,7 +12,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/ProtectedRoute';
-import { hasPermission, Permission } from '../../../domain/services/AuthorizationService';
+import { hasPermission, Permission } from '../../lib/auth';
 
 interface SidebarProps {
   open: boolean;

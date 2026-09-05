@@ -23,7 +23,7 @@ import {
   BillAccountingEntry,
   BillInventoryMovement,
 } from '../../domain/services/BillDetailService';
-import { BILL_TYPE_LABELS, BILL_TYPE_COLORS } from '../../domain/services/BillsListService';
+import { BILL_TYPE_LABELS, BILL_TYPE_COLORS } from '../lib/billLabels';
 import { VoucherStatus, VOUCHER_STATUS_LABELS } from '../../domain/types/voucher';
 import { printWindow, generateCsv, downloadFile, generateExportFilename } from '../utils/export';
 

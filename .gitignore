@@ -23,3 +23,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Dev utility scripts
+start-server.bat
+test-api.mts
+test-bills.mts

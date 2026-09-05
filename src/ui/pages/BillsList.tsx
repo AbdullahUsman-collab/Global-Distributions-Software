@@ -17,7 +17,7 @@ import {
   BILL_VOUCHER_TYPES,
   BILL_TYPE_LABELS,
   BILL_TYPE_COLORS,
-} from '../../domain/services/BillsListService';
+} from '../lib/billLabels';
 import { VoucherType } from '../../domain/types/voucher';
 import {
   VoucherStatus,
