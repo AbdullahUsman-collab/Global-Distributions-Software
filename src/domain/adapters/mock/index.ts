@@ -16,3 +16,4 @@ export { MockVoucherAdapter } from './MockVoucherAdapter';
 export { MockInventoryAdapter } from './MockInventoryAdapter';
 export { MockCustomerAdapter } from './MockCustomerAdapter';
 export { MockSupplierAdapter } from './MockSupplierAdapter';
+export { MockUserBrandAccessAdapter } from './MockUserBrandAccessAdapter';

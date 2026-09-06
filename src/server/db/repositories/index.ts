@@ -12,3 +12,4 @@ export { PostgresCustomerAdapter } from './PostgresCustomerAdapter.js';
 export { PostgresSupplierAdapter } from './PostgresSupplierAdapter.js';
 export { PostgresTenantAdapter } from './PostgresTenantAdapter.js';
 export { PostgresSettingsAdapter } from './PostgresSettingsAdapter.js';
+export { PostgresUserBrandAccessAdapter } from './PostgresUserBrandAccessAdapter.js';

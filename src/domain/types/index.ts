@@ -9,6 +9,7 @@ export * from './rbac';
 export * from './settings';
 export * from './coa';
 export * from './voucher';
+export * from './user-brand-access';
 // Re-export specific items from inventory to avoid conflicts with settings
 export {
   StockMovementType,

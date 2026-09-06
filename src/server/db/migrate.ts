@@ -50,6 +50,7 @@ export async function runMigrations(): Promise<string[]> {
     const migrations = [
       { version: '001', name: 'initial_schema', file: '001_initial.sql' },
       { version: '002', name: 'fix_stock_movements_dual_warehouse', file: '002_fix_stock_movements.sql' },
+      { version: '003', name: 'user_brand_access', file: '003_user_brand_access.sql' },
     ];
 
     for (const migration of migrations) {
@@ -101,6 +102,7 @@ export async function getMigrationStatus(): Promise<{ version: string; name: str
     const migrations = [
       { version: '001', name: 'initial_schema' },
       { version: '002', name: 'fix_stock_movements_dual_warehouse' },
+      { version: '003', name: 'user_brand_access' },
     ];
 
     return migrations.map(m => ({
