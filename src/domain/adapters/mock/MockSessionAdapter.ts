@@ -19,6 +19,13 @@ const SESSION_DURATION_MS = 30 * 60 * 1000;
 let sessions: Map<string, UserSession> = new Map();
 
 /**
+ * Reset store to empty state. Use in test beforeEach to isolate tests.
+ */
+export function resetSessionStore(): void {
+  sessions = new Map();
+}
+
+/**
  * Mock implementation of ISessionRepository.
  * DEVELOPMENT ONLY - Do not use in production.
  */

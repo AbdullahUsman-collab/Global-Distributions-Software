@@ -18,6 +18,7 @@
 import {
   LoginCredentials,
   AuthResult,
+  SwitchTenantResult,
   UserSession,
   User,
 } from '../../types/auth';
@@ -28,6 +29,7 @@ import { IUserCredentialsRepository } from '../../repositories/IUserCredentialsR
 import { ISessionRepository } from '../../repositories/ISessionRepository';
 import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository';
 import { DEMO_PLAIN_PASSWORDS } from './MockUserCredentialsAdapter';
+import { TenantPublicConfig } from '../../types/tenant';
 
 /**
  * Mock implementation of IAuthService.
@@ -157,5 +159,93 @@ export class MockAuthService implements IAuthService {
       session.tenantId,
       session.userId
     );
+  }
+
+  /**
+   * Switch tenant context for an authenticated session.
+   *
+   * Flow (46C-4):
+   * 1. Validate current session exists
+   * 2. Verify user is active
+   * 3. Validate target tenant exists and is active
+   * 4. Verify user has ACTIVE brand access for target tenant
+   * 5. Delete old session (prevent session fixation)
+   * 6. Create new session with target tenantId
+   * 7. Return user with access-derived role for new tenant
+   */
+  async switchTenant(sessionId: string, targetTenantId: string): Promise<SwitchTenantResult> {
+    // 1. Validate current session exists
+    const session = await this.sessionRepository.getSession(sessionId);
+    if (!session) {
+      return { success: false, error: 'Invalid or expired session' };
+    }
+
+    // 2. Verify user is active
+    const user = await this.userRepository.findById(session.userId);
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+    if (!user.isActive) {
+      return { success: false, error: 'Account is deactivated' };
+    }
+
+    // 3. Validate target tenant exists and is active
+    const tenant = await this.tenantRepository.getTenantById(targetTenantId);
+    if (!tenant || !tenant.isActive) {
+      return { success: false, error: 'Invalid or inactive tenant' };
+    }
+
+    // 4. Verify user has ACTIVE brand access for target tenant
+    const access = await this.brandAccessRepository.getByUserAndTenant(user.id, targetTenantId);
+    if (!access || !access.isActive) {
+      return { success: false, error: 'Not authorized for this brand' };
+    }
+
+    // 5. Delete old session (prevent session fixation)
+    await this.sessionRepository.deleteSession(sessionId);
+
+    // 6. Create new session with target tenantId
+    const newSession = await this.sessionRepository.createSession(
+      targetTenantId,
+      user.id
+    );
+
+    // 7. Return user with access-derived role for new tenant
+    const authorizedUser: User = {
+      ...user,
+      tenantId: targetTenantId,
+      role: access.role,
+    };
+
+    return {
+      success: true,
+      session: newSession,
+      user: authorizedUser,
+    };
+  }
+
+  /**
+   * Get all authorized tenants for a user.
+   * Returns only tenants where the user has ACTIVE brand access
+   * and the tenant itself is active.
+   */
+  async getAuthorizedTenants(userId: string): Promise<TenantPublicConfig[]> {
+    const activeAccess = await this.brandAccessRepository.getActiveByUserId(userId);
+    const tenants: TenantPublicConfig[] = [];
+
+    for (const access of activeAccess) {
+      const tenant = await this.tenantRepository.getTenantById(access.tenantId);
+      if (tenant && tenant.isActive) {
+        tenants.push({
+          id: tenant.id,
+          slug: tenant.slug,
+          brandName: tenant.brandName,
+          logoUrl: tenant.logoUrl,
+          primaryColor: tenant.primaryColor,
+        });
+      }
+    }
+
+    return tenants;
   }
 }

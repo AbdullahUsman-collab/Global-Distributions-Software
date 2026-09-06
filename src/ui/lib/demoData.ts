@@ -619,11 +619,35 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
     if (cleanPath === '/api/supplier-balances') {
       return DEMO_AGING_SUPPLIER.rows.map(r => ({ partyId: r.partyId, partyName: r.partyName, balance: r.totalOutstanding }));
     }
+
+    // Authorized tenants (demo: returns all active tenants)
+    if (cleanPath === '/api/auth/tenants') {
+      return DEMO_TENANTS;
+    }
   }
 
-  // ─── POST / PUT / DELETE Routes → Success ───────────────
+  // ─── POST / PUT / DELETE Routes ────────────────────────
 
   if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+    // Switch tenant (demo: accept any valid tenant)
+    if (cleanPath === '/api/auth/switch-tenant' && method === 'POST') {
+      const targetTenantId = body?.tenantId;
+      const targetTenant = DEMO_TENANTS.find(t => t.id === targetTenantId);
+      if (!targetTenant) {
+        return { error: 'Invalid or inactive tenant' };
+      }
+      return {
+        success: true,
+        user: {
+          id: 'user-admin-001',
+          username: 'admin',
+          displayName: 'Administrator',
+          role: 'ADMIN',
+          tenantId: targetTenantId,
+        },
+      };
+    }
+
     return { success: true, id: 'demo-1' };
   }
 

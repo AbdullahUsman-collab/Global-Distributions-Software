@@ -89,6 +89,14 @@ export type AuthResult =
   | { success: false; error: string };
 
 /**
+ * Tenant switch result union type.
+ * Success contains new session and updated user, failure contains error.
+ */
+export type SwitchTenantResult =
+  | { success: true; session: UserSession; user: User }
+  | { success: false; error: string };
+
+/**
  * Session validation result.
  * Returns session if valid, null if expired or invalid.
  */

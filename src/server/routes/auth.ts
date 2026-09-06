@@ -1,11 +1,15 @@
 /**
  * Authentication API Routes
- * Handles login, logout, session validation, and user resolution.
+ * Handles login, logout, session validation, user resolution,
+ * tenant switching, and authorized brand listing.
  *
  * RULE: Password is NEVER returned to the client.
  * RULE: Session ID is set as HTTP-only cookie, not exposed to JavaScript.
  * RULE: Login failures use generic error messages (no username/tenant enumeration).
  * RULE: Rate-limited to prevent brute-force attacks.
+ *
+ * RULE (46C-4): Tenant switching validates brand access server-side.
+ * Client cannot grant itself access or override role.
  */
 
 import { Router, Request, Response } from 'express';
@@ -135,6 +139,103 @@ export function createAuthRoutes(
 
     res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
     res.json({ success: true });
+  });
+
+  /**
+   * POST /api/auth/switch-tenant
+   * Switch tenant context for authenticated user.
+   *
+   * Validates brand access server-side, rotates session,
+   * returns user info with access-derived role.
+   *
+   * Request: { tenantId: string }
+   * Client MUST NOT provide: userId, role, permissions
+   */
+  router.post('/switch-tenant', async (req: Request, res: Response) => {
+    const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
+
+    if (!sessionId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    try {
+      const { tenantId } = req.body;
+
+      if (!tenantId || typeof tenantId !== 'string' || tenantId.trim() === '') {
+        res.status(400).json({ error: 'tenantId is required' });
+        return;
+      }
+
+      if (tenantId.length > 128) {
+        res.status(400).json({ error: 'tenantId is too long' });
+        return;
+      }
+
+      const result = await authService.switchTenant(sessionId, tenantId);
+
+      if (!result.success) {
+        res.status(403).json({ error: result.error });
+        return;
+      }
+
+      // Set new session as HTTP-only cookie (session rotation)
+      res.cookie(SESSION_COOKIE_NAME, result.session.sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        maxAge: SESSION_DURATION_MS,
+        path: '/',
+      });
+
+      // Return updated user context (NOT the session ID)
+      res.json({
+        success: true,
+        user: {
+          id: result.user.id,
+          username: result.user.username,
+          displayName: result.user.displayName,
+          role: result.user.role,
+          tenantId: result.user.tenantId,
+        },
+      });
+    } catch (error) {
+      console.error('Switch tenant error:', error);
+      res.status(500).json({ error: 'Tenant switch failed' });
+    }
+  });
+
+  /**
+   * GET /api/auth/tenants
+   * List authorized tenants (brands) for authenticated user.
+   *
+   * Returns only brands where:
+   * - user_brand_access.is_active = true
+   * - tenant.is_active = true
+   *
+   * Never exposes unauthorized tenants.
+   */
+  router.get('/tenants', async (req: Request, res: Response) => {
+    const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
+
+    if (!sessionId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    try {
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        res.status(401).json({ error: 'Invalid or expired session' });
+        return;
+      }
+
+      const tenants = await authService.getAuthorizedTenants(session.userId);
+      res.json(tenants);
+    } catch (error) {
+      console.error('Error listing authorized tenants:', error);
+      res.status(500).json({ error: 'Failed to list tenants' });
+    }
   });
 
   return router;

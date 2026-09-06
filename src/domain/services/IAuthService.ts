@@ -11,9 +11,11 @@
 import {
   LoginCredentials,
   AuthResult,
+  SwitchTenantResult,
   UserSession,
   User,
 } from '../types/auth';
+import { TenantPublicConfig } from '../types/tenant';
 
 /**
  * Service interface for authentication business logic.
@@ -50,4 +52,17 @@ export interface IAuthService {
    * Extends session expiration if still valid.
    */
   refreshSession(sessionId: string): Promise<UserSession | null>;
+
+  /**
+   * Switch the tenant context for an authenticated session.
+   * Validates brand access and tenant status, rotates session.
+   * Returns updated user info with access-derived role.
+   */
+  switchTenant(sessionId: string, targetTenantId: string): Promise<SwitchTenantResult>;
+
+  /**
+   * Get all authorized tenants for a user.
+   * Returns only active brand access records with tenant details.
+   */
+  getAuthorizedTenants(userId: string): Promise<TenantPublicConfig[]>;
 }

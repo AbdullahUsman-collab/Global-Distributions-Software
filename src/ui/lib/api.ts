@@ -573,3 +573,24 @@ export async function cancelStockMovement(id: string) {
 export async function getCustomerARBalance(customerId: string) {
   return apiRequest<any>(`/customers/${customerId}/ar-balance`);
 }
+
+// ─── Auth / Tenant Switching API ──────────────────────────────
+
+/**
+ * Switch the active tenant context.
+ * Server validates brand access and rotates session.
+ */
+export async function switchTenant(tenantId: string) {
+  return apiRequest<{ success: boolean; user: any }>('/auth/switch-tenant', {
+    method: 'POST',
+    body: JSON.stringify({ tenantId }),
+  });
+}
+
+/**
+ * Get all authorized tenants (brands) for the current user.
+ * Returns only active brand access with active tenants.
+ */
+export async function getAuthorizedTenants() {
+  return apiRequest<any[]>('/auth/tenants');
+}

@@ -60,6 +60,13 @@ const DEMO_TENANTS: Tenant[] = [
 let tenants: Tenant[] = [...DEMO_TENANTS];
 
 /**
+ * Reset store to seed data. Use in test beforeEach to isolate tests.
+ */
+export function resetTenantStore(): void {
+  tenants = [...DEMO_TENANTS.map(t => ({ ...t }))];
+}
+
+/**
  * Mock implementation of ITenantRepository.
  * DEVELOPMENT ONLY - Do not use in production.
  */

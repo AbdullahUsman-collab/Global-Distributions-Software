@@ -105,6 +105,15 @@ export function resetPasswordStore(): void {
 let credentials: UserCredentials[] = [...DEMO_CREDENTIALS];
 
 /**
+ * Add credentials directly (for test setup, bypasses adapter).
+ */
+export function addCredentials(userId: string, tenantId: string, passwordHash: string, algo?: string): void {
+  const existing = credentials.find(c => c.userId === userId);
+  if (existing) return;
+  credentials.push({ userId, tenantId, passwordHash, algo: algo || 'bcrypt' });
+}
+
+/**
  * Mock implementation of IUserCredentialsRepository.
  * DEVELOPMENT ONLY - Do not use in production.
  */
