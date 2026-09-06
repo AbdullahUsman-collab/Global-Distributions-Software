@@ -21,6 +21,7 @@ import { MockAuthService } from '../adapters/mock/MockAuthService';
 import { MockUserAdapter } from '../adapters/mock/MockUserAdapter';
 import { MockUserCredentialsAdapter } from '../adapters/mock/MockUserCredentialsAdapter';
 import { MockSessionAdapter } from '../adapters/mock/MockSessionAdapter';
+import { MockUserBrandAccessAdapter } from '../adapters/mock/MockUserBrandAccessAdapter';
 import { MockTenantAdapter } from '../adapters/mock/MockTenantAdapter';
 import { SalesService } from '../services/SalesService';
 import { PurchaseService } from '../services/PurchaseService';
@@ -55,7 +56,8 @@ function createAuthService() {
   const userAdapter = new MockUserAdapter();
   const credentialsAdapter = new MockUserCredentialsAdapter();
   const sessionAdapter = new MockSessionAdapter();
-  return new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter);
+  const brandAccessAdapter = new MockUserBrandAccessAdapter();
+  return new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter, brandAccessAdapter);
 }
 
 /* ══════════════════════════════════════════════════════════════ */

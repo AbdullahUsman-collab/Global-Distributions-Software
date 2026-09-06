@@ -37,6 +37,7 @@ import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapt
 import { MockCustomerAdapter } from '../domain/adapters/mock/MockCustomerAdapter';
 import { MockSupplierAdapter } from '../domain/adapters/mock/MockSupplierAdapter';
 import { MockSettingsAdapter } from '../domain/adapters/mock/MockSettingsAdapter';
+import { MockUserBrandAccessAdapter } from '../domain/adapters/mock/MockUserBrandAccessAdapter';
 
 // Domain adapters — PostgreSQL
 import { PostgresTenantAdapter } from './db/repositories/PostgresTenantAdapter';
@@ -49,6 +50,7 @@ import { PostgresInventoryAdapter } from './db/repositories/PostgresInventoryAda
 import { PostgresCustomerAdapter } from './db/repositories/PostgresCustomerAdapter';
 import { PostgresSupplierAdapter } from './db/repositories/PostgresSupplierAdapter';
 import { PostgresSettingsAdapter } from './db/repositories/PostgresSettingsAdapter';
+import { PostgresUserBrandAccessAdapter } from './db/repositories/PostgresUserBrandAccessAdapter';
 
 // Database
 import { initPool, closePool } from './db/pool';
@@ -76,7 +78,8 @@ const tenantAdapter = usePg ? new PostgresTenantAdapter() : new MockTenantAdapte
 const userAdapter = usePg ? new PostgresUserAdapter() : new MockUserAdapter();
 const credentialsAdapter = usePg ? new PostgresUserCredentialsAdapter() : new MockUserCredentialsAdapter();
 const sessionAdapter = usePg ? new PostgresSessionAdapter() : new MockSessionAdapter();
-const authService = new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter);
+const brandAccessAdapter = usePg ? new PostgresUserBrandAccessAdapter() : new MockUserBrandAccessAdapter();
+const authService = new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter, brandAccessAdapter);
 
 const coaAdapter = usePg ? new PostgresCOAAdapter() : new MockCOAAdapter();
 const voucherAdapter = usePg ? new PostgresVoucherAdapter() : new MockVoucherAdapter();
@@ -167,7 +170,7 @@ app.use('/api', csrfProtection);
 
 // ─── Auth Middleware (applied to protected routes) ─────────────
 
-const authMiddleware = createAuthMiddleware(sessionAdapter, userAdapter);
+const authMiddleware = createAuthMiddleware(sessionAdapter, userAdapter, brandAccessAdapter);
 
 // ─── Routes ────────────────────────────────────────────────────
 

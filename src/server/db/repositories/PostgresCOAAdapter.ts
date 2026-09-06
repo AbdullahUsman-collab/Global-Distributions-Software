@@ -82,12 +82,17 @@ export class PostgresCOAAdapter implements ICOARepository {
   }
 
   private static ACCOUNT_UPDATE_COLUMNS: Record<string, string> = {
-    accountCode: 'account_code',
     accountName: 'account_name',
-    accountType: 'account_type',
-    parentAccountId: 'parent_account_id',
-    description: 'description',
     isActive: 'is_active',
+    controlCategory: 'control_category',
+    legacyMainHeadNo: 'legacy_main_head_no',
+    accountEffect: 'account_effect',
+    address: 'address',
+    ownerName: 'owner_name',
+    phone: 'phone',
+    stn: 'stn',
+    ntn: 'ntn',
+    cnic: 'cnic',
   };
 
   async updateAccount(tenantId: string, id: string, dto: UpdateAccountHeadDTO): Promise<AccountHead> {

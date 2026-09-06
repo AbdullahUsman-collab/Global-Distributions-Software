@@ -5,11 +5,17 @@
  * RULE: tenantId, role, permissions are resolved server-side from session.
  * RULE: Client-provided tenantId/role/createdBy are NEVER trusted.
  * RULE: Session is validated from HTTP-only cookie, not localStorage.
+ *
+ * RULE (46C-3): Authorization source is user_brand_access.
+ * On every request, the middleware verifies that the session's tenantId
+ * corresponds to an ACTIVE user_brand_access record. The role used for
+ * permission checks is derived from user_brand_access, NOT from users.role.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { ISessionRepository } from '../../domain/repositories/ISessionRepository';
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
+import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
 import { UserSession, User } from '../../domain/types/auth';
 import { hasPermission } from '../../domain/services/AuthorizationService';
 
@@ -27,10 +33,20 @@ const SESSION_COOKIE_NAME = 'erp_session';
 /**
  * Create authentication middleware.
  * Validates session from HTTP-only cookie and attaches user to request.
+ *
+ * Authorization flow (46C-3):
+ * 1. Extract session ID from HTTP-only cookie
+ * 2. Validate session exists and is not expired
+ * 3. Find user by session.userId
+ * 4. Verify user is active
+ * 5. Verify user has ACTIVE user_brand_access for session.tenantId
+ * 6. Override req.user.role with access-derived role
+ * 7. Attach session and user to request
  */
 export function createAuthMiddleware(
   sessionRepo: ISessionRepository,
-  userRepo: IUserRepository
+  userRepo: IUserRepository,
+  brandAccessRepo: IUserBrandAccessRepository
 ) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
@@ -58,9 +74,21 @@ export function createAuthMiddleware(
         return;
       }
 
-      // Attach session and user to request
+      // 46C-3: Verify user has ACTIVE user_brand_access for this tenant
+      const access = await brandAccessRepo.getByUserAndTenant(user.id, session.tenantId);
+      if (!access || !access.isActive) {
+        res.status(401).json({ error: 'Not authorized for this brand' });
+        return;
+      }
+
+      // Attach session to request
       req.session = session;
-      req.user = user;
+
+      // Attach user with access-derived role (overrides users.role)
+      req.user = {
+        ...user,
+        role: access.role,
+      };
 
       next();
     } catch (error) {

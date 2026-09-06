@@ -72,10 +72,9 @@ export class PostgresSupplierAdapter implements ISupplierRepository {
     email: 'email',
     address: 'address',
     city: 'city',
-    region: 'region',
-    paymentTermsDays: 'payment_terms_days',
-    gstNumber: 'gst_number',
-    ntnNumber: 'ntn_number',
+    taxRegistrationNumber: 'tax_registration_number',
+    paymentTerms: 'payment_terms',
+    creditLimit: 'credit_limit',
     isActive: 'is_active',
   };
 

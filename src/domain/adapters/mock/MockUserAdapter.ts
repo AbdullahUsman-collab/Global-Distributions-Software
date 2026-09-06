@@ -82,6 +82,20 @@ const DEMO_USERS: User[] = [
 let users: User[] = [...DEMO_USERS];
 
 /**
+ * Reset store to seed data. Use in test beforeEach to isolate tests.
+ */
+export function resetUserStore(): void {
+  users = [...DEMO_USERS.map(u => ({ ...u }))];
+}
+
+/**
+ * Get direct access to store for test setup (bypasses adapter).
+ */
+export function getUserStore(): User[] {
+  return users;
+}
+
+/**
  * Mock implementation of IUserRepository.
  * DEVELOPMENT ONLY - Do not use in production.
  */

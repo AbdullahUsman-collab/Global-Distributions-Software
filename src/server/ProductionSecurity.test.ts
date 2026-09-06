@@ -12,6 +12,7 @@ import { MockTenantAdapter } from '../domain/adapters/mock/MockTenantAdapter';
 import { MockUserAdapter } from '../domain/adapters/mock/MockUserAdapter';
 import { MockUserCredentialsAdapter } from '../domain/adapters/mock/MockUserCredentialsAdapter';
 import { MockSessionAdapter } from '../domain/adapters/mock/MockSessionAdapter';
+import { MockUserBrandAccessAdapter } from '../domain/adapters/mock/MockUserBrandAccessAdapter';
 import { MockAuthService } from '../domain/adapters/mock/MockAuthService';
 import { hasPermission, requirePermission, Permissions } from '../domain/services/AuthorizationService';
 import { SYSTEM_ROLES, SystemRoleName } from '../domain/types/rbac';
@@ -46,6 +47,7 @@ let tenantAdapter: MockTenantAdapter;
 let userAdapter: MockUserAdapter;
 let credentialsAdapter: MockUserCredentialsAdapter;
 let sessionAdapter: MockSessionAdapter;
+let brandAccessAdapter: MockUserBrandAccessAdapter;
 let authService: MockAuthService;
 
 beforeEach(() => {
@@ -53,7 +55,8 @@ beforeEach(() => {
   userAdapter = new MockUserAdapter();
   credentialsAdapter = new MockUserCredentialsAdapter();
   sessionAdapter = new MockSessionAdapter();
-  authService = new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter);
+  brandAccessAdapter = new MockUserBrandAccessAdapter();
+  authService = new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter, brandAccessAdapter);
 });
 
 // ─── 1. Authentication Security ────────────────────────────────

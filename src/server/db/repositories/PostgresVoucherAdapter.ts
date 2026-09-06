@@ -233,7 +233,7 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
     let idx = 2;
 
     if (filters?.status) {
-      sql += ` INNER JOIN voucher_headers vh ON vh.id = le.voucher_id AND vh.tenant_id = le.tenant_id`;
+      sql += ` INNER JOIN vouchers vh ON vh.id = le.voucher_id AND vh.tenant_id = le.tenant_id`;
     }
 
     sql += ` WHERE le.tenant_id = $1`;

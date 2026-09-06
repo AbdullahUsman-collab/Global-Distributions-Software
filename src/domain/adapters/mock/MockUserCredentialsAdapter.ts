@@ -77,6 +77,29 @@ export const DEMO_PLAIN_PASSWORDS: Record<string, string> = {
 };
 
 /**
+ * Register a plain-text password for a dynamically created user (test only).
+ */
+export function registerTestPassword(userId: string, password: string): void {
+  DEMO_PLAIN_PASSWORDS[userId] = password;
+}
+
+/**
+ * Reset plain-password registry to seed data. Use in test beforeEach.
+ */
+export function resetPasswordStore(): void {
+  const keys = Object.keys(DEMO_PLAIN_PASSWORDS);
+  for (const k of keys) {
+    delete DEMO_PLAIN_PASSWORDS[k];
+  }
+  DEMO_PLAIN_PASSWORDS['user-admin-001'] = 'admin123';
+  DEMO_PLAIN_PASSWORDS['user-manager-001'] = 'manager123';
+  DEMO_PLAIN_PASSWORDS['user-clerk-001'] = 'clerk123';
+  DEMO_PLAIN_PASSWORDS['user-inactive-001'] = 'former123';
+  DEMO_PLAIN_PASSWORDS['user-admin-002'] = 'admin123';
+  DEMO_PLAIN_PASSWORDS['user-admin-003'] = 'admin123';
+}
+
+/**
  * In-memory storage for mock credentials.
  */
 let credentials: UserCredentials[] = [...DEMO_CREDENTIALS];

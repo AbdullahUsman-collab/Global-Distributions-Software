@@ -65,14 +65,12 @@ export class PostgresCustomerAdapter implements ICustomerRepository {
 
   private static CUSTOMER_UPDATE_COLUMNS: Record<string, string> = {
     name: 'name',
-    contactPerson: 'contact_person',
-    phone: 'phone',
-    email: 'email',
     address: 'address',
-    city: 'city',
-    region: 'region',
-    creditLimit: 'credit_limit',
-    paymentTermsDays: 'payment_terms_days',
+    ownerName: 'owner_name',
+    phone: 'phone',
+    stn: 'stn',
+    ntn: 'ntn',
+    cnic: 'cnic',
     isActive: 'is_active',
   };
 

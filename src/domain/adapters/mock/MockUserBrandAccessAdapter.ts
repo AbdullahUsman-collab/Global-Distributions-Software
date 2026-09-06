@@ -88,6 +88,20 @@ const SEED_ACCESS: UserBrandAccess[] = [
 
 let accessStore: UserBrandAccess[] = [...SEED_ACCESS.map(a => deepClone(a))];
 
+/**
+ * Reset store to seed data. Use in test beforeEach to isolate tests.
+ */
+export function resetBrandAccessStore(): void {
+  accessStore = [...SEED_ACCESS.map(a => deepClone(a))];
+}
+
+/**
+ * Get direct access to store for test setup (bypasses adapter).
+ */
+export function getBrandAccessStore(): UserBrandAccess[] {
+  return accessStore;
+}
+
 /* ─── Adapter Implementation ───────────────────────────────── */
 
 /**
