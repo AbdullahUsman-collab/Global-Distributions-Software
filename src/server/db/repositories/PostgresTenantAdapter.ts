@@ -58,18 +58,10 @@ export class PostgresTenantAdapter implements ITenantRepository {
   }
 
   private static TENANT_UPDATE_COLUMNS: Record<string, string> = {
-    name: 'name',
-    displayName: 'display_name',
-    legalName: 'legal_name',
-    registrationNumber: 'registration_number',
-    taxNumber: 'tax_number',
-    address: 'address',
-    city: 'city',
-    province: 'province',
-    phone: 'phone',
-    email: 'email',
-    website: 'website',
-    logo: 'logo',
+    brandName: 'brand_name',
+    logoUrl: 'logo_url',
+    primaryColor: 'primary_color',
+    accentColor: 'accent_color',
     isActive: 'is_active',
   };
 

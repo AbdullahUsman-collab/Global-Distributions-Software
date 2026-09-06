@@ -199,7 +199,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
   }
 
   async getStockMovements(tenantId: string, productId?: string): Promise<StockMovement[]> {
-    let sql = `SELECT id, tenant_id, product_id, warehouse_id, movement_type, status,
+    let sql = `SELECT id, tenant_id, product_id, from_warehouse_id, to_warehouse_id, movement_type, status,
                quantity, unit_cost, reference_id, reference_type, narration, created_by, created_at, updated_at
                FROM stock_movements WHERE tenant_id = $1`;
     const params: any[] = [tenantId];
@@ -211,7 +211,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
 
   async getStockMovementById(tenantId: string, id: string): Promise<StockMovement | null> {
     const result = await query(
-      `SELECT id, tenant_id, product_id, warehouse_id, movement_type, status,
+      `SELECT id, tenant_id, product_id, from_warehouse_id, to_warehouse_id, movement_type, status,
        quantity, unit_cost, reference_id, reference_type, narration, created_by, created_at, updated_at
        FROM stock_movements WHERE tenant_id = $1 AND id = $2`,
       [tenantId, id]
@@ -223,12 +223,12 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
   async createStockMovement(tenantId: string, movement: Omit<StockMovement, 'id' | 'createdAt'>): Promise<StockMovement> {
     const id = uuid();
     const result = await query(
-      `INSERT INTO stock_movements (id, tenant_id, product_id, warehouse_id, movement_type, status,
+      `INSERT INTO stock_movements (id, tenant_id, product_id, from_warehouse_id, to_warehouse_id, movement_type, status,
          quantity, unit_cost, reference_id, reference_type, narration, created_by, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW())
        RETURNING *`,
-      [id, tenantId, movement.productId, movement.warehouseId, movement.movementType,
-       movement.status, movement.quantity, movement.unitCost,
+      [id, tenantId, movement.productId, movement.fromWarehouseId || null, movement.toWarehouseId || null,
+       movement.movementType, movement.status, movement.quantity, movement.unitCost,
        movement.referenceId || null, movement.referenceType || null,
        movement.narration || null, movement.createdBy]
     );
@@ -255,7 +255,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       switch (movement.movementType) {
         case 'GRN':
         case 'RETURN': {
-          const targetWarehouseId = movement.warehouseId;
+          const targetWarehouseId = movement.toWarehouseId ?? movement.fromWarehouseId;
           if (!targetWarehouseId) throw new Error('Target warehouse required for GRN/RETURN');
 
           const existing = await client.query(
@@ -289,7 +289,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
         }
 
         case 'ISSUE': {
-          const sourceWarehouseId = movement.warehouseId;
+          const sourceWarehouseId = movement.fromWarehouseId;
           if (!sourceWarehouseId) throw new Error('Source warehouse required for ISSUE');
 
           const existing = await client.query(
@@ -317,11 +317,13 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
         }
 
         case 'TRANSFER': {
-          // For transfers, the warehouseId is the source; we need to find the target from narration or reference
-          // Simplified: deduct from source warehouse
-          const sourceWarehouseId = movement.warehouseId;
+          // Transfer between warehouses: deduct from source, add to target
+          const sourceWarehouseId = movement.fromWarehouseId;
+          const targetWarehouseId = movement.toWarehouseId;
           if (!sourceWarehouseId) throw new Error('Source warehouse required for TRANSFER');
+          if (!targetWarehouseId) throw new Error('Target warehouse required for TRANSFER');
 
+          // Deduct from source
           const existing = await client.query(
             `SELECT id, quantity_on_hand FROM stock_levels
              WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3 FOR UPDATE`,
@@ -342,11 +344,39 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
              WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
             [movement.quantity, tenantId, movement.productId, sourceWarehouseId]
           );
+
+          // Add to target
+          const targetExisting = await client.query(
+            `SELECT id, quantity_on_hand, unit_cost FROM stock_levels
+             WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3 FOR UPDATE`,
+            [tenantId, movement.productId, targetWarehouseId]
+          );
+
+          if (targetExisting.rows.length === 0) {
+            await client.query(
+              `INSERT INTO stock_levels (id, tenant_id, product_id, warehouse_id, quantity_on_hand, quantity_reserved, unit_cost)
+               VALUES ($1, $2, $3, $4, $5, 0, $6)`,
+              [uuid(), tenantId, movement.productId, targetWarehouseId, movement.quantity, movement.unitCost]
+            );
+          } else {
+            const targetLevel = targetExisting.rows[0];
+            const currentQty = Number(targetLevel.quantity_on_hand);
+            const currentCost = Number(targetLevel.unit_cost);
+            const newQty = currentQty + movement.quantity;
+            const newCost = newQty > 0
+              ? (currentQty * currentCost + movement.quantity * movement.unitCost) / newQty
+              : 0;
+            await client.query(
+              `UPDATE stock_levels SET quantity_on_hand = $1, unit_cost = $2, updated_at = NOW()
+               WHERE tenant_id = $3 AND product_id = $4 AND warehouse_id = $5`,
+              [newQty, newCost, tenantId, movement.productId, targetWarehouseId]
+            );
+          }
           break;
         }
 
         case 'ADJUSTMENT': {
-          const targetWarehouseId = movement.warehouseId;
+          const targetWarehouseId = movement.fromWarehouseId ?? movement.toWarehouseId;
           if (!targetWarehouseId) throw new Error('Warehouse required for ADJUSTMENT');
 
           const existing = await client.query(
@@ -397,7 +427,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
         switch (movement.movementType) {
           case 'GRN':
           case 'RETURN': {
-            const targetWarehouseId = movement.warehouseId;
+            const targetWarehouseId = movement.toWarehouseId ?? movement.fromWarehouseId;
             if (targetWarehouseId) {
               await client.query(
                 `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand - $1, updated_at = NOW()
@@ -408,7 +438,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
             break;
           }
           case 'ISSUE': {
-            const sourceWarehouseId = movement.warehouseId;
+            const sourceWarehouseId = movement.fromWarehouseId;
             if (sourceWarehouseId) {
               await client.query(
                 `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand + $1, updated_at = NOW()
@@ -419,19 +449,30 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
             break;
           }
           case 'TRANSFER': {
-            const sourceWarehouseId = movement.warehouseId;
+            // Reverse transfer: deduct from target, add back to source
+            const sourceWarehouseId = movement.fromWarehouseId;
+            const targetWarehouseId = movement.toWarehouseId;
             if (sourceWarehouseId) {
+              // Add back to source
               await client.query(
                 `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand + $1, updated_at = NOW()
                  WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
                 [movement.quantity, tenantId, movement.productId, sourceWarehouseId]
               );
             }
+            if (targetWarehouseId) {
+              // Deduct from target
+              await client.query(
+                `UPDATE stock_levels SET quantity_on_hand = quantity_on_hand - $1, updated_at = NOW()
+                 WHERE tenant_id = $2 AND product_id = $3 AND warehouse_id = $4`,
+                [movement.quantity, tenantId, movement.productId, targetWarehouseId]
+              );
+            }
             break;
           }
           case 'ADJUSTMENT': {
             // Cannot auto-reverse adjustment — set to 0
-            const targetWarehouseId = movement.warehouseId;
+            const targetWarehouseId = movement.fromWarehouseId ?? movement.toWarehouseId;
             if (targetWarehouseId) {
               await client.query(
                 `UPDATE stock_levels SET quantity_on_hand = 0, updated_at = NOW()
@@ -477,7 +518,9 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
 
   private mapStockMovementRow(r: any): StockMovement {
     return {
-      id: r.id, tenantId: r.tenant_id, productId: r.product_id, warehouseId: r.warehouse_id,
+      id: r.id, tenantId: r.tenant_id, productId: r.product_id,
+      fromWarehouseId: r.from_warehouse_id || undefined,
+      toWarehouseId: r.to_warehouse_id || undefined,
       movementType: r.movement_type, status: r.status, quantity: Number(r.quantity),
       unitCost: Number(r.unit_cost), totalCost: Number(r.quantity) * Number(r.unit_cost),
       referenceId: r.reference_id, referenceType: r.reference_type,

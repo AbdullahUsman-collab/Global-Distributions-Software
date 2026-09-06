@@ -48,6 +48,7 @@ import { PostgresVoucherAdapter } from './db/repositories/PostgresVoucherAdapter
 import { PostgresInventoryAdapter } from './db/repositories/PostgresInventoryAdapter';
 import { PostgresCustomerAdapter } from './db/repositories/PostgresCustomerAdapter';
 import { PostgresSupplierAdapter } from './db/repositories/PostgresSupplierAdapter';
+import { PostgresSettingsAdapter } from './db/repositories/PostgresSettingsAdapter';
 
 // Database
 import { initPool, closePool } from './db/pool';
@@ -82,7 +83,7 @@ const voucherAdapter = usePg ? new PostgresVoucherAdapter() : new MockVoucherAda
 const inventoryAdapter = usePg ? new PostgresInventoryAdapter() : new MockInventoryAdapter();
 const customerAdapter = usePg ? new PostgresCustomerAdapter() : new MockCustomerAdapter(coaAdapter);
 const supplierAdapter = usePg ? new PostgresSupplierAdapter() : new MockSupplierAdapter(coaAdapter);
-const settingsAdapter = new MockSettingsAdapter();
+const settingsAdapter = usePg ? new PostgresSettingsAdapter() : new MockSettingsAdapter();
 
 // ─── Initialize Domain Services ────────────────────────────────
 
