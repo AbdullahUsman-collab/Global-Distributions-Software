@@ -79,8 +79,9 @@ async function apiRequest<T>(
     });
 
     if (!res.ok) {
-      // Try demo data fallback for GET failures (e.g. 404 on Vercel)
-      if (!isStateChanging) {
+      // Try demo data fallback when server is unavailable (e.g. 404 on Vercel)
+      // Applies to ALL methods: GET, POST, PUT, DELETE
+      {
         let body: any = undefined;
         if (options.body && typeof options.body === 'string') {
           try { body = JSON.parse(options.body); } catch { /* ignore */ }
