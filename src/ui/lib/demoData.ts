@@ -10,6 +10,10 @@
 
 const T = 'tenant-demo-wholesale-001';
 
+const _dm = new Date();
+const DEMO_MONTH = `${_dm.getFullYear()}-${String(_dm.getMonth() + 1).padStart(2, '0')}`;
+const d = (day: number) => `${DEMO_MONTH}-${String(day).padStart(2, '0')}`;
+
 /* ─── Tenants ─────────────────────────────────────────────── */
 
 export const DEMO_TENANTS = [
@@ -178,96 +182,96 @@ const DEMO_ACCOUNTS = [
 
 const DEMO_VOUCHERS = [
   // Opening Balance JV
-  { id: 'vch-01', tenantId: T, voucherNumber: 1, voucherType: 'JV', status: 'POSTED', date: '2026-08-01', narration: 'Opening balance as of August 2026', createdBy: 'admin', createdAt: new Date('2026-08-01'), updatedAt: new Date('2026-08-01') },
+  { id: 'vch-01', tenantId: T, voucherNumber: 1, voucherType: 'JV', status: 'POSTED', date: d(1), narration: 'Opening balance as of current month', createdBy: 'admin', createdAt: new Date(d(1)), updatedAt: new Date(d(1)) },
   // 4 Sale Vouchers
-  { id: 'vch-02', tenantId: T, voucherNumber: 2, voucherType: 'SV', status: 'POSTED', date: '2026-08-02', narration: 'Sale to Al-Noor Super Store — Invoice #1001', createdBy: 'admin', createdAt: new Date('2026-08-02'), updatedAt: new Date('2026-08-02') },
-  { id: 'vch-03', tenantId: T, voucherNumber: 3, voucherType: 'SV', status: 'POSTED', date: '2026-08-05', narration: 'Sale to City Mart — Invoice #1002', createdBy: 'admin', createdAt: new Date('2026-08-05'), updatedAt: new Date('2026-08-05') },
-  { id: 'vch-04', tenantId: T, voucherNumber: 4, voucherType: 'SV', status: 'POSTED', date: '2026-08-10', narration: 'Sale to Faisal Traders — Invoice #1003', createdBy: 'admin', createdAt: new Date('2026-08-10'), updatedAt: new Date('2026-08-10') },
-  { id: 'vch-05', tenantId: T, voucherNumber: 5, voucherType: 'SV', status: 'POSTED', date: '2026-08-15', narration: 'Sale to Madina Cash & Carry — Invoice #1004', createdBy: 'admin', createdAt: new Date('2026-08-15'), updatedAt: new Date('2026-08-15') },
+  { id: 'vch-02', tenantId: T, voucherNumber: 2, voucherType: 'SV', status: 'POSTED', date: d(2), narration: 'Sale to Al-Noor Super Store — Invoice #1001', createdBy: 'admin', createdAt: new Date(d(2)), updatedAt: new Date(d(2)) },
+  { id: 'vch-03', tenantId: T, voucherNumber: 3, voucherType: 'SV', status: 'POSTED', date: d(5), narration: 'Sale to City Mart — Invoice #1002', createdBy: 'admin', createdAt: new Date(d(5)), updatedAt: new Date(d(5)) },
+  { id: 'vch-04', tenantId: T, voucherNumber: 4, voucherType: 'SV', status: 'POSTED', date: d(10), narration: 'Sale to Faisal Traders — Invoice #1003', createdBy: 'admin', createdAt: new Date(d(10)), updatedAt: new Date(d(10)) },
+  { id: 'vch-05', tenantId: T, voucherNumber: 5, voucherType: 'SV', status: 'POSTED', date: d(15), narration: 'Sale to Madina Cash & Carry — Invoice #1004', createdBy: 'admin', createdAt: new Date(d(15)), updatedAt: new Date(d(15)) },
   // 1 Sale Return Voucher
-  { id: 'vch-06', tenantId: T, voucherNumber: 6, voucherType: 'SRV', status: 'POSTED', date: '2026-08-12', narration: 'Sale return from City Mart — damaged goods', createdBy: 'admin', createdAt: new Date('2026-08-12'), updatedAt: new Date('2026-08-12') },
+  { id: 'vch-06', tenantId: T, voucherNumber: 6, voucherType: 'SRV', status: 'POSTED', date: d(12), narration: 'Sale return from City Mart — damaged goods', createdBy: 'admin', createdAt: new Date(d(12)), updatedAt: new Date(d(12)) },
   // 2 Purchase Vouchers
-  { id: 'vch-07', tenantId: T, voucherNumber: 7, voucherType: 'PV', status: 'POSTED', date: '2026-08-03', narration: 'Purchase from ABC Foods Supplier — PO #2001', createdBy: 'admin', createdAt: new Date('2026-08-03'), updatedAt: new Date('2026-08-03') },
-  { id: 'vch-08', tenantId: T, voucherNumber: 8, voucherType: 'PV', status: 'POSTED', date: '2026-08-08', narration: 'Purchase from Punjab Distributors — PO #2002', createdBy: 'admin', createdAt: new Date('2026-08-08'), updatedAt: new Date('2026-08-08') },
+  { id: 'vch-07', tenantId: T, voucherNumber: 7, voucherType: 'PV', status: 'POSTED', date: d(3), narration: 'Purchase from ABC Foods Supplier — PO #2001', createdBy: 'admin', createdAt: new Date(d(3)), updatedAt: new Date(d(3)) },
+  { id: 'vch-08', tenantId: T, voucherNumber: 8, voucherType: 'PV', status: 'POSTED', date: d(8), narration: 'Purchase from Punjab Distributors — PO #2002', createdBy: 'admin', createdAt: new Date(d(8)), updatedAt: new Date(d(8)) },
   // 1 Purchase Return Voucher
-  { id: 'vch-09', tenantId: T, voucherNumber: 9, voucherType: 'PRV', status: 'POSTED', date: '2026-08-14', narration: 'Purchase return to ABC Foods Supplier — defective batch', createdBy: 'admin', createdAt: new Date('2026-08-14'), updatedAt: new Date('2026-08-14') },
+  { id: 'vch-09', tenantId: T, voucherNumber: 9, voucherType: 'PRV', status: 'POSTED', date: d(14), narration: 'Purchase return to ABC Foods Supplier — defective batch', createdBy: 'admin', createdAt: new Date(d(14)), updatedAt: new Date(d(14)) },
   // 2 Customer Receipts
-  { id: 'vch-10', tenantId: T, voucherNumber: 10, voucherType: 'CR', status: 'POSTED', date: '2026-08-18', narration: 'Cash received from Al-Noor Super Store — partial payment', createdBy: 'admin', createdAt: new Date('2026-08-18'), updatedAt: new Date('2026-08-18') },
-  { id: 'vch-11', tenantId: T, voucherNumber: 11, voucherType: 'CRV', status: 'POSTED', date: '2026-08-20', narration: 'Bank receipt from Faisal Traders — partial settlement', createdBy: 'admin', createdAt: new Date('2026-08-20'), updatedAt: new Date('2026-08-20') },
+  { id: 'vch-10', tenantId: T, voucherNumber: 10, voucherType: 'CR', status: 'POSTED', date: d(18), narration: 'Cash received from Al-Noor Super Store — partial payment', createdBy: 'admin', createdAt: new Date(d(18)), updatedAt: new Date(d(18)) },
+  { id: 'vch-11', tenantId: T, voucherNumber: 11, voucherType: 'CRV', status: 'POSTED', date: d(20), narration: 'Bank receipt from Faisal Traders — partial settlement', createdBy: 'admin', createdAt: new Date(d(20)), updatedAt: new Date(d(20)) },
   // 1 Cash Payment
-  { id: 'vch-12', tenantId: T, voucherNumber: 12, voucherType: 'CP', status: 'POSTED', date: '2026-08-07', narration: 'Cash payment for office supplies', createdBy: 'admin', createdAt: new Date('2026-08-07'), updatedAt: new Date('2026-08-07') },
+  { id: 'vch-12', tenantId: T, voucherNumber: 12, voucherType: 'CP', status: 'POSTED', date: d(7), narration: 'Cash payment for office supplies', createdBy: 'admin', createdAt: new Date(d(7)), updatedAt: new Date(d(7)) },
   // 1 Bank Payment Voucher
-  { id: 'vch-13', tenantId: T, voucherNumber: 13, voucherType: 'BPV', status: 'POSTED', date: '2026-08-22', narration: 'Monthly salaries via bank transfer', createdBy: 'admin', createdAt: new Date('2026-08-22'), updatedAt: new Date('2026-08-22') },
+  { id: 'vch-13', tenantId: T, voucherNumber: 13, voucherType: 'BPV', status: 'POSTED', date: d(22), narration: 'Monthly salaries via bank transfer', createdBy: 'admin', createdAt: new Date(d(22)), updatedAt: new Date(d(22)) },
   // 1 Rent JV
-  { id: 'vch-14', tenantId: T, voucherNumber: 14, voucherType: 'JV', status: 'POSTED', date: '2026-08-01', narration: 'Office rent allocation for August', createdBy: 'admin', createdAt: new Date('2026-08-01'), updatedAt: new Date('2026-08-01') },
+  { id: 'vch-14', tenantId: T, voucherNumber: 14, voucherType: 'JV', status: 'POSTED', date: d(1), narration: 'Office rent allocation for current month', createdBy: 'admin', createdAt: new Date(d(1)), updatedAt: new Date(d(1)) },
   // 2 Draft JVs
-  { id: 'vch-15', tenantId: T, voucherNumber: 15, voucherType: 'JV', status: 'DRAFT', date: '2026-08-24', narration: 'Adjustment entry — pending approval', createdBy: 'admin', createdAt: new Date('2026-08-24'), updatedAt: new Date('2026-08-24') },
-  { id: 'vch-16', tenantId: T, voucherNumber: 16, voucherType: 'JV', status: 'DRAFT', date: '2026-08-25', narration: 'Depreciation entry — pending approval', createdBy: 'admin', createdAt: new Date('2026-08-25'), updatedAt: new Date('2026-08-25') },
+  { id: 'vch-15', tenantId: T, voucherNumber: 15, voucherType: 'JV', status: 'DRAFT', date: d(24), narration: 'Adjustment entry — pending approval', createdBy: 'admin', createdAt: new Date(d(24)), updatedAt: new Date(d(24)) },
+  { id: 'vch-16', tenantId: T, voucherNumber: 16, voucherType: 'JV', status: 'DRAFT', date: d(25), narration: 'Depreciation entry — pending approval', createdBy: 'admin', createdAt: new Date(d(25)), updatedAt: new Date(d(25)) },
   // 1 Purchase Payment Voucher (settling PO #2002)
-  { id: 'vch-17', tenantId: T, voucherNumber: 17, voucherType: 'PV', status: 'POSTED', date: '2026-08-22', narration: 'Bank payment to Punjab Distributors — PO #2002 settled', createdBy: 'admin', createdAt: new Date('2026-08-22'), updatedAt: new Date('2026-08-22') },
+  { id: 'vch-17', tenantId: T, voucherNumber: 17, voucherType: 'PV', status: 'POSTED', date: d(22), narration: 'Bank payment to Punjab Distributors — PO #2002 settled', createdBy: 'admin', createdAt: new Date(d(22)), updatedAt: new Date(d(22)) },
 ];
 
 /* ─── Ledger Entries (40 entries matching vouchers) ───────── */
 
 const DEMO_LEDGER = [
   // Opening Balance JV (vch-01)
-  { id: 'led-01', tenantId: T, voucherId: 'vch-01', voucherLineId: 'vl-01', accountId: '11102', debit: 500000, credit: 0, entryDate: '2026-08-01', voucherType: 'JV', voucherNumber: 1, narration: 'Bank opening balance' },
-  { id: 'led-02', tenantId: T, voucherId: 'vch-01', voucherLineId: 'vl-02', accountId: '31101', debit: 0, credit: 500000, entryDate: '2026-08-01', voucherType: 'JV', voucherNumber: 1, narration: 'Owner equity / capital' },
+  { id: 'led-01', tenantId: T, voucherId: 'vch-01', voucherLineId: 'vl-01', accountId: '11102', debit: 500000, credit: 0, entryDate: d(1), voucherType: 'JV', voucherNumber: 1, narration: 'Bank opening balance' },
+  { id: 'led-02', tenantId: T, voucherId: 'vch-01', voucherLineId: 'vl-02', accountId: '31101', debit: 0, credit: 500000, entryDate: d(1), voucherType: 'JV', voucherNumber: 1, narration: 'Owner equity / capital' },
   // SV #1001 — Al-Noor (vch-02)
-  { id: 'led-03', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-03', accountId: '11201', debit: 185000, credit: 0, entryDate: '2026-08-02', voucherType: 'SV', voucherNumber: 2, narration: 'Al-Noor Super Store — AR' },
-  { id: 'led-04', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-04', accountId: '41101', debit: 0, credit: 160000, entryDate: '2026-08-02', voucherType: 'SV', voucherNumber: 2, narration: 'Wholesale sales' },
-  { id: 'led-05', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-05', accountId: '11301', debit: 0, credit: 160000, entryDate: '2026-08-02', voucherType: 'SV', voucherNumber: 2, narration: 'Inventory reduction' },
+  { id: 'led-03', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-03', accountId: '11201', debit: 185000, credit: 0, entryDate: d(2), voucherType: 'SV', voucherNumber: 2, narration: 'Al-Noor Super Store — AR' },
+  { id: 'led-04', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-04', accountId: '41101', debit: 0, credit: 160000, entryDate: d(2), voucherType: 'SV', voucherNumber: 2, narration: 'Wholesale sales' },
+  { id: 'led-05', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-05', accountId: '11301', debit: 0, credit: 160000, entryDate: d(2), voucherType: 'SV', voucherNumber: 2, narration: 'Inventory reduction' },
   // SV #1002 — City Mart (vch-03)
-  { id: 'led-06', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-06', accountId: '11202', debit: 92500, credit: 0, entryDate: '2026-08-05', voucherType: 'SV', voucherNumber: 3, narration: 'City Mart — AR' },
-  { id: 'led-07', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-07', accountId: '41101', debit: 0, credit: 80000, entryDate: '2026-08-05', voucherType: 'SV', voucherNumber: 3, narration: 'Wholesale sales' },
-  { id: 'led-08', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-08', accountId: '11301', debit: 0, credit: 80000, entryDate: '2026-08-05', voucherType: 'SV', voucherNumber: 3, narration: 'Inventory reduction' },
+  { id: 'led-06', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-06', accountId: '11202', debit: 92500, credit: 0, entryDate: d(5), voucherType: 'SV', voucherNumber: 3, narration: 'City Mart — AR' },
+  { id: 'led-07', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-07', accountId: '41101', debit: 0, credit: 80000, entryDate: d(5), voucherType: 'SV', voucherNumber: 3, narration: 'Wholesale sales' },
+  { id: 'led-08', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-08', accountId: '11301', debit: 0, credit: 80000, entryDate: d(5), voucherType: 'SV', voucherNumber: 3, narration: 'Inventory reduction' },
   // SV #1003 — Faisal (vch-04)
-  { id: 'led-09', tenantId: T, voucherId: 'vch-04', voucherLineId: 'vl-09', accountId: '11203', debit: 277500, credit: 0, entryDate: '2026-08-10', voucherType: 'SV', voucherNumber: 4, narration: 'Faisal Traders — AR' },
-  { id: 'led-10', tenantId: T, voucherId: 'vch-04', voucherLineId: 'vl-10', accountId: '41101', debit: 0, credit: 240000, entryDate: '2026-08-10', voucherType: 'SV', voucherNumber: 4, narration: 'Wholesale sales' },
-  { id: 'led-11', tenantId: T, voucherId: 'vch-04', voucherLineId: 'vl-11', accountId: '11301', debit: 0, credit: 240000, entryDate: '2026-08-10', voucherType: 'SV', voucherNumber: 4, narration: 'Inventory reduction' },
+  { id: 'led-09', tenantId: T, voucherId: 'vch-04', voucherLineId: 'vl-09', accountId: '11203', debit: 277500, credit: 0, entryDate: d(10), voucherType: 'SV', voucherNumber: 4, narration: 'Faisal Traders — AR' },
+  { id: 'led-10', tenantId: T, voucherId: 'vch-04', voucherLineId: 'vl-10', accountId: '41101', debit: 0, credit: 240000, entryDate: d(10), voucherType: 'SV', voucherNumber: 4, narration: 'Wholesale sales' },
+  { id: 'led-11', tenantId: T, voucherId: 'vch-04', voucherLineId: 'vl-11', accountId: '11301', debit: 0, credit: 240000, entryDate: d(10), voucherType: 'SV', voucherNumber: 4, narration: 'Inventory reduction' },
   // SV #1004 — Madina (vch-05)
-  { id: 'led-12', tenantId: T, voucherId: 'vch-05', voucherLineId: 'vl-12', accountId: '11204', debit: 138000, credit: 0, entryDate: '2026-08-15', voucherType: 'SV', voucherNumber: 5, narration: 'Madina Cash & Carry — AR' },
-  { id: 'led-13', tenantId: T, voucherId: 'vch-05', voucherLineId: 'vl-13', accountId: '41101', debit: 0, credit: 120000, entryDate: '2026-08-15', voucherType: 'SV', voucherNumber: 5, narration: 'Wholesale sales' },
-  { id: 'led-14', tenantId: T, voucherId: 'vch-05', voucherLineId: 'vl-14', accountId: '11301', debit: 0, credit: 120000, entryDate: '2026-08-15', voucherType: 'SV', voucherNumber: 5, narration: 'Inventory reduction' },
+  { id: 'led-12', tenantId: T, voucherId: 'vch-05', voucherLineId: 'vl-12', accountId: '11204', debit: 138000, credit: 0, entryDate: d(15), voucherType: 'SV', voucherNumber: 5, narration: 'Madina Cash & Carry — AR' },
+  { id: 'led-13', tenantId: T, voucherId: 'vch-05', voucherLineId: 'vl-13', accountId: '41101', debit: 0, credit: 120000, entryDate: d(15), voucherType: 'SV', voucherNumber: 5, narration: 'Wholesale sales' },
+  { id: 'led-14', tenantId: T, voucherId: 'vch-05', voucherLineId: 'vl-14', accountId: '11301', debit: 0, credit: 120000, entryDate: d(15), voucherType: 'SV', voucherNumber: 5, narration: 'Inventory reduction' },
   // SRV — City Mart return (vch-06)
-  { id: 'led-15', tenantId: T, voucherId: 'vch-06', voucherLineId: 'vl-15', accountId: '41104', debit: 16000, credit: 0, entryDate: '2026-08-12', voucherType: 'SRV', voucherNumber: 6, narration: 'Sales returns' },
-  { id: 'led-16', tenantId: T, voucherId: 'vch-06', voucherLineId: 'vl-16', accountId: '11202', debit: 0, credit: 18720, entryDate: '2026-08-12', voucherType: 'SRV', voucherNumber: 6, narration: 'City Mart — AR reduction' },
-  { id: 'led-17', tenantId: T, voucherId: 'vch-06', voucherLineId: 'vl-17', accountId: '11301', debit: 16000, credit: 0, entryDate: '2026-08-12', voucherType: 'SRV', voucherNumber: 6, narration: 'Inventory restored' },
+  { id: 'led-15', tenantId: T, voucherId: 'vch-06', voucherLineId: 'vl-15', accountId: '41104', debit: 16000, credit: 0, entryDate: d(12), voucherType: 'SRV', voucherNumber: 6, narration: 'Sales returns' },
+  { id: 'led-16', tenantId: T, voucherId: 'vch-06', voucherLineId: 'vl-16', accountId: '11202', debit: 0, credit: 18720, entryDate: d(12), voucherType: 'SRV', voucherNumber: 6, narration: 'City Mart — AR reduction' },
+  { id: 'led-17', tenantId: T, voucherId: 'vch-06', voucherLineId: 'vl-17', accountId: '11301', debit: 16000, credit: 0, entryDate: d(12), voucherType: 'SRV', voucherNumber: 6, narration: 'Inventory restored' },
   // PV #2001 — ABC Foods (vch-07)
-  { id: 'led-18', tenantId: T, voucherId: 'vch-07', voucherLineId: 'vl-18', accountId: '51101', debit: 320000, credit: 0, entryDate: '2026-08-03', voucherType: 'PV', voucherNumber: 7, narration: 'Purchase cost' },
-  { id: 'led-19', tenantId: T, voucherId: 'vch-07', voucherLineId: 'vl-19', accountId: '21101', debit: 0, credit: 320000, entryDate: '2026-08-03', voucherType: 'PV', voucherNumber: 7, narration: 'ABC Foods Supplier — AP' },
-  { id: 'led-20', tenantId: T, voucherId: 'vch-07', voucherLineId: 'vl-20', accountId: '11301', debit: 320000, credit: 0, entryDate: '2026-08-03', voucherType: 'PV', voucherNumber: 7, narration: 'Inventory received' },
+  { id: 'led-18', tenantId: T, voucherId: 'vch-07', voucherLineId: 'vl-18', accountId: '51101', debit: 320000, credit: 0, entryDate: d(3), voucherType: 'PV', voucherNumber: 7, narration: 'Purchase cost' },
+  { id: 'led-19', tenantId: T, voucherId: 'vch-07', voucherLineId: 'vl-19', accountId: '21101', debit: 0, credit: 320000, entryDate: d(3), voucherType: 'PV', voucherNumber: 7, narration: 'ABC Foods Supplier — AP' },
+  { id: 'led-20', tenantId: T, voucherId: 'vch-07', voucherLineId: 'vl-20', accountId: '11301', debit: 320000, credit: 0, entryDate: d(3), voucherType: 'PV', voucherNumber: 7, narration: 'Inventory received' },
   // PV #2002 — Punjab Dist (vch-08)
-  { id: 'led-21', tenantId: T, voucherId: 'vch-08', voucherLineId: 'vl-21', accountId: '51101', debit: 180000, credit: 0, entryDate: '2026-08-08', voucherType: 'PV', voucherNumber: 8, narration: 'Purchase cost' },
-  { id: 'led-22', tenantId: T, voucherId: 'vch-08', voucherLineId: 'vl-22', accountId: '21102', debit: 0, credit: 180000, entryDate: '2026-08-08', voucherType: 'PV', voucherNumber: 8, narration: 'Punjab Distributors — AP' },
-  { id: 'led-23', tenantId: T, voucherId: 'vch-08', voucherLineId: 'vl-23', accountId: '11301', debit: 180000, credit: 0, entryDate: '2026-08-08', voucherType: 'PV', voucherNumber: 8, narration: 'Inventory received' },
+  { id: 'led-21', tenantId: T, voucherId: 'vch-08', voucherLineId: 'vl-21', accountId: '51101', debit: 180000, credit: 0, entryDate: d(8), voucherType: 'PV', voucherNumber: 8, narration: 'Purchase cost' },
+  { id: 'led-22', tenantId: T, voucherId: 'vch-08', voucherLineId: 'vl-22', accountId: '21102', debit: 0, credit: 180000, entryDate: d(8), voucherType: 'PV', voucherNumber: 8, narration: 'Punjab Distributors — AP' },
+  { id: 'led-23', tenantId: T, voucherId: 'vch-08', voucherLineId: 'vl-23', accountId: '11301', debit: 180000, credit: 0, entryDate: d(8), voucherType: 'PV', voucherNumber: 8, narration: 'Inventory received' },
   // PRV — ABC Foods return (vch-09)
-  { id: 'led-24', tenantId: T, voucherId: 'vch-09', voucherLineId: 'vl-24', accountId: '21101', debit: 74880, credit: 0, entryDate: '2026-08-14', voucherType: 'PRV', voucherNumber: 9, narration: 'ABC Foods Supplier — AP reduction' },
-  { id: 'led-25', tenantId: T, voucherId: 'vch-09', voucherLineId: 'vl-25', accountId: '51104', debit: 0, credit: 64000, entryDate: '2026-08-14', voucherType: 'PRV', voucherNumber: 9, narration: 'Purchase returns' },
-  { id: 'led-26', tenantId: T, voucherId: 'vch-09', voucherLineId: 'vl-26', accountId: '11301', debit: 0, credit: 64000, entryDate: '2026-08-14', voucherType: 'PRV', voucherNumber: 9, narration: 'Inventory reduced' },
+  { id: 'led-24', tenantId: T, voucherId: 'vch-09', voucherLineId: 'vl-24', accountId: '21101', debit: 74880, credit: 0, entryDate: d(14), voucherType: 'PRV', voucherNumber: 9, narration: 'ABC Foods Supplier — AP reduction' },
+  { id: 'led-25', tenantId: T, voucherId: 'vch-09', voucherLineId: 'vl-25', accountId: '51104', debit: 0, credit: 64000, entryDate: d(14), voucherType: 'PRV', voucherNumber: 9, narration: 'Purchase returns' },
+  { id: 'led-26', tenantId: T, voucherId: 'vch-09', voucherLineId: 'vl-26', accountId: '11301', debit: 0, credit: 64000, entryDate: d(14), voucherType: 'PRV', voucherNumber: 9, narration: 'Inventory reduced' },
   // CR — Al-Noor payment (vch-10)
-  { id: 'led-27', tenantId: T, voucherId: 'vch-10', voucherLineId: 'vl-27', accountId: '11101', debit: 100000, credit: 0, entryDate: '2026-08-18', voucherType: 'CR', voucherNumber: 10, narration: 'Cash received' },
-  { id: 'led-28', tenantId: T, voucherId: 'vch-10', voucherLineId: 'vl-28', accountId: '11201', debit: 0, credit: 100000, entryDate: '2026-08-18', voucherType: 'CR', voucherNumber: 10, narration: 'Al-Noor Super Store — AR' },
+  { id: 'led-27', tenantId: T, voucherId: 'vch-10', voucherLineId: 'vl-27', accountId: '11101', debit: 100000, credit: 0, entryDate: d(18), voucherType: 'CR', voucherNumber: 10, narration: 'Cash received' },
+  { id: 'led-28', tenantId: T, voucherId: 'vch-10', voucherLineId: 'vl-28', accountId: '11201', debit: 0, credit: 100000, entryDate: d(18), voucherType: 'CR', voucherNumber: 10, narration: 'Al-Noor Super Store — AR' },
   // CRV — Faisal bank receipt (vch-11)
-  { id: 'led-29', tenantId: T, voucherId: 'vch-11', voucherLineId: 'vl-29', accountId: '11102', debit: 80000, credit: 0, entryDate: '2026-08-20', voucherType: 'CRV', voucherNumber: 11, narration: 'Bank transfer received' },
-  { id: 'led-30', tenantId: T, voucherId: 'vch-11', voucherLineId: 'vl-30', accountId: '11203', debit: 0, credit: 80000, entryDate: '2026-08-20', voucherType: 'CRV', voucherNumber: 11, narration: 'Faisal Traders — AR' },
+  { id: 'led-29', tenantId: T, voucherId: 'vch-11', voucherLineId: 'vl-29', accountId: '11102', debit: 80000, credit: 0, entryDate: d(20), voucherType: 'CRV', voucherNumber: 11, narration: 'Bank transfer received' },
+  { id: 'led-30', tenantId: T, voucherId: 'vch-11', voucherLineId: 'vl-30', accountId: '11203', debit: 0, credit: 80000, entryDate: d(20), voucherType: 'CRV', voucherNumber: 11, narration: 'Faisal Traders — AR' },
   // CP — Office supplies (vch-12)
-  { id: 'led-31', tenantId: T, voucherId: 'vch-12', voucherLineId: 'vl-31', accountId: '61102', debit: 15000, credit: 0, entryDate: '2026-08-07', voucherType: 'CP', voucherNumber: 12, narration: 'Office supplies expense' },
-  { id: 'led-32', tenantId: T, voucherId: 'vch-12', voucherLineId: 'vl-32', accountId: '11101', debit: 0, credit: 15000, entryDate: '2026-08-07', voucherType: 'CP', voucherNumber: 12, narration: 'Cash paid' },
+  { id: 'led-31', tenantId: T, voucherId: 'vch-12', voucherLineId: 'vl-31', accountId: '61102', debit: 15000, credit: 0, entryDate: d(7), voucherType: 'CP', voucherNumber: 12, narration: 'Office supplies expense' },
+  { id: 'led-32', tenantId: T, voucherId: 'vch-12', voucherLineId: 'vl-32', accountId: '11101', debit: 0, credit: 15000, entryDate: d(7), voucherType: 'CP', voucherNumber: 12, narration: 'Cash paid' },
   // BPV — Salaries (vch-13)
-  { id: 'led-33', tenantId: T, voucherId: 'vch-13', voucherLineId: 'vl-33', accountId: '61103', debit: 180000, credit: 0, entryDate: '2026-08-22', voucherType: 'BPV', voucherNumber: 13, narration: 'Office salaries August' },
-  { id: 'led-34', tenantId: T, voucherId: 'vch-13', voucherLineId: 'vl-34', accountId: '11102', debit: 0, credit: 180000, entryDate: '2026-08-22', voucherType: 'BPV', voucherNumber: 13, narration: 'Bank transfer paid' },
+  { id: 'led-33', tenantId: T, voucherId: 'vch-13', voucherLineId: 'vl-33', accountId: '61103', debit: 180000, credit: 0, entryDate: d(22), voucherType: 'BPV', voucherNumber: 13, narration: 'Office salaries current month' },
+  { id: 'led-34', tenantId: T, voucherId: 'vch-13', voucherLineId: 'vl-34', accountId: '11102', debit: 0, credit: 180000, entryDate: d(22), voucherType: 'BPV', voucherNumber: 13, narration: 'Bank transfer paid' },
   // JV — Rent (vch-14)
-  { id: 'led-35', tenantId: T, voucherId: 'vch-14', voucherLineId: 'vl-35', accountId: '61101', debit: 50000, credit: 0, entryDate: '2026-08-01', voucherType: 'JV', voucherNumber: 14, narration: 'August office rent' },
-  { id: 'led-36', tenantId: T, voucherId: 'vch-14', voucherLineId: 'vl-36', accountId: '11101', debit: 0, credit: 50000, entryDate: '2026-08-01', voucherType: 'JV', voucherNumber: 14, narration: 'Cash paid for rent' },
+  { id: 'led-35', tenantId: T, voucherId: 'vch-14', voucherLineId: 'vl-35', accountId: '61101', debit: 50000, credit: 0, entryDate: d(1), voucherType: 'JV', voucherNumber: 14, narration: 'Office rent current month' },
+  { id: 'led-36', tenantId: T, voucherId: 'vch-14', voucherLineId: 'vl-36', accountId: '11101', debit: 0, credit: 50000, entryDate: d(1), voucherType: 'JV', voucherNumber: 14, narration: 'Cash paid for rent' },
   // Draft JV #15 (no ledger entries — not posted)
   // Draft JV #16 (no ledger entries — not posted)
   // PV — Punjab Distributors payment (vch-17)
-  { id: 'led-37', tenantId: T, voucherId: 'vch-17', voucherLineId: 'vl-37', accountId: '21102', debit: 110600, credit: 0, entryDate: '2026-08-22', voucherType: 'PV', voucherNumber: 17, narration: 'Punjab Distributors — AP' },
-  { id: 'led-38', tenantId: T, voucherId: 'vch-17', voucherLineId: 'vl-38', accountId: '11102', debit: 0, credit: 110600, entryDate: '2026-08-22', voucherType: 'PV', voucherNumber: 17, narration: 'Bank transfer paid' },
+  { id: 'led-37', tenantId: T, voucherId: 'vch-17', voucherLineId: 'vl-37', accountId: '21102', debit: 110600, credit: 0, entryDate: d(22), voucherType: 'PV', voucherNumber: 17, narration: 'Punjab Distributors — AP' },
+  { id: 'led-38', tenantId: T, voucherId: 'vch-17', voucherLineId: 'vl-38', accountId: '11102', debit: 0, credit: 110600, entryDate: d(22), voucherType: 'PV', voucherNumber: 17, narration: 'Bank transfer paid' },
   // Additional ledger entries to reach 40
-  { id: 'led-39', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-39', accountId: '11301', debit: 185000, credit: 0, entryDate: '2026-08-02', voucherType: 'SV', voucherNumber: 2, narration: 'Cost of goods sold — Al-Noor' },
-  { id: 'led-40', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-40', accountId: '11301', debit: 92500, credit: 0, entryDate: '2026-08-05', voucherType: 'SV', voucherNumber: 3, narration: 'Cost of goods sold — City Mart' },
+  { id: 'led-39', tenantId: T, voucherId: 'vch-02', voucherLineId: 'vl-39', accountId: '11301', debit: 185000, credit: 0, entryDate: d(2), voucherType: 'SV', voucherNumber: 2, narration: 'Cost of goods sold — Al-Noor' },
+  { id: 'led-40', tenantId: T, voucherId: 'vch-03', voucherLineId: 'vl-40', accountId: '11301', debit: 92500, credit: 0, entryDate: d(5), voucherType: 'SV', voucherNumber: 3, narration: 'Cost of goods sold — City Mart' },
 ];
 
 /* ─── Stock Levels (20 products × 2 warehouses = 40) ─────── */
@@ -646,6 +650,46 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
           tenantId: targetTenantId,
         },
       };
+    }
+
+    // Cash Book: create voucher + ledger entries in-memory
+    if (cleanPath === '/api/cash-book' && method === 'POST' && body) {
+      const { type, cashAccountId, counterAccountId, amount, date, narration } = body;
+      const cashAcct = DEMO_ACCOUNTS.find(a => a.id === cashAccountId);
+      const counterAcct = DEMO_ACCOUNTS.find(a => a.id === counterAccountId);
+      if (!cashAcct || !counterAcct || !amount || !date) {
+        return { error: 'Invalid cash book entry data' };
+      }
+
+      const vId = `vch-demo-${Date.now()}`;
+      const vlDebitId = `vl-demo-d-${Date.now()}`;
+      const vlCreditId = `vl-demo-c-${Date.now()}`;
+      const leDebitId = `led-demo-d-${Date.now()}`;
+      const leCreditId = `led-demo-c-${Date.now()}`;
+      const vNum = DEMO_VOUCHERS.length + 1;
+      const vt = type === 'CR' ? 'CR' : 'CP';
+
+      const voucher = {
+        id: vId, tenantId: T, voucherNumber: vNum, voucherType: vt,
+        status: 'DRAFT', date, narration: narration || `${vt} entry`,
+        createdBy: 'admin', createdAt: new Date(), updatedAt: new Date(),
+      };
+      DEMO_VOUCHERS.push(voucher);
+
+      // CR: DEBIT cash, CREDIT counter | CP: DEBIT counter, CREDIT cash
+      if (vt === 'CR') {
+        DEMO_LEDGER.push(
+          { id: leDebitId, tenantId: T, voucherId: vId, voucherLineId: vlDebitId, accountId: cashAcct.accountCode, debit: amount, credit: 0, entryDate: date, voucherType: vt, voucherNumber: vNum, narration: narration || 'Cash received' },
+          { id: leCreditId, tenantId: T, voucherId: vId, voucherLineId: vlCreditId, accountId: counterAcct.accountCode, debit: 0, credit: amount, entryDate: date, voucherType: vt, voucherNumber: vNum, narration: narration || 'Cash received' },
+        );
+      } else {
+        DEMO_LEDGER.push(
+          { id: leDebitId, tenantId: T, voucherId: vId, voucherLineId: vlDebitId, accountId: counterAcct.accountCode, debit: amount, credit: 0, entryDate: date, voucherType: vt, voucherNumber: vNum, narration: narration || 'Cash paid' },
+          { id: leCreditId, tenantId: T, voucherId: vId, voucherLineId: vlCreditId, accountId: cashAcct.accountCode, debit: 0, credit: amount, entryDate: date, voucherType: vt, voucherNumber: vNum, narration: narration || 'Cash paid' },
+        );
+      }
+
+      return { success: true, id: vId };
     }
 
     return { success: true, id: 'demo-1' };

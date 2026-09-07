@@ -142,8 +142,8 @@ describe('Step 46C-4 Cash Book 404 Remediation', () => {
     it('TEST 1: POST /api/cash-book returns demo success', () => {
       const result = handleDemoRequest('/api/cash-book', 'POST', {
         type: 'CR',
-        cashAccountId: 'acc-11101',
-        counterAccountId: 'acc-41101',
+        cashAccountId: 'coa-11101',
+        counterAccountId: 'coa-41101',
         amount: 5000,
         date: '2026-08-15',
         narration: 'Test receipt',
@@ -155,8 +155,8 @@ describe('Step 46C-4 Cash Book 404 Remediation', () => {
     it('TEST 2: POST /api/cash-book with type CP returns demo success', () => {
       const result = handleDemoRequest('/api/cash-book', 'POST', {
         type: 'CP',
-        cashAccountId: 'acc-11101',
-        counterAccountId: 'acc-51101',
+        cashAccountId: 'coa-11101',
+        counterAccountId: 'coa-51101',
         amount: 3000,
         date: '2026-08-15',
         narration: 'Test payment',
