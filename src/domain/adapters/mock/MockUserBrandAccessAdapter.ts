@@ -9,6 +9,8 @@
 import { UserBrandAccess, CreateUserBrandAccessPayload, UpdateUserBrandAccessPayload } from '../../types/user-brand-access';
 import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository';
 
+const VALID_ROLES = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
+
 /* ─── Helpers ──────────────────────────────────────────────── */
 
 let nextId = 9000;
@@ -128,6 +130,10 @@ export class MockUserBrandAccessAdapter implements IUserBrandAccessRepository {
   }
 
   async create(payload: CreateUserBrandAccessPayload): Promise<UserBrandAccess> {
+    if (!VALID_ROLES.includes(payload.role)) {
+      throw new Error(`Invalid role: ${payload.role}. Valid roles: ${VALID_ROLES.join(', ')}`);
+    }
+
     // Check for duplicate
     const existing = accessStore.find(a => a.userId === payload.userId && a.tenantId === payload.tenantId);
     if (existing) {
@@ -149,6 +155,10 @@ export class MockUserBrandAccessAdapter implements IUserBrandAccessRepository {
   }
 
   async update(id: string, payload: UpdateUserBrandAccessPayload): Promise<UserBrandAccess> {
+    if (payload.role !== undefined && !VALID_ROLES.includes(payload.role)) {
+      throw new Error(`Invalid role: ${payload.role}. Valid roles: ${VALID_ROLES.join(', ')}`);
+    }
+
     const idx = accessStore.findIndex(a => a.id === id);
     if (idx === -1) throw new Error(`Access record not found: ${id}`);
 

@@ -10,18 +10,23 @@
  * - Shows loading state during validation
  * - Redirects to / if no session or invalid session
  * - Resolves user and tenant context for children from server
+ * - Supports brand switching via refreshAuth()
+ * - Tracks authorized brands for the brand switcher
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { UserSession, User } from '../../../domain/types/auth';
-import { Tenant } from '../../../domain/types/tenant';
+import { Tenant, TenantPublicConfig } from '../../../domain/types/tenant';
 import { apiGetMe, clearLocalSession } from '../../lib/session';
+import { getAuthorizedTenants } from '../../lib/api';
 
 interface AuthContext {
   session: UserSession;
   user: User;
   tenant: Tenant;
+  authorizedBrands: TenantPublicConfig[];
+  refreshAuth: () => Promise<void>;
 }
 
 export const AuthContext = React.createContext<AuthContext | null>(null);
@@ -31,46 +36,83 @@ export const ProtectedRoute: React.FC = () => {
   const [authContext, setAuthContext] = useState<AuthContext | null>(null);
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
-  useEffect(() => {
-    const validateAndLoad = async () => {
-      try {
-        // Validate session via server API (reads HTTP-only cookie)
-        const result = await apiGetMe();
-
-        if (!result || !result.user || !result.tenant) {
-          clearLocalSession();
-          setShouldRedirect(true);
-          setLoading(false);
-          return;
-        }
-
-        // Create a minimal session object from the server response
-        const session: UserSession = {
-          sessionId: 'cookie-based',
-          userId: result.user.id,
-          tenantId: result.user.tenantId,
-          createdAt: new Date(),
-          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-        };
-
-        setAuthContext({
-          session,
-          user: result.user as User,
-          tenant: result.tenant as Tenant,
-        });
-      } catch (err) {
-        console.error('Session validation error:', err);
+  const loadAuth = useCallback(async () => {
+    try {
+      const result = await apiGetMe();
+      if (!result || !result.user || !result.tenant) {
         clearLocalSession();
         setShouldRedirect(true);
-      } finally {
         setLoading(false);
+        return;
       }
-    };
 
-    validateAndLoad();
+      const session: UserSession = {
+        sessionId: 'cookie-based',
+        userId: result.user.id,
+        tenantId: result.user.tenantId,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+      };
+
+      let brands: TenantPublicConfig[] = [];
+      try {
+        brands = await getAuthorizedTenants();
+      } catch {
+        brands = [{ id: result.tenant.id, slug: result.tenant.slug, brandName: result.tenant.brandName, logoUrl: result.tenant.logoUrl, primaryColor: result.tenant.primaryColor }];
+      }
+
+      const refreshAuth = async () => {
+        try {
+          const refreshed = await apiGetMe();
+          if (!refreshed || !refreshed.user || !refreshed.tenant) {
+            clearLocalSession();
+            setShouldRedirect(true);
+            return;
+          }
+          const newSession: UserSession = {
+            sessionId: 'cookie-based',
+            userId: refreshed.user.id,
+            tenantId: refreshed.user.tenantId,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+          };
+          let newBrands: TenantPublicConfig[] = [];
+          try {
+            newBrands = await getAuthorizedTenants();
+          } catch {
+            newBrands = [{ id: refreshed.tenant.id, slug: refreshed.tenant.slug, brandName: refreshed.tenant.brandName, logoUrl: refreshed.tenant.logoUrl, primaryColor: refreshed.tenant.primaryColor }];
+          }
+          setAuthContext({
+            session: newSession,
+            user: refreshed.user as User,
+            tenant: refreshed.tenant as Tenant,
+            authorizedBrands: newBrands,
+            refreshAuth: async () => { await loadAuth(); },
+          });
+        } catch {
+          clearLocalSession();
+          setShouldRedirect(true);
+        }
+      };
+
+      setAuthContext({
+        session,
+        user: result.user as User,
+        tenant: result.tenant as Tenant,
+        authorizedBrands: brands,
+        refreshAuth,
+      });
+    } catch (err) {
+      console.error('Session validation error:', err);
+      clearLocalSession();
+      setShouldRedirect(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Loading state
+  useEffect(() => { loadAuth(); }, [loadAuth]);
+
   if (loading) {
     return (
       <div style={styles.loadingContainer}>
@@ -82,12 +124,10 @@ export const ProtectedRoute: React.FC = () => {
     );
   }
 
-  // Redirect if no valid session
   if (shouldRedirect || !authContext) {
     return <Navigate to="/" replace />;
   }
 
-  // Render children with auth context
   return (
     <AuthContext.Provider value={authContext}>
       <Outlet />
@@ -95,9 +135,6 @@ export const ProtectedRoute: React.FC = () => {
   );
 };
 
-/**
- * Hook to access auth context in child components.
- */
 export function useAuth(): AuthContext {
   const context = React.useContext(AuthContext);
   if (!context) {

@@ -595,3 +595,35 @@ export async function switchTenant(tenantId: string) {
 export async function getAuthorizedTenants() {
   return apiRequest<any[]>('/auth/tenants');
 }
+
+// ─── User Brand Access Management API ─────────────────────────
+
+export async function getUserBrandAccess(userId: string) {
+  return apiRequest<any[]>(`/user-brand-access?userId=${encodeURIComponent(userId)}`);
+}
+
+export async function getAllUserBrandAccess() {
+  return apiRequest<any[]>('/user-brand-access');
+}
+
+export async function createUserBrandAccess(data: { userId: string; tenantId: string; role: string; isActive?: boolean }) {
+  return apiRequest<any>('/user-brand-access', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateUserBrandAccess(id: string, data: { role?: string; isActive?: boolean }) {
+  return apiRequest<any>(`/user-brand-access/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deactivateUserBrandAccess(id: string) {
+  return apiRequest<any>(`/user-brand-access/${id}`, { method: 'DELETE' });
+}
+
+export async function activateUserBrandAccess(id: string) {
+  return apiRequest<any>(`/user-brand-access/${id}/activate`, { method: 'POST' });
+}

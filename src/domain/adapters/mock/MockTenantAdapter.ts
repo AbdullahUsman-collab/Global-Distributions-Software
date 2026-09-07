@@ -67,6 +67,13 @@ export function resetTenantStore(): void {
 }
 
 /**
+ * Get direct access to store for test setup (bypasses adapter).
+ */
+export function getTenantStore(): Tenant[] {
+  return tenants;
+}
+
+/**
  * Mock implementation of ITenantRepository.
  * DEVELOPMENT ONLY - Do not use in production.
  */

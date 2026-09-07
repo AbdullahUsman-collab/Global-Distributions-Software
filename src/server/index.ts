@@ -181,26 +181,27 @@ app.use('/api', createTenantRoutes(tenantAdapter));
 // Protected routes (auth + RBAC required)
 app.use('/api',
   authMiddleware,
-  createProtectedRoutes(
-    salesService,
-    purchaseService,
-    customerReceiptService,
-    cashBookService,
-    saleReturnService,
-    purchaseReturnService,
-    billDetailService,
-    billsListService,
-    partyBalanceService,
-    agingReportService,
-    dashboardService,
-    coaAdapter,
-    voucherAdapter,
-    inventoryAdapter,
-    customerAdapter,
-    supplierAdapter,
-    settingsAdapter,
-    financialReportService,
-  )
+    createProtectedRoutes(
+      salesService,
+      purchaseService,
+      customerReceiptService,
+      cashBookService,
+      saleReturnService,
+      purchaseReturnService,
+      billDetailService,
+      billsListService,
+      partyBalanceService,
+      agingReportService,
+      dashboardService,
+      coaAdapter,
+      voucherAdapter,
+      inventoryAdapter,
+      customerAdapter,
+      supplierAdapter,
+      settingsAdapter,
+      financialReportService,
+      brandAccessAdapter,
+    )
 );
 
 // Health check

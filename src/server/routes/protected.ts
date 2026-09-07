@@ -28,8 +28,12 @@ import { IInventoryRepository } from '../../domain/repositories/IInventoryReposi
 import { ICustomerRepository } from '../../domain/repositories/ICustomerRepository';
 import { ISupplierRepository } from '../../domain/repositories/ISupplierRepository';
 import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository';
+import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
 import { FinancialReportService } from '../../domain/services/FinancialReportService';
+import { SystemRoleName } from '../../domain/types/rbac';
 import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO, validId, validDate, requiredString, positiveNumber, nonEmptyArray, validEnum, combineValidations } from '../lib/validation';
+
+const VALID_ROLES: readonly SystemRoleName[] = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
 
 export function createProtectedRoutes(
   salesService: SalesService,
@@ -50,6 +54,7 @@ export function createProtectedRoutes(
   supplierRepo: ISupplierRepository,
   settingsRepo: ISettingsRepository,
   financialReportService: FinancialReportService,
+  brandAccessRepo?: IUserBrandAccessRepository,
 ): Router {
   const router = Router();
 
@@ -1898,6 +1903,163 @@ export function createProtectedRoutes(
       }
     }
   );
+
+  // ─── User Brand Access Management ───────────────────────────
+
+  if (brandAccessRepo) {
+    /**
+     * GET /api/user-brand-access?userId=xxx
+     * List a user's brand access records.
+     */
+    router.get('/user-brand-access',
+      requirePermissionMiddleware('users.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const userId = req.query.userId as string;
+          if (!userId) {
+            res.status(400).json({ error: 'userId query parameter required' });
+            return;
+          }
+          const access = await brandAccessRepo.getByUserId(userId);
+          res.json(access);
+        } catch (error) {
+          console.error('List user brand access error:', error);
+          res.status(500).json({ error: 'Failed to list brand access' });
+        }
+      }
+    );
+
+    /**
+     * GET /api/users/:id/brand-access
+     * List a user's brand access records (RESTful variant).
+     */
+    router.get('/users/:id/brand-access',
+      requirePermissionMiddleware('users.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const access = await brandAccessRepo.getByUserId(req.params.id);
+          res.json(access);
+        } catch (error) {
+          console.error('List user brand access error:', error);
+          res.status(500).json({ error: 'Failed to list brand access' });
+        }
+      }
+    );
+
+    /**
+     * POST /api/user-brand-access
+     * Create a new user brand access record.
+     */
+    router.post('/user-brand-access',
+      mutationRateLimiter,
+      requirePermissionMiddleware('users.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const { userId, tenantId, role, isActive } = req.body;
+          if (!userId || !tenantId || !role) {
+            res.status(400).json({ error: 'userId, tenantId, and role are required' });
+            return;
+          }
+          if (!VALID_ROLES.includes(role)) {
+            res.status(400).json({ error: `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}` });
+            return;
+          }
+          const existing = await brandAccessRepo.getByUserAndTenant(userId, tenantId);
+          if (existing) {
+            res.status(409).json({ error: 'User already has access to this brand' });
+            return;
+          }
+          const access = await brandAccessRepo.create({ userId, tenantId, role, isActive: isActive !== false });
+          res.status(201).json(access);
+        } catch (error) {
+          console.error('Create user brand access error:', error);
+          res.status(500).json({ error: 'Failed to create brand access' });
+        }
+      }
+    );
+
+    /**
+     * PUT /api/user-brand-access/:id
+     * Update a user brand access record (role, isActive).
+     */
+    router.put('/user-brand-access/:id',
+      mutationRateLimiter,
+      requirePermissionMiddleware('users.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const { role, isActive } = req.body;
+          const updates: { role?: SystemRoleName; isActive?: boolean } = {};
+          if (role !== undefined) {
+            if (!VALID_ROLES.includes(role)) {
+              res.status(400).json({ error: `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}` });
+              return;
+            }
+            updates.role = role;
+          }
+          if (isActive !== undefined) {
+            updates.isActive = !!isActive;
+          }
+          if (Object.keys(updates).length === 0) {
+            res.status(400).json({ error: 'No valid fields to update' });
+            return;
+          }
+          const updated = await brandAccessRepo.update(req.params.id, updates);
+          if (!updated) {
+            res.status(404).json({ error: 'Brand access record not found' });
+            return;
+          }
+          res.json(updated);
+        } catch (error) {
+          console.error('Update user brand access error:', error);
+          res.status(500).json({ error: 'Failed to update brand access' });
+        }
+      }
+    );
+
+    /**
+     * DELETE /api/user-brand-access/:id
+     * Deactivate a user brand access record.
+     */
+    router.delete('/user-brand-access/:id',
+      mutationRateLimiter,
+      requirePermissionMiddleware('users.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const deactivated = await brandAccessRepo.deactivate(req.params.id);
+          if (!deactivated) {
+            res.status(404).json({ error: 'Brand access record not found' });
+            return;
+          }
+          res.json({ success: true });
+        } catch (error) {
+          console.error('Deactivate user brand access error:', error);
+          res.status(500).json({ error: 'Failed to deactivate brand access' });
+        }
+      }
+    );
+
+    /**
+     * POST /api/user-brand-access/:id/activate
+     * Reactivate a user brand access record.
+     */
+    router.post('/user-brand-access/:id/activate',
+      mutationRateLimiter,
+      requirePermissionMiddleware('users.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const activated = await brandAccessRepo.activate(req.params.id);
+          if (!activated) {
+            res.status(404).json({ error: 'Brand access record not found' });
+            return;
+          }
+          res.json({ success: true });
+        } catch (error) {
+          console.error('Activate user brand access error:', error);
+          res.status(500).json({ error: 'Failed to activate brand access' });
+        }
+      }
+    );
+  }
 
   return router;
 }

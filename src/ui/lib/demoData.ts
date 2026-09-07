@@ -62,6 +62,16 @@ export const DEMO_USERS: Record<string, { username: string; password: string; us
   'admin@tenant-apex-trading-003': { username: 'admin', password: 'admin123', userId: 'user-admin-003', displayName: 'Administrator', role: 'ADMIN', tenantId: 'tenant-apex-trading-003' },
 };
 
+let DEMO_BRAND_ACCESS: Array<{ id: string; userId: string; tenantId: string; role: string; isActive: boolean; createdAt: Date; updatedAt: Date }> = [
+  { id: 'uba-001', userId: 'user-admin-001', tenantId: 'tenant-demo-wholesale-001', role: 'ADMIN', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+  { id: 'uba-002', userId: 'user-admin-001', tenantId: 'tenant-demo-distribution-002', role: 'ACCOUNTANT', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+  { id: 'uba-003', userId: 'user-admin-001', tenantId: 'tenant-apex-trading-003', role: 'VIEWER', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+  { id: 'uba-004', userId: 'user-manager-001', tenantId: 'tenant-demo-wholesale-001', role: 'MANAGER', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+  { id: 'uba-005', userId: 'user-clerk-001', tenantId: 'tenant-demo-wholesale-001', role: 'SALES', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+  { id: 'uba-006', userId: 'user-admin-002', tenantId: 'tenant-demo-distribution-002', role: 'ADMIN', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+  { id: 'uba-007', userId: 'user-admin-003', tenantId: 'tenant-apex-trading-003', role: 'ADMIN', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+];
+
 /* ─── Warehouses ──────────────────────────────────────────── */
 
 const DEMO_WAREHOUSES = [
@@ -491,6 +501,18 @@ function parseQuery(url: string): [string, URLSearchParams] {
   return [url.slice(0, qIdx), new URLSearchParams(url.slice(qIdx + 1))];
 }
 
+function getCurrentDemoUser(): { userId: string; username: string; displayName: string; tenantId: string } | null {
+  if (typeof localStorage === 'undefined') return null;
+  const stored = localStorage.getItem('erp_current_user');
+  if (!stored) return null;
+  try {
+    const parsed = JSON.parse(stored);
+    return { userId: parsed.id, username: parsed.username, displayName: parsed.displayName, tenantId: parsed.tenantId };
+  } catch {
+    return null;
+  }
+}
+
 /* ─── Main Handler ────────────────────────────────────────── */
 
 export function handleDemoRequest(path: string, method: string, body?: any): any {
@@ -624,32 +646,102 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
       return DEMO_AGING_SUPPLIER.rows.map(r => ({ partyId: r.partyId, partyName: r.partyName, balance: r.totalOutstanding }));
     }
 
-    // Authorized tenants (demo: returns all active tenants)
+    // Authorized tenants (demo: returns tenants the current user has active brand access to)
     if (cleanPath === '/api/auth/tenants') {
-      return DEMO_TENANTS;
+      const currentUser = getCurrentDemoUser();
+      if (!currentUser) return DEMO_TENANTS;
+      const userAccess = DEMO_BRAND_ACCESS.filter(a => a.userId === currentUser.userId && a.isActive);
+      return DEMO_TENANTS.filter(t => t.isActive && userAccess.some(a => a.tenantId === t.id));
+    }
+
+    // User brand access
+    const userBrandAccess = matchPath('/api/users/:id/brand-access', cleanPath);
+    if (userBrandAccess && method === 'GET') {
+      return DEMO_BRAND_ACCESS.filter(a => a.userId === userBrandAccess.groups!.id);
+    }
+    if (cleanPath === '/api/user-brand-access' && method === 'GET') {
+      const userId = query.get('userId');
+      if (userId) return DEMO_BRAND_ACCESS.filter(a => a.userId === userId);
+      return DEMO_BRAND_ACCESS;
     }
   }
 
   // ─── POST / PUT / DELETE Routes ────────────────────────
 
   if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
-    // Switch tenant (demo: accept any valid tenant)
+    // Switch tenant (demo: validate brand access and return role from access)
     if (cleanPath === '/api/auth/switch-tenant' && method === 'POST') {
       const targetTenantId = body?.tenantId;
       const targetTenant = DEMO_TENANTS.find(t => t.id === targetTenantId);
       if (!targetTenant) {
         return { error: 'Invalid or inactive tenant' };
       }
+      const currentUser = getCurrentDemoUser();
+      if (!currentUser) {
+        // No localStorage context (test env) — fall back to accepting any valid tenant
+        return {
+          success: true,
+          user: {
+            id: 'user-admin-001',
+            username: 'admin',
+            displayName: 'Administrator',
+            role: 'ADMIN',
+            tenantId: targetTenantId,
+          },
+        };
+      }
+      const access = DEMO_BRAND_ACCESS.find(a => a.userId === currentUser.userId && a.tenantId === targetTenantId && a.isActive);
+      if (!access) {
+        return { error: 'Not authorized for this brand' };
+      }
       return {
         success: true,
         user: {
-          id: 'user-admin-001',
-          username: 'admin',
-          displayName: 'Administrator',
-          role: 'ADMIN',
+          id: currentUser.userId,
+          username: currentUser.username,
+          displayName: currentUser.displayName,
+          role: access.role,
           tenantId: targetTenantId,
         },
       };
+    }
+
+    // User brand access management
+    if (cleanPath === '/api/user-brand-access' && method === 'POST' && body) {
+      const { userId, tenantId, role, isActive } = body;
+      if (!userId || !tenantId || !role) return { error: 'userId, tenantId, and role are required' };
+      const validRoles = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
+      if (!validRoles.includes(role)) return { error: 'Invalid role' };
+      const existing = DEMO_BRAND_ACCESS.find(a => a.userId === userId && a.tenantId === tenantId);
+      if (existing) return { error: 'User already has access to this brand' };
+      const newAccess = { id: `uba-${Date.now()}`, userId, tenantId, role, isActive: isActive !== false, createdAt: new Date(), updatedAt: new Date() };
+      DEMO_BRAND_ACCESS.push(newAccess);
+      return newAccess;
+    }
+
+    const ubaUpdate = matchPath('/api/user-brand-access/:id', cleanPath);
+    if (ubaUpdate && method === 'PUT' && body) {
+      const idx = DEMO_BRAND_ACCESS.findIndex(a => a.id === ubaUpdate.groups!.id);
+      if (idx === -1) return { error: 'Brand access record not found' };
+      if (body.role !== undefined) DEMO_BRAND_ACCESS[idx].role = body.role;
+      if (body.isActive !== undefined) DEMO_BRAND_ACCESS[idx].isActive = !!body.isActive;
+      DEMO_BRAND_ACCESS[idx].updatedAt = new Date();
+      return DEMO_BRAND_ACCESS[idx];
+    }
+    if (ubaUpdate && method === 'DELETE') {
+      const idx = DEMO_BRAND_ACCESS.findIndex(a => a.id === ubaUpdate.groups!.id);
+      if (idx === -1) return { error: 'Brand access record not found' };
+      DEMO_BRAND_ACCESS[idx].isActive = false;
+      DEMO_BRAND_ACCESS[idx].updatedAt = new Date();
+      return { success: true };
+    }
+    const ubaActivate = matchPath('/api/user-brand-access/:id/activate', cleanPath);
+    if (ubaActivate && method === 'POST') {
+      const idx = DEMO_BRAND_ACCESS.findIndex(a => a.id === ubaActivate.groups!.id);
+      if (idx === -1) return { error: 'Brand access record not found' };
+      DEMO_BRAND_ACCESS[idx].isActive = true;
+      DEMO_BRAND_ACCESS[idx].updatedAt = new Date();
+      return { success: true };
     }
 
     // Cash Book: create voucher + ledger entries in-memory
