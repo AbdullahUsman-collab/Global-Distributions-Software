@@ -254,14 +254,24 @@ export async function apiGetTenantBySlug(slug: string): Promise<{ id: string; sl
 
 // ─── Client-Side Mock Login (Vercel fallback) ──────────────────
 
-const DEMO_USERS: Record<string, { username: string; password: string; userId: string; displayName: string; role: string; tenantId: string }> = {
-  'admin@tenant-demo-wholesale-001': { username: 'admin', password: 'admin123', userId: 'user-admin-001', displayName: 'Administrator', role: 'ADMIN', tenantId: 'tenant-demo-wholesale-001' },
-  'manager@tenant-demo-wholesale-001': { username: 'manager', password: 'manager123', userId: 'user-manager-001', displayName: 'Sales Manager', role: 'MANAGER', tenantId: 'tenant-demo-wholesale-001' },
-  'clerk@tenant-demo-wholesale-001': { username: 'clerk', password: 'clerk123', userId: 'user-clerk-001', displayName: 'Sales Clerk', role: 'SALES', tenantId: 'tenant-demo-wholesale-001' },
-  'former@tenant-demo-wholesale-001': { username: 'former', password: 'former123', userId: 'user-inactive-001', displayName: 'Former Employee', role: 'VIEWER', tenantId: 'tenant-demo-wholesale-001' },
-  'admin@tenant-demo-distribution-002': { username: 'admin', password: 'admin123', userId: 'user-admin-002', displayName: 'Administrator', role: 'ADMIN', tenantId: 'tenant-demo-distribution-002' },
-  'admin@tenant-apex-trading-003': { username: 'admin', password: 'admin123', userId: 'user-admin-003', displayName: 'Administrator', role: 'ADMIN', tenantId: 'tenant-apex-trading-003' },
+const DEMO_USERS: Record<string, { username: string; password: string; userId: string; displayName: string; tenantId: string }> = {
+  'admin@tenant-demo-wholesale-001': { username: 'admin', password: 'admin123', userId: 'user-admin-001', displayName: 'Administrator', tenantId: 'tenant-demo-wholesale-001' },
+  'manager@tenant-demo-wholesale-001': { username: 'manager', password: 'manager123', userId: 'user-manager-001', displayName: 'Sales Manager', tenantId: 'tenant-demo-wholesale-001' },
+  'clerk@tenant-demo-wholesale-001': { username: 'clerk', password: 'clerk123', userId: 'user-clerk-001', displayName: 'Sales Clerk', tenantId: 'tenant-demo-wholesale-001' },
+  'former@tenant-demo-wholesale-001': { username: 'former', password: 'former123', userId: 'user-inactive-001', displayName: 'Former Employee', tenantId: 'tenant-demo-wholesale-001' },
+  'admin@tenant-demo-distribution-002': { username: 'admin', password: 'admin123', userId: 'user-admin-002', displayName: 'Administrator', tenantId: 'tenant-demo-distribution-002' },
+  'admin@tenant-apex-trading-003': { username: 'admin', password: 'admin123', userId: 'user-admin-003', displayName: 'Administrator', tenantId: 'tenant-apex-trading-003' },
 };
+
+const DEMO_BRAND_ACCESS: Array<{ userId: string; tenantId: string; role: string; isActive: boolean }> = [
+  { userId: 'user-admin-001', tenantId: 'tenant-demo-wholesale-001', role: 'ADMIN', isActive: true },
+  { userId: 'user-admin-001', tenantId: 'tenant-demo-distribution-002', role: 'ACCOUNTANT', isActive: true },
+  { userId: 'user-admin-001', tenantId: 'tenant-apex-trading-003', role: 'VIEWER', isActive: true },
+  { userId: 'user-manager-001', tenantId: 'tenant-demo-wholesale-001', role: 'MANAGER', isActive: true },
+  { userId: 'user-clerk-001', tenantId: 'tenant-demo-wholesale-001', role: 'SALES', isActive: true },
+  { userId: 'user-admin-002', tenantId: 'tenant-demo-distribution-002', role: 'ADMIN', isActive: true },
+  { userId: 'user-admin-003', tenantId: 'tenant-apex-trading-003', role: 'ADMIN', isActive: true },
+];
 
 function clientSideLogin(
   username: string,
@@ -281,12 +291,16 @@ function clientSideLogin(
     return { success: false, error: 'Account is deactivated' };
   }
 
+  // Derive role from user_brand_access (not from DEMO_USERS)
+  const access = DEMO_BRAND_ACCESS.find(a => a.userId === user.userId && a.tenantId === tenantId && a.isActive);
+  const role = access ? access.role : 'VIEWER';
+
   const userObj = {
     id: user.userId,
     tenantId: user.tenantId,
     username: user.username,
     displayName: user.displayName,
-    role: user.role,
+    role,
     isActive: username !== 'former',
   };
 

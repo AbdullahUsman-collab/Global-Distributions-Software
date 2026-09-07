@@ -136,13 +136,26 @@ export class MockAuthService implements IAuthService {
 
   /**
    * Get user by session.
+   * Derives role from user_brand_access for the session's tenant (not from users.role).
    */
   async getUserBySession(sessionId: string): Promise<User | null> {
     const session = await this.sessionRepository.getSession(sessionId);
     if (!session) {
       return null;
     }
-    return this.userRepository.findById(session.userId);
+    const user = await this.userRepository.findById(session.userId);
+    if (!user) {
+      return null;
+    }
+    // Derive role from user_brand_access for the session's active tenant
+    const access = await this.brandAccessRepository.getByUserAndTenant(user.id, session.tenantId);
+    if (!access || !access.isActive) {
+      return null;
+    }
+    return {
+      ...user,
+      role: access.role,
+    };
   }
 
   /**
