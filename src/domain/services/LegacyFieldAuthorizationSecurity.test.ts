@@ -365,4 +365,78 @@ describe('Step 46C-6 — Legacy User Field Authorization Security', () => {
     expect(tenants.length).toBe(1);
     expect(tenants[0].id).toBe(WHOLESALE);
   });
+
+  // ─── TEST 16: changing legacy users.role does not change effective role ──
+
+  it('TEST 16: changing legacy users.role in store does not change effective role', async () => {
+    const userId = 'user-legacy-role-change';
+    await insertUser(userId, WHOLESALE, 'legacychange', 'VIEWER');
+    await brandAccessRepo.create({ userId, tenantId: WHOLESALE, role: 'MANAGER' });
+
+    // Login — effective role should be MANAGER (from brand access)
+    const login1 = await authService.authenticate({ username: 'legacychange', password: 'pass123', tenantId: WHOLESALE });
+    expect(login1.success).toBe(true);
+    if (login1.success) expect(login1.user.role).toBe('MANAGER');
+
+    // Now change the legacy users.role to ADMIN in the user store
+    const userStore = getUserStore();
+    const user = userStore.find(u => u.id === userId);
+    if (user) user.role = 'ADMIN' as any;
+
+    // Login again — effective role should STILL be MANAGER (from brand access, not users.role)
+    const login2 = await authService.authenticate({ username: 'legacychange', password: 'pass123', tenantId: WHOLESALE });
+    expect(login2.success).toBe(true);
+    if (login2.success) expect(login2.user.role).toBe('MANAGER');
+
+    // Verify getUserBySession also returns MANAGER
+    const userFromSession = await authService.getUserBySession(login2.session.sessionId);
+    expect(userFromSession).not.toBeNull();
+    expect(userFromSession!.role).toBe('MANAGER');
+  });
+
+  // ─── TEST 17: changing legacy users.tenantId does not change effective brand access ──
+
+  it('TEST 17: changing legacy users.tenantId does not grant unauthorized tenant access', async () => {
+    const userId = 'user-legacy-tenant-change';
+    await insertUser(userId, WHOLESALE, 'legacytenant', 'ADMIN');
+    await brandAccessRepo.create({ userId, tenantId: WHOLESALE, role: 'ADMIN' });
+
+    // Login — should work with WHOLESALE
+    const login1 = await authService.authenticate({ username: 'legacytenant', password: 'pass123', tenantId: WHOLESALE });
+    expect(login1.success).toBe(true);
+
+    // Now change the legacy users.tenantId to DISTRIBUTION in the user store
+    const userStore = getUserStore();
+    const user = userStore.find(u => u.id === userId);
+    if (user) user.tenantId = DISTRIBUTION;
+
+    // Login to DISTRIBUTION — should STILL FAIL because there's no brand access
+    const login2 = await authService.authenticate({ username: 'legacytenant', password: 'pass123', tenantId: DISTRIBUTION });
+    expect(login2.success).toBe(false);
+
+    // Verify the brand access is still only for WHOLESALE
+    const access = await brandAccessRepo.getByUserAndTenant(userId, DISTRIBUTION);
+    expect(access).toBeNull();
+    const wholesaleAccess = await brandAccessRepo.getByUserAndTenant(userId, WHOLESALE);
+    expect(wholesaleAccess).not.toBeNull();
+  });
+
+  // ─── TEST 18: user.tenantId mismatch does not bypass brand access ──
+
+  it('TEST 18: brand access is required regardless of user.tenantId value', async () => {
+    const userId = 'user-mismatch-tenant';
+    // User record says WHOLESALE
+    await insertUser(userId, WHOLESALE, 'mismatch', 'VIEWER');
+    // Brand access for DISTRIBUTION only
+    await brandAccessRepo.create({ userId, tenantId: DISTRIBUTION, role: 'SALES' });
+
+    // Cannot login to WHOLESALE (no brand access there)
+    const login1 = await authService.authenticate({ username: 'mismatch', password: 'pass123', tenantId: WHOLESALE });
+    expect(login1.success).toBe(false);
+
+    // Authorized tenants should only include DISTRIBUTION
+    const tenants = await authService.getAuthorizedTenants(userId);
+    expect(tenants.length).toBe(1);
+    expect(tenants[0].id).toBe(DISTRIBUTION);
+  });
 });

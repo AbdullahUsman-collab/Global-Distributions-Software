@@ -4,6 +4,11 @@
  *
  * RULE: NEVER exposes passwordHash or credential data.
  * RULE: Returns only public User model.
+ *
+ * RULE (46C-7): Tenant scoping uses user_brand_access, NOT users.tenant_id.
+ * The users.tenant_id column is legacy compatibility — not authorization authority.
+ * findByUsername() verifies active brand access for the requested tenant.
+ * getUsersByTenant() lists users through active brand access records.
  */
 
 import { User, CreateUserPayload, UpdateUserPayload } from '../../../domain/types/auth';
@@ -12,16 +17,29 @@ import { query } from '../pool.js';
 
 /**
  * PostgreSQL implementation of IUserRepository.
+ *
+ * 46C-7 DECOUPLING:
+ * - findByUsername: joins user_brand_access for tenant scoping
+ * - getUsersByTenant: joins user_brand_access for tenant scoping
+ * - findById: no tenant scoping needed (identity lookup)
+ * - createUser: writes users.tenant_id/role for legacy schema compatibility
+ * - mapRow: reads legacy columns for User type compatibility
+ *
+ * Authorization source: user_brand_access (NOT users.tenant_id or users.role)
  */
 export class PostgresUserAdapter implements IUserRepository {
   /**
-   * Find user by username within a tenant.
+   * Find user by username with ACTIVE brand access for the requested tenant.
+   *
+   * 46C-7: Joins user_brand_access instead of using users.tenant_id.
+   * This ensures only users with active brand access are found.
    */
   async findByUsername(tenantId: string, username: string): Promise<User | null> {
     const result = await query(
-      `SELECT id, tenant_id, username, display_name, role, is_active, created_at, updated_at
-       FROM users
-       WHERE tenant_id = $1 AND LOWER(username) = LOWER($2)`,
+      `SELECT u.id, u.tenant_id, u.username, u.display_name, u.role, u.is_active, u.created_at, u.updated_at
+       FROM users u
+       INNER JOIN user_brand_access uba ON uba.user_id = u.id AND uba.tenant_id = $1 AND uba.is_active = true
+       WHERE LOWER(u.username) = LOWER($2)`,
       [tenantId, username]
     );
 
@@ -31,6 +49,7 @@ export class PostgresUserAdapter implements IUserRepository {
 
   /**
    * Find user by ID.
+   * No tenant scoping — identity lookup only.
    */
   async findById(id: string): Promise<User | null> {
     const result = await query(
@@ -56,14 +75,18 @@ export class PostgresUserAdapter implements IUserRepository {
   }
 
   /**
-   * Get all users for a tenant.
+   * Get all users with ACTIVE brand access for a tenant.
+   *
+   * 46C-7: Joins user_brand_access instead of using users.tenant_id.
+   * Users who only have a legacy users.tenant_id matching but no
+   * active brand access record are NOT returned.
    */
   async getUsersByTenant(tenantId: string): Promise<User[]> {
     const result = await query(
-      `SELECT id, tenant_id, username, display_name, role, is_active, created_at, updated_at
-       FROM users
-       WHERE tenant_id = $1
-       ORDER BY username`,
+      `SELECT DISTINCT u.id, u.tenant_id, u.username, u.display_name, u.role, u.is_active, u.created_at, u.updated_at
+       FROM users u
+       INNER JOIN user_brand_access uba ON uba.user_id = u.id AND uba.tenant_id = $1 AND uba.is_active = true
+       ORDER BY u.username`,
       [tenantId]
     );
 
@@ -72,6 +95,11 @@ export class PostgresUserAdapter implements IUserRepository {
 
   /**
    * Create a new user.
+   *
+   * 46C-7: Still writes users.tenant_id and users.role for legacy schema
+   * compatibility. These columns remain in the physical database.
+   * Authorization is NOT derived from these values — user_brand_access
+   * is the authoritative source.
    */
   async createUser(payload: CreateUserPayload): Promise<User> {
     const id = `user-${Date.now()}`;
@@ -131,6 +159,10 @@ export class PostgresUserAdapter implements IUserRepository {
 
   /**
    * Map database row to User model.
+   *
+   * 46C-7: Reads legacy users.tenant_id and users.role for User type
+   * compatibility. These values are NOT used for authorization —
+   * user_brand_access.role is the authoritative per-brand role.
    */
   private mapRow(row: any): User {
     return {
