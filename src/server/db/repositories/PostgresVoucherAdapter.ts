@@ -82,6 +82,9 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
       const voucherId = uuid();
       const voucherNumber = await this.getNextVoucherNumberTx(client, tenantId);
 
+      // Build account code→id map for this tenant (services pass codes like '41101', DB uses IDs like 'coa-41101')
+      const acctMap = await this.buildAccountCodeMap(client, tenantId);
+
       await client.query(
         `INSERT INTO vouchers (id, tenant_id, voucher_number, voucher_type, status, date, narration, created_by)
          VALUES ($1, $2, $3, $4, 'DRAFT', $5, $6, $7)`,
@@ -90,14 +93,15 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
 
       for (let i = 0; i < dto.lines.length; i++) {
         const line = dto.lines[i];
+        const resolvedAccountId = this.resolveAccountId(line.accountId, acctMap);
         await client.query(
           `INSERT INTO voucher_lines (id, voucher_id, tenant_id, account_id, description, debit, credit, line_order,
              contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
           [
-            uuid(), voucherId, tenantId, line.accountId, line.description,
+            uuid(), voucherId, tenantId, resolvedAccountId, line.description,
             line.debit, line.credit, i + 1,
-            line.contraAccountId ?? null, line.quantity ?? null,
+            line.contraAccountId ? this.resolveAccountId(line.contraAccountId, acctMap) : null, line.quantity ?? null,
             line.productId ?? null, line.branch ?? null,
             line.stInvNo ?? null, line.stRate ?? null,
             line.stAmount ?? null, line.amtExclStd ?? null,
@@ -269,10 +273,37 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
 
   private async getNextVoucherNumberTx(client: any, tenantId: string): Promise<number> {
     const r = await client.query(
-      `SELECT COALESCE(MAX(voucher_number), 0) + 1 AS next_num FROM vouchers WHERE tenant_id = $1 FOR UPDATE`,
+      `SELECT COALESCE(MAX(voucher_number), 0) + 1 AS next_num FROM (SELECT voucher_number FROM vouchers WHERE tenant_id = $1 FOR UPDATE) sub`,
       [tenantId]
     );
     return Number(r.rows[0].next_num);
+  }
+
+  /**
+   * Build a map from account_code → account_id for the given tenant.
+   * Services pass codes like '41101', but the DB uses IDs like 'coa-41101'.
+   */
+  private async buildAccountCodeMap(client: any, tenantId: string): Promise<Map<string, string>> {
+    const r = await client.query(
+      `SELECT id, account_code FROM accounts WHERE tenant_id = $1`,
+      [tenantId]
+    );
+    const map = new Map<string, string>();
+    for (const row of r.rows) {
+      map.set(row.account_code, row.id);
+    }
+    return map;
+  }
+
+  /**
+   * Resolve an account reference to a DB account_id.
+   * If it's already a valid ID (starts with 'coa-'), return as-is.
+   * If it's a code (e.g., '41101'), look up in the map.
+   */
+  private resolveAccountId(ref: string, codeMap: Map<string, string>): string {
+    if (!ref) return ref;
+    if (ref.startsWith('coa-')) return ref;
+    return codeMap.get(ref) || ref;
   }
 
   private mapVoucherRow(r: any): VoucherHeader {

@@ -19,6 +19,8 @@
 
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import fs from 'fs';
 import { createAuthMiddleware } from './middleware/auth';
 import { csrfProtection } from './middleware/csrf';
 import { apiRateLimiter } from './middleware/rateLimit';
@@ -178,6 +180,11 @@ const authMiddleware = createAuthMiddleware(sessionAdapter, userAdapter, brandAc
 app.use('/api/auth', createAuthRoutes(authService, tenantAdapter));
 app.use('/api', createTenantRoutes(tenantAdapter));
 
+// Health check (no auth required — registered before protected routes)
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), mode });
+});
+
 // Protected routes (auth + RBAC required)
 app.use('/api',
   authMiddleware,
@@ -204,9 +211,21 @@ app.use('/api',
     )
 );
 
-// Health check
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// ─── SPA Fallback ──────────────────────────────────────────────
+// Serves the SPA for all non-API routes (supports client-side routing,
+// page refresh, and direct URL navigation).
+const distPath = path.resolve(process.cwd(), 'dist');
+const indexPath = path.join(distPath, 'index.html');
+const hasDist = fs.existsSync(indexPath);
+
+// For non-API GET requests, serve the SPA index.html
+// This enables client-side routing (React Router) to handle the path
+app.get(/^(?!\/api\/).*/, (req, res) => {
+  if (hasDist) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ error: 'SPA not built. Run "npm run build" first.' });
+  }
 });
 
 // ─── Start Server ──────────────────────────────────────────────
