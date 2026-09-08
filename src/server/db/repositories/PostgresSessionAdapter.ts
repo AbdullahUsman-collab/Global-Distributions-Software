@@ -8,7 +8,7 @@
  * RULE: Logout deletes/revokes the server-side session.
  */
 
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { ISessionRepository } from '../../../domain/repositories/ISessionRepository';
 import { UserSession } from '../../../domain/types/auth';
 import { query } from '../pool.js';
@@ -31,7 +31,7 @@ export class PostgresSessionAdapter implements ISessionRepository {
    * Stores a SHA-256 hash of the token, not the raw token.
    */
   async createSession(tenantId: string, userId: string): Promise<UserSession> {
-    const sessionId = require('crypto').randomBytes(32).toString('hex');
+    const sessionId = randomBytes(32).toString('hex');
     const tokenHash = hashToken(sessionId);
     const now = new Date();
     const expiresAt = new Date(now.getTime() + SESSION_DURATION_MS);
