@@ -170,16 +170,20 @@ export class BillDetailService {
     const billLines: BillLineDetail[] = lines.map(line => {
       const product = line.productId ? productById.get(line.productId) : undefined;
       const movement = voucherMovements.find(m => m.productId === line.productId);
+      const amtExclStd = line.amtExclStd || 0;
+      const stRate = line.stRate || 0;
+      const gstAmount = line.stAmount || (amtExclStd * stRate / 100);
+      const amount = amtExclStd || line.debit || line.credit;
       return {
         line,
         productName: product?.name ?? (line.productId ? `Product ${line.productId}` : ''),
         productSku: product?.sku ?? '',
         productUnit: product?.unit ?? '',
-        rate: line.amtExclStd > 0 && line.quantity > 0 ? line.amtExclStd / line.quantity : 0,
+        rate: amtExclStd > 0 && line.quantity ? amtExclStd / line.quantity : 0,
         quantity: line.quantity,
         discount: 0,
-        amount: line.amtExclStd || line.debit || line.credit,
-        gstAmount: line.stAmount || 0,
+        amount,
+        gstAmount,
         furtherTaxAmount: 0,
         fedAmount: 0,
         advanceTaxAmount: 0,
@@ -218,22 +222,7 @@ export class BillDetailService {
       };
     });
 
-    // 9. Compute tax summary
-    let subtotal = 0;
-    let gst = 0;
-    let furtherTax = 0;
-    let fed = 0;
-    let advanceTax = 0;
-
-    for (const bl of billLines) {
-      subtotal += bl.amount;
-      gst += bl.gstAmount;
-      furtherTax += bl.furtherTaxAmount;
-      fed += bl.fedAmount;
-      advanceTax += bl.advanceTaxAmount;
-    }
-
-    // Fallback: if line-level tax not stored, compute from ledger entries
+    // 9. Compute tax summary from ledger entries (authoritative source)
     const totalTaxFromLedger = voucherLedger.reduce((s, e) => {
       const acc = accountByCode.get(e.accountId);
       if (acc && (acc.accountCode === '21201' || acc.accountCode === '21202' || acc.accountCode === '21203' ||
@@ -243,7 +232,14 @@ export class BillDetailService {
       return s;
     }, 0);
 
-    const totalTax = gst + furtherTax + fed + advanceTax || totalTaxFromLedger;
+    let subtotal = 0;
+    let gst = 0;
+    for (const bl of billLines) {
+      subtotal += bl.amount;
+      gst += bl.gstAmount;
+    }
+
+    const totalTax = totalTaxFromLedger || gst;
     const grandTotal = subtotal + totalTax;
 
     return {
@@ -258,9 +254,9 @@ export class BillDetailService {
       taxSummary: {
         subtotal,
         gst,
-        furtherTax,
-        fed,
-        advanceTax,
+        furtherTax: 0,
+        fed: 0,
+        advanceTax: 0,
         totalTax,
         grandTotal,
       },

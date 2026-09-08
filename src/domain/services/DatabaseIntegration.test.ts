@@ -160,12 +160,14 @@ describe('Environment Configuration', () => {
       NODE_ENV: process.env.NODE_ENV,
       DATABASE_URL: process.env.DATABASE_URL,
       SESSION_SECRET: process.env.SESSION_SECRET,
+      COOKIE_SECRET: process.env.COOKIE_SECRET,
       CORS_ORIGINS: process.env.CORS_ORIGINS,
     };
 
     process.env.NODE_ENV = 'production';
     process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/mydb';
     process.env.SESSION_SECRET = 'a'.repeat(64);
+    process.env.COOKIE_SECRET = 'b'.repeat(32);
     process.env.CORS_ORIGINS = 'https://example.com';
 
     const config = loadConfig();

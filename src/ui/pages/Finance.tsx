@@ -59,6 +59,7 @@ const TABS: { key: FinanceTab; label: string }[] = [
 const ACCOUNT_TYPES: AccountType[] = ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'COGS', 'EXPENSE'];
 type UpdateAccountDTO = {
   accountName?: string; isActive?: boolean; controlCategory?: ControlCategory | null;
+  legacyMainHeadNo?: number | null; accountEffect?: 'Balance Sheet' | 'Profit and Loss' | 'Both' | null;
   address?: string; ownerName?: string; phone?: string; stn?: string; ntn?: string; cnic?: string;
 };
 
@@ -1265,6 +1266,8 @@ const CreateAccountModal: React.FC<{
   const [name, setName] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('ASSET');
   const [controlCategory, setControlCategory] = useState<ControlCategory | ''>('');
+  const [legacyMainHeadNo, setLegacyMainHeadNo] = useState('');
+  const [accountEffect, setAccountEffect] = useState<'Balance Sheet' | 'Profit and Loss' | 'Both' | ''>('');
   const [address, setAddress] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('');
@@ -1288,6 +1291,8 @@ const CreateAccountModal: React.FC<{
         level,
         accountType,
         controlCategory: controlCategory || undefined,
+        legacyMainHeadNo: legacyMainHeadNo ? Number(legacyMainHeadNo) : undefined,
+        accountEffect: accountEffect || undefined,
         address: address || undefined,
         ownerName: ownerName || undefined,
         phone: phone || undefined,
@@ -1337,6 +1342,21 @@ const CreateAccountModal: React.FC<{
           <p style={{ ...styles.infoNote, marginBottom: 12 }}>
             This will be a <strong>{level < 4 ? 'Summary' : 'Posting'}</strong> account. Normal balance: <strong>{deriveNormalBalanceLabel(accountType)}</strong>
           </p>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Legacy Main Head No. (optional)</label>
+              <input value={legacyMainHeadNo} onChange={e => setLegacyMainHeadNo(e.target.value)} style={styles.input} placeholder="e.g. 1" type="number" min="0" />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Account Effect (optional)</label>
+              <select value={accountEffect} onChange={e => setAccountEffect(e.target.value as 'Balance Sheet' | 'Profit and Loss' | 'Both' | '')} style={styles.select}>
+                <option value="">None</option>
+                <option value="Balance Sheet">Balance Sheet</option>
+                <option value="Profit and Loss">Profit and Loss</option>
+                <option value="Both">Both</option>
+              </select>
+            </div>
+          </div>
           <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 8 }}>
             <label style={{ ...styles.label, fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Account Metadata</label>
           </div>
@@ -1390,6 +1410,8 @@ const EditAccountModal: React.FC<{
   const [name, setName] = useState(account.accountName);
   const [isActive, setIsActive] = useState(account.isActive);
   const [controlCategory, setControlCategory] = useState<ControlCategory | ''>(account.controlCategory ?? '');
+  const [legacyMainHeadNo, setLegacyMainHeadNo] = useState(account.legacyMainHeadNo?.toString() ?? '');
+  const [accountEffect, setAccountEffect] = useState<'Balance Sheet' | 'Profit and Loss' | 'Both' | ''>(account.accountEffect ?? '');
   const [address, setAddress] = useState(account.address ?? '');
   const [ownerName, setOwnerName] = useState(account.ownerName ?? '');
   const [phone, setPhone] = useState(account.phone ?? '');
@@ -1404,6 +1426,8 @@ const EditAccountModal: React.FC<{
       accountName: name.trim() || account.accountName,
       isActive,
       controlCategory: controlCategory || null,
+      legacyMainHeadNo: legacyMainHeadNo ? Number(legacyMainHeadNo) : null,
+      accountEffect: accountEffect || null,
       address: address || undefined,
       ownerName: ownerName || undefined,
       phone: phone || undefined,
@@ -1432,6 +1456,21 @@ const EditAccountModal: React.FC<{
                 <option key={k} value={k}>{v}</option>
               ))}
             </select>
+          </div>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Legacy Main Head No.</label>
+              <input value={legacyMainHeadNo} onChange={e => setLegacyMainHeadNo(e.target.value)} style={styles.input} placeholder="e.g. 1" type="number" min="0" />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Account Effect</label>
+              <select value={accountEffect} onChange={e => setAccountEffect(e.target.value as 'Balance Sheet' | 'Profit and Loss' | 'Both' | '')} style={styles.select}>
+                <option value="">None</option>
+                <option value="Balance Sheet">Balance Sheet</option>
+                <option value="Profit and Loss">Profit and Loss</option>
+                <option value="Both">Both</option>
+              </select>
+            </div>
           </div>
           <div style={styles.field}>
             <label style={styles.label}>Status</label>

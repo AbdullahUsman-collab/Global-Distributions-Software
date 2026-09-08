@@ -143,6 +143,7 @@ export function validateProductionConfig(config: ServerConfig): void {
   const required = [
     { key: 'DATABASE_URL', value: config.databaseUrl },
     { key: 'SESSION_SECRET', value: config.session.secret },
+    { key: 'COOKIE_SECRET', value: process.env.COOKIE_SECRET },
     { key: 'CORS_ORIGINS', value: process.env.CORS_ORIGINS },
   ];
 
