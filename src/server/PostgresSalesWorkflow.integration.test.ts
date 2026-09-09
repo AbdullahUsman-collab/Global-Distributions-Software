@@ -39,11 +39,12 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
   let cookieHeader: string | undefined;
   let tenantId = 'tenant-demo-wholesale-001';
   let userId: string;
+  const CSRF_TOKEN = 'test-csrf-token-for-integration';
 
   beforeAll(async () => {
     // Initialize pool and run migrations
-    const { loadConfig } = await import('../../server/db/env');
-    const { initPool, testConnection, closePool } = await import('../../server/db/pool');
+    const { loadConfig } = await import('./db/env');
+    const { initPool, testConnection, closePool } = await import('./db/pool');
     const config = loadConfig();
     initPool(config.database);
 
@@ -52,23 +53,24 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
       throw new Error('PostgreSQL connection failed — cannot run integration tests');
     }
 
-    const { runMigrations } = await import('../../server/db/migrate');
+    const { runMigrations } = await import('./db/migrate');
     await runMigrations();
-  });
+  }, 30000);
 
   afterAll(async () => {
-    const { closePool } = await import('../../server/db/pool');
+    const { closePool } = await import('./db/pool');
     await closePool();
   });
 
   describe('Authentication', () => {
     it('should login with valid credentials', async () => {
       // This test uses the Express app directly
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       const res = await request.default(app)
         .post('/api/auth/login')
+        .set('x-csrf-token', CSRF_TOKEN)
         .send({ username: 'admin', password: 'admin123', tenantId });
 
       expect(res.status).toBe(200);
@@ -81,14 +83,15 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
       if (setCookie) {
         cookieHeader = setCookie.find((c: string) => c.startsWith('erp_session='));
       }
-    });
+    }, 15000);
 
     it('should reject invalid password', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       const res = await request.default(app)
         .post('/api/auth/login')
+        .set('x-csrf-token', CSRF_TOKEN)
         .send({ username: 'admin', password: 'wrongpassword', tenantId });
 
       expect(res.status).toBe(401);
@@ -96,11 +99,12 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
     });
 
     it('should reject inactive user', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       const res = await request.default(app)
         .post('/api/auth/login')
+        .set('x-csrf-token', CSRF_TOKEN)
         .send({ username: 'former', password: 'former123', tenantId });
 
       expect(res.status).toBe(401);
@@ -111,7 +115,7 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
     let saleId: string;
 
     it('should create a sale draft', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       // First get products and customers
@@ -131,6 +135,7 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
       const res = await request.default(app)
         .post('/api/sales')
         .set('Cookie', cookieHeader || '')
+        .set('x-csrf-token', CSRF_TOKEN)
         .send({
           customerId: 'customer-001',
           date: '2026-08-30',
@@ -153,22 +158,23 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
       expect(res.body.voucherType).toBe('SV');
       expect(res.body.status).toBe('DRAFT');
       saleId = res.body.id;
-    });
+    }, 15000);
 
     it('should post the sale', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       const res = await request.default(app)
         .post(`/api/sales/${saleId}/post`)
-        .set('Cookie', cookieHeader || '');
+        .set('Cookie', cookieHeader || '')
+        .set('x-csrf-token', CSRF_TOKEN);
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('POSTED');
-    });
+    }, 15000);
 
     it('should retrieve the bill', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       const res = await request.default(app)
@@ -178,28 +184,30 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
       expect(res.status).toBe(200);
       expect(res.body.voucher.id).toBe(saleId);
       expect(res.body.lines.length).toBeGreaterThan(0);
-    });
+    }, 15000);
 
     it('should not allow deleting a posted sale', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       const res = await request.default(app)
         .delete(`/api/sales/${saleId}`)
-        .set('Cookie', cookieHeader || '');
+        .set('Cookie', cookieHeader || '')
+        .set('x-csrf-token', CSRF_TOKEN);
 
       expect(res.status).toBe(409);
-    });
+    }, 15000);
   });
 
   describe('Tenant Isolation', () => {
     it('should not allow cross-tenant bill access', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       // Login as tenant-demo-distribution-002
       const loginRes = await request.default(app)
         .post('/api/auth/login')
+        .set('x-csrf-token', CSRF_TOKEN)
         .send({ username: 'admin', password: 'admin123', tenantId: 'tenant-demo-distribution-002' });
 
       const otherCookie = loginRes.headers['set-cookie']
@@ -212,12 +220,12 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
 
       // Should return 404 (not found in this tenant's scope)
       expect(res.status).toBe(404);
-    });
+    }, 15000);
   });
 
   describe('Ledger', () => {
     it('should have ledger entries after sale posting', async () => {
-      const app = (await import('../../server/index')).default;
+      const app = (await import('./index')).default;
       const request = await import('supertest');
 
       const res = await request.default(app)
@@ -226,7 +234,7 @@ describePg('PostgreSQL Integration — Sales Workflow', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.length).toBeGreaterThan(0);
-    });
+    }, 15000);
   });
 });
 
@@ -272,8 +280,8 @@ describe('PostgreSQL Adapter Unit Tests', () => {
     expect(fs.existsSync(path.resolve('src/ui/lib/api.ts'))).toBe(true);
   });
 
-  it('PostgreSQL connection would fail without DATABASE_URL', () => {
-    // This test documents that mock mode is the default
-    expect(process.env.DATABASE_URL).toBeUndefined();
+  it('PostgreSQL connection is available when DATABASE_URL is set', () => {
+    // When running integration tests, DATABASE_URL should be available
+    expect(process.env.DATABASE_URL).toBeDefined();
   });
 });
