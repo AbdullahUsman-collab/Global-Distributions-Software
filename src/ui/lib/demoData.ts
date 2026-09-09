@@ -555,10 +555,36 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
     // Bills
     if (cleanPath === '/api/bills') return DEMO_BILLS;
 
-    // Bill detail
+    // Bill detail — must return BillDetail shape (not BillRecord)
     const billDetail = matchPath('/api/bills/:id', cleanPath);
     if (billDetail) {
-      return DEMO_BILLS.find(b => b.voucher.id === billDetail.groups!.id) || null;
+      const record = DEMO_BILLS.find(b => b.voucher.id === billDetail.groups!.id);
+      if (record) {
+        const partyType = record.partyId.startsWith('cust-') ? 'customer' : record.partyId.startsWith('sup-') ? 'supplier' : 'unknown';
+        const subtotal = record.total;
+        const gst = subtotal * 0.17;
+        return {
+          voucher: record.voucher,
+          partyType,
+          partyId: record.partyId,
+          partyName: record.partyName,
+          partyAccountCode: partyType === 'customer' ? '11201' : partyType === 'supplier' ? '21100' : '',
+          lines: record.lines,
+          accountingEntries: [],
+          inventoryMovements: [],
+          taxSummary: {
+            subtotal,
+            gst,
+            furtherTax: 0,
+            fed: 0,
+            advanceTax: 0,
+            totalTax: gst,
+            grandTotal: subtotal + gst,
+          },
+          stockLevels: [],
+        };
+      }
+      return null;
     }
 
     // Sales
