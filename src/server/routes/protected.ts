@@ -135,7 +135,7 @@ export function createProtectedRoutes(
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message?.includes('POSTED')) {
+        if (error.message?.toUpperCase().includes('POSTED')) {
           res.status(409).json({ error: error.message });
           return;
         }
@@ -219,7 +219,7 @@ export function createProtectedRoutes(
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message?.includes('POSTED')) {
+        if (error.message?.toUpperCase().includes('POSTED')) {
           res.status(409).json({ error: error.message });
           return;
         }
@@ -492,7 +492,7 @@ export function createProtectedRoutes(
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message?.includes('POSTED')) {
+        if (error.message?.toUpperCase().includes('POSTED')) {
           res.status(409).json({ error: error.message });
           return;
         }
@@ -1036,7 +1036,7 @@ export function createProtectedRoutes(
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message?.includes('POSTED')) {
+        if (error.message?.toUpperCase().includes('POSTED')) {
           res.status(409).json({ error: error.message });
           return;
         }
@@ -1090,7 +1090,7 @@ export function createProtectedRoutes(
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message?.includes('POSTED')) {
+        if (error.message?.toUpperCase().includes('POSTED')) {
           res.status(409).json({ error: error.message });
           return;
         }
@@ -1144,7 +1144,7 @@ export function createProtectedRoutes(
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message?.includes('POSTED')) {
+        if (error.message?.toUpperCase().includes('POSTED')) {
           res.status(409).json({ error: error.message });
           return;
         }
