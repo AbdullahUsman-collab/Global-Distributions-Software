@@ -275,8 +275,12 @@ const ProductModal: React.FC<{
   const [fedPercent, setFedPercent] = useState(product?.fedPercent ?? 0);
   const [advanceTaxSalePercent, setAdvanceTaxSalePercent] = useState(product?.advanceTaxSalePercent ?? 0);
   const [advanceTaxPurchasePercent, setAdvanceTaxPurchasePercent] = useState(product?.advanceTaxPurchasePercent ?? 0);
+  const [margin, setMargin] = useState(product?.margin ?? 0.072);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Computed costRate for display
+  const computedCostRate = (retailPrice || 0) - (purchaseRate || 0) * margin;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -305,6 +309,8 @@ const ProductModal: React.FC<{
         fedPercent,
         advanceTaxSalePercent,
         advanceTaxPurchasePercent,
+        margin,
+        costRate: computedCostRate,
       });
     } catch (err: any) {
       setError(err.message || 'Failed to save product.');
@@ -362,11 +368,21 @@ const ProductModal: React.FC<{
               <input type="number" min={0} step={0.01} value={retailPrice} onChange={e => setRetailPrice(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
-          <div style={styles.formRow}>
+          <div className="responsive-form-row" style={styles.formRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Margin %</label>
+              <input type="number" min={0} max={100} step={0.001} value={margin} onChange={e => setMargin(parseFloat(e.target.value) || 0)} style={styles.input} />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Cost Rate (auto)</label>
+              <input type="number" value={computedCostRate.toFixed(2)} style={{ ...styles.input, backgroundColor: '#f1f5f9', color: '#475569' }} readOnly />
+            </div>
             <div style={styles.field}>
               <label style={styles.label}>Trade Disc %</label>
               <input type="number" min={0} max={100} step={0.1} value={tradeDiscount} onChange={e => setTradeDiscount(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
+          </div>
+          <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Trade Offer</label>
               <input value={tradeOffer} onChange={e => setTradeOffer(e.target.value)} style={styles.input} placeholder="e.g. Buy 10 Get 1" />

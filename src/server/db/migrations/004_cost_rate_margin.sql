@@ -12,14 +12,22 @@
 --   cost_rate: The calculated cost rate used for COGS and inventory valuation
 --   margin: The margin percentage used to calculate cost_rate
 
--- Add cost_rate column (stores the calculated Cost_rate)
-ALTER TABLE products ADD COLUMN cost_rate DECIMAL(15,6) DEFAULT 0;
+-- Idempotent: add cost_rate column only if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'cost_rate') THEN
+    ALTER TABLE products ADD COLUMN cost_rate DECIMAL(15,6) DEFAULT 0;
+  END IF;
+END $$;
 
--- Add margin column (stores the margin percentage, e.g., 0.072 for 7.2%)
-ALTER TABLE products ADD COLUMN margin DECIMAL(8,6) DEFAULT 0;
+-- Idempotent: add margin column only if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'margin') THEN
+    ALTER TABLE products ADD COLUMN margin DECIMAL(8,6) DEFAULT 0;
+  END IF;
+END $$;
 
 -- Backfill cost_rate from existing data where possible
--- For existing products, calculate cost_rate using the formula
--- Cost_rate = Retail_Price - Purchase_Rate × Margin
--- Since we don't know the legacy margin, set to purchaseRate as conservative default
+-- For existing products, set cost_rate = purchaseRate as conservative default
 UPDATE products SET cost_rate = purchase_rate WHERE cost_rate = 0 AND purchase_rate > 0;

@@ -623,6 +623,12 @@ const PurchaseBillForm: React.FC<{
           updated.advanceTaxPercent = product.advanceTaxPurchasePercent;
         }
       }
+      // Auto-calculate packs from cartons × pcsPerCarton
+      if (updates.cartons !== undefined) {
+        const product = productMap.get(updated.productId);
+        const pcsPerCarton = product?.pcsPerCarton ?? 1;
+        updated.packs = updates.cartons * pcsPerCarton;
+      }
       return updated;
     }));
   };
