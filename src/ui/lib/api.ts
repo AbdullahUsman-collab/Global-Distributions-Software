@@ -604,6 +604,38 @@ export async function getAuthorizedTenants() {
   return apiRequest<any[]>('/auth/tenants');
 }
 
+// ─── User Management API ────────────────────────────────────
+
+export async function getUsers() {
+  return apiRequest<any[]>('/users');
+}
+
+export async function getUser(id: string) {
+  return apiRequest<any>(`/users/${encodeURIComponent(id)}`);
+}
+
+export async function createUser(data: { username: string; displayName: string; password: string; role?: string }) {
+  return apiRequest<any>('/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateUser(id: string, data: { displayName?: string; isActive?: boolean }) {
+  return apiRequest<any>(`/users/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deactivateUser(id: string) {
+  return apiRequest<any>(`/users/${encodeURIComponent(id)}/deactivate`, { method: 'POST' });
+}
+
+export async function activateUser(id: string) {
+  return apiRequest<any>(`/users/${encodeURIComponent(id)}/activate`, { method: 'POST' });
+}
+
 // ─── User Brand Access Management API ─────────────────────────
 
 export async function getUserBrandAccess(userId: string) {

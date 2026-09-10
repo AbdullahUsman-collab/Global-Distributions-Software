@@ -29,6 +29,7 @@ import { ICustomerRepository } from '../../domain/repositories/ICustomerReposito
 import { ISupplierRepository } from '../../domain/repositories/ISupplierRepository';
 import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository';
 import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
+import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { FinancialReportService } from '../../domain/services/FinancialReportService';
 import { StockReportService } from '../../domain/services/StockReportService';
 import { SystemRoleName } from '../../domain/types/rbac';
@@ -56,6 +57,7 @@ export function createProtectedRoutes(
   settingsRepo: ISettingsRepository,
   financialReportService: FinancialReportService,
   stockReportService: StockReportService,
+  userRepo: IUserRepository,
   brandAccessRepo?: IUserBrandAccessRepository,
 ): Router {
   const router = Router();
@@ -1939,6 +1941,192 @@ export function createProtectedRoutes(
         }
         console.error('Get customer AR balance error:', error);
         res.status(500).json({ error: 'Failed to get customer AR balance' });
+      }
+    }
+  );
+
+  // ─── User Management ────────────────────────────────────────
+
+  /**
+   * GET /api/users
+   * List users for the current tenant.
+   */
+  router.get('/users',
+    requirePermissionMiddleware('users.manage'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const users = await userRepo.getUsersByTenant(tenantId);
+        res.json(users);
+      } catch (error) {
+        console.error('List users error:', error);
+        res.status(500).json({ error: 'Failed to list users' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/users/:id
+   * Get a single user by ID.
+   */
+  router.get('/users/:id',
+    requirePermissionMiddleware('users.manage'),
+    async (req: Request, res: Response) => {
+      try {
+        const user = await userRepo.findById(req.params.id);
+        if (!user) {
+          res.status(404).json({ error: 'User not found' });
+          return;
+        }
+        res.json(user);
+      } catch (error) {
+        console.error('Get user error:', error);
+        res.status(500).json({ error: 'Failed to get user' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/users
+   * Create a new user.
+   */
+  router.post('/users',
+    mutationRateLimiter,
+    requirePermissionMiddleware('users.manage'),
+    async (req: Request, res: Response) => {
+      try {
+        const { username, displayName, password, role } = req.body;
+        if (!username || !displayName || !password) {
+          res.status(400).json({ error: 'username, displayName, and password are required' });
+          return;
+        }
+        if (typeof username !== 'string' || username.length < 3 || username.length > 50) {
+          res.status(400).json({ error: 'username must be 3-50 characters' });
+          return;
+        }
+        if (typeof displayName !== 'string' || displayName.length < 1 || displayName.length > 100) {
+          res.status(400).json({ error: 'displayName must be 1-100 characters' });
+          return;
+        }
+        if (typeof password !== 'string' || password.length < 6) {
+          res.status(400).json({ error: 'password must be at least 6 characters' });
+          return;
+        }
+        const validRoles = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
+        if (role && !validRoles.includes(role)) {
+          res.status(400).json({ error: 'Invalid role value' });
+          return;
+        }
+        const tenantId = req.user!.tenantId;
+        const existing = await userRepo.findByUsername(tenantId, username);
+        if (existing) {
+          res.status(409).json({ error: 'Username already exists' });
+          return;
+        }
+        const user = await userRepo.createUser({
+          tenantId,
+          username,
+          displayName,
+          password,
+          role: role || 'VIEWER',
+        });
+        res.status(201).json(user);
+      } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({ error: 'Failed to create user' });
+      }
+    }
+  );
+
+  /**
+   * PUT /api/users/:id
+   * Update user metadata (displayName, isActive).
+   */
+  router.put('/users/:id',
+    mutationRateLimiter,
+    requirePermissionMiddleware('users.manage'),
+    async (req: Request, res: Response) => {
+      try {
+        const { displayName, isActive } = req.body;
+        const user = await userRepo.findById(req.params.id);
+        if (!user) {
+          res.status(404).json({ error: 'User not found' });
+          return;
+        }
+        const updates: { displayName?: string; isActive?: boolean } = {};
+        if (displayName !== undefined) {
+          if (typeof displayName !== 'string' || displayName.length < 1 || displayName.length > 100) {
+            res.status(400).json({ error: 'displayName must be 1-100 characters' });
+            return;
+          }
+          updates.displayName = displayName;
+        }
+        if (isActive !== undefined) {
+          if (typeof isActive !== 'boolean') {
+            res.status(400).json({ error: 'isActive must be a boolean' });
+            return;
+          }
+          updates.isActive = isActive;
+        }
+        if (Object.keys(updates).length === 0) {
+          res.status(400).json({ error: 'No valid fields to update' });
+          return;
+        }
+        const updated = await userRepo.updateUser(req.params.id, updates);
+        res.json(updated);
+      } catch (error) {
+        console.error('Update user error:', error);
+        res.status(500).json({ error: 'Failed to update user' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/users/:id/deactivate
+   * Deactivate a user account.
+   */
+  router.post('/users/:id/deactivate',
+    mutationRateLimiter,
+    requirePermissionMiddleware('users.manage'),
+    async (req: Request, res: Response) => {
+      try {
+        const user = await userRepo.findById(req.params.id);
+        if (!user) {
+          res.status(404).json({ error: 'User not found' });
+          return;
+        }
+        const deactivated = await userRepo.deactivateUser(req.params.id);
+        if (!deactivated) {
+          res.status(404).json({ error: 'User not found' });
+          return;
+        }
+        res.json({ success: true });
+      } catch (error) {
+        console.error('Deactivate user error:', error);
+        res.status(500).json({ error: 'Failed to deactivate user' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/users/:id/activate
+   * Reactivate a deactivated user account.
+   */
+  router.post('/users/:id/activate',
+    mutationRateLimiter,
+    requirePermissionMiddleware('users.manage'),
+    async (req: Request, res: Response) => {
+      try {
+        const user = await userRepo.findById(req.params.id);
+        if (!user) {
+          res.status(404).json({ error: 'User not found' });
+          return;
+        }
+        const updated = await userRepo.updateUser(req.params.id, { isActive: true });
+        res.json(updated);
+      } catch (error) {
+        console.error('Activate user error:', error);
+        res.status(500).json({ error: 'Failed to activate user' });
       }
     }
   );

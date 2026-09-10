@@ -210,6 +210,7 @@ app.use('/api',
       settingsAdapter,
       financialReportService,
       stockReportService,
+      userAdapter,
       brandAccessAdapter,
     )
 );

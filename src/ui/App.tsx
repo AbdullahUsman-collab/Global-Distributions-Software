@@ -20,6 +20,7 @@ import { BillsList } from './pages/BillsList';
 import { BillDetailPage } from './pages/BillDetail';
 import { AgingReport } from './pages/AgingReport';
 import { Settings } from './pages/Settings';
+import { Users } from './pages/Users';
 import { UserBrandAccessPage } from './pages/UserBrandAccess';
 import { Layout } from './components/layout/Layout';
 
@@ -46,6 +47,7 @@ export const App: React.FC = () => {
               <Route path="/customer-receipts" element={<ErrorBoundary><CustomerReceipts /></ErrorBoundary>} />
               <Route path="/cash-book" element={<ErrorBoundary><CashBook /></ErrorBoundary>} />
               <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+              <Route path="/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />
               <Route path="/brand-access" element={<ErrorBoundary><UserBrandAccessPage /></ErrorBoundary>} />
             </Route>
           </Route>
