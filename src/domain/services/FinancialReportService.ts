@@ -343,10 +343,16 @@ export class FinancialReportService {
       if (!ancestor) continue;
 
       // Determine net balance
+      // For asset accounts: debit - credit (positive = net debit, normal for assets)
+      // For equity/liability accounts: credit - debit (positive = net credit, normal for equity)
+      // COGS and EXPENSE accounts under equity have debit balances that REDUCE equity,
+      // so they must use credit - debit (resulting in negative values).
       let balance = 0;
-      if (account.normalBalance === 'DEBIT') {
+      if (ancestor.legacyMainHeadNo === 100 || ancestor.legacyMainHeadNo === 250) {
+        // Asset side: always debit - credit
         balance = tot.debit - tot.credit;
       } else {
+        // Equity/liability side: always credit - debit
         balance = tot.credit - tot.debit;
       }
 

@@ -8,6 +8,7 @@
  *   - audit/04_ACCOUNTING_ENGINE.md (PV posting rules)
  *   - audit/16_CALCULATIONS.md (Tax formulas)
  *   - audit/07_INVENTORY_ENGINE.md (GRN movement)
+ *   - audit/65_LEGACY_COST_RATE_FORMULA_VERIFICATION.md (Cost_rate formula)
  *
  * Accounting (PV posting, audit/24):
  *   DEBIT: Inventory (11301) — Base Amount
@@ -18,6 +19,7 @@
  *
  * Inventory effect (audit/07, audit/24):
  *   Stock INCREASED by received quantity via GRN movement
+ *   Unit cost = Purchase_Rate (the incoming cost for AVCO calculation)
  */
 
 import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher';
@@ -324,6 +326,10 @@ export class PurchaseService {
     // Get the voucher lines to extract product/quantity data
     const voucherLines = await this.voucherRepo.getVoucherLines(tenantId, voucherId);
 
+    // Get products to resolve purchase rates
+    const products = await this.inventoryRepo.getProducts(tenantId);
+    const productMap = new Map(products.map(p => [p.id, p]));
+
     // Create stock GRN movements for lines with product references
     for (const line of voucherLines) {
       if (line.productId && line.quantity && line.quantity > 0) {
@@ -334,6 +340,11 @@ export class PurchaseService {
         // Use the destination warehouse from the line, or first available
         const destLevel = productLevels.find(sl => sl.warehouseId === line.branch)
           ?? productLevels[0];
+
+        // Use the product's purchase rate as the incoming cost for AVCO calculation
+        // This is the correct behavior: GRN receives stock at purchase rate
+        const product = productMap.get(line.productId);
+        const incomingCost = product?.purchaseRate ?? line.amtExclStd ?? destLevel?.unitCost ?? 0;
 
         if (destLevel) {
           // Create GRN movement (receipt into stock)
@@ -346,8 +357,8 @@ export class PurchaseService {
             toWarehouseId: destLevel.warehouseId,
             productId: line.productId,
             quantity: line.quantity,
-            unitCost: destLevel.unitCost,
-            totalCost: line.quantity * destLevel.unitCost,
+            unitCost: incomingCost,
+            totalCost: line.quantity * incomingCost,
             narration: `GRN receipt for ${line.description}`,
             status: 'DRAFT',
             createdBy: postedVoucher.createdBy,

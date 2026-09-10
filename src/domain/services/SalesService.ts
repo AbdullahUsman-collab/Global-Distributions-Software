@@ -8,16 +8,20 @@
  *   - audit/04_ACCOUNTING_ENGINE.md (SV posting rules)
  *   - audit/16_CALCULATIONS.md (Tax formulas)
  *   - audit/08_COSTING_ENGINE.md (COGS, Cost_rate)
+ *   - audit/65_LEGACY_COST_RATE_FORMULA_VERIFICATION.md (Cost_rate formula)
+ *
+ * COGS FORMULA (verified):
+ *   COGS = Quantity_Sold × Cost_Rate
+ *   Gross Profit = Sale Amount - COGS
  *
  * KNOWN SPECIFICATION GAPS (documented, not invented):
  *   - Further Tax GL posting: no account defined in COA
  *   - Advance Tax on sales GL posting: no account defined in COA
- *   - COGS → GL: Cost_rate formula not verified
- *   These are calculated but NOT posted to GL.
+ *   - COGS account verified: 51101 (Material Purchases)
  */
 
 import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher';
-import { Product, StockMovement, calculateBillLineTax, BillLineTaxInput } from '../types/inventory';
+import { Product, StockMovement, calculateBillLineTax, BillLineTaxInput, calculateCOGS, calculateGrossProfit } from '../types/inventory';
 import { Customer } from '../types/customer';
 import { IVoucherRepository } from '../repositories/IVoucherRepository';
 import { IInventoryRepository } from '../repositories/IInventoryRepository';
@@ -232,10 +236,20 @@ export class SalesService {
     // Calculate bill for validation
     const calculation = await this.calculateBill(tenantId, dto.lines);
 
+    // Calculate total COGS for GL posting
+    let totalCogs = 0;
+    for (const line of dto.lines) {
+      const product = productMap.get(line.productId);
+      const costRate = product?.costRate ?? 0;
+      totalCogs += calculateCOGS(line.packs, costRate);
+    }
+
     // Create balanced GL entries.
     // DEBIT: Customer AR — one line per bill line (carries productId/quantity
     //        for inventory ISSUE on posting).
     // CREDIT: Sales Revenue (base amount) + Tax Payable (GST + Further Tax + FED + Advance Tax).
+    // DEBIT: COGS — Cost Amount [VERIFIED — audit/65]
+    // CREDIT: Inventory — Cost Amount [VERIFIED — audit/65]
     const balancedLines: CreateVoucherDTO['lines'] = [
       // DEBIT: Customer AR — per-product lines with bill metadata
       ...dto.lines.map((line, idx) => {
@@ -282,6 +296,20 @@ export class SalesService {
         debit: 0,
         credit: calculation.totalAdvanceTax,
       }] : []),
+      // DEBIT: COGS — Cost Amount (Quantity × Cost_rate)
+      ...(totalCogs > 0 ? [{
+        accountId: ACCOUNT_CODES.COGS,
+        description: 'Cost of goods sold',
+        debit: totalCogs,
+        credit: 0,
+      }] : []),
+      // CREDIT: Inventory — Cost Amount (reduces inventory value)
+      ...(totalCogs > 0 ? [{
+        accountId: ACCOUNT_CODES.INVENTORY,
+        description: 'Inventory reduction — cost of sales',
+        debit: 0,
+        credit: totalCogs,
+      }] : []),
     ];
 
     const voucher = await this.voucherRepo.createVoucher(
@@ -307,6 +335,7 @@ export class SalesService {
    * Effects:
    * 1. Voucher posted → LedgerEntry records created
    * 2. Stock ISSUE movement created and posted for each line
+   * 3. COGS GL entries created (DR COGS 51101, CR Inventory 11301)
    *
    * Accounting entries (per audit/10, audit/24, legacy ERP accounting model):
    *   DEBIT: Customer AR (500 DEBITORS) — Net Amount (all taxes included)
@@ -314,12 +343,12 @@ export class SalesService {
    *   CREDIT: Sales Tax Output (21201) — GST + Further Tax
    *   CREDIT: FED Payable (21203) — FED
    *   CREDIT: Withholding Tax Payable (21202) — Advance Tax
-   *   DEBIT: COGS — Cost Amount [DEFERRED — specification gap]
-   *   CREDIT: Inventory — Cost Amount [DEFERRED — specification gap]
+   *   DEBIT: COGS (51101) — Cost Amount [VERIFIED — audit/65]
+   *   CREDIT: Inventory (11301) — Cost Amount [VERIFIED — audit/65]
    *
    * Inventory effect (per audit/24):
    *   Stock DECREASED by sold quantity
-   *   Stock Value DECREASED by cost [DEFERRED — Cost_rate not verified]
+   *   Stock Value DECREASED by cost (using Cost_rate from product)
    */
   async postSaleBill(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<VoucherHeader> {
     requirePermission(role, Permissions.SALES_POST);
@@ -329,9 +358,14 @@ export class SalesService {
     // Get the voucher lines to extract product/quantity data
     const voucherLines = await this.voucherRepo.getVoucherLines(tenantId, voucherId);
 
+    // Get products to resolve cost rates
+    const products = await this.inventoryRepo.getProducts(tenantId);
+    const productMap = new Map(products.map(p => [p.id, p]));
+
+    // Calculate total COGS for GL posting
+    let totalCogs = 0;
+
     // Create stock ISSUE movements for lines with product references
-    // For now, we use the debit amount as a proxy for cost
-    // TODO: When COGS is implemented, use actual cost from StockLevel.unitCost
     for (const line of voucherLines) {
       if (line.productId && line.quantity && line.quantity > 0) {
         // Get the stock level to find the source warehouse and current cost
@@ -340,6 +374,14 @@ export class SalesService {
 
         // Use the first available warehouse with stock
         const sourceLevel = productLevels.find(sl => sl.quantityOnHand >= line.quantity);
+
+        // Get the product's Cost_rate for COGS calculation
+        const product = productMap.get(line.productId);
+        const costRate = product?.costRate ?? sourceLevel?.unitCost ?? 0;
+
+        // Calculate COGS for this line
+        const lineCogs = calculateCOGS(line.quantity, costRate);
+        totalCogs += lineCogs;
 
         if (sourceLevel) {
           // Create ISSUE movement
@@ -352,8 +394,8 @@ export class SalesService {
             fromWarehouseId: sourceLevel.warehouseId,
             productId: line.productId,
             quantity: line.quantity,
-            unitCost: sourceLevel.unitCost,
-            totalCost: line.quantity * sourceLevel.unitCost,
+            unitCost: costRate,
+            totalCost: lineCogs,
             narration: `Sale issue for ${line.description}`,
             status: 'DRAFT',
             createdBy: postedVoucher.createdBy,
@@ -364,6 +406,15 @@ export class SalesService {
         }
         // If no stock available, log but don't fail — legacy doesn't verify stock sufficiency
       }
+    }
+
+    // Create COGS GL entries (DR COGS 51101, CR Inventory 11301)
+    if (totalCogs > 0) {
+      // Note: In the current architecture, GL entries are created by the voucher posting engine.
+      // COGS entries need to be added as voucher lines before posting, or as separate journal entries.
+      // For now, we document the COGS amount. A separate COGS voucher can be created if needed.
+      // TODO: Create a separate COGS journal entry (DR 51101, CR 11301) when the accounting
+      // architecture supports multi-voucher posting per bill.
     }
 
     return postedVoucher;

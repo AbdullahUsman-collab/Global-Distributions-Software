@@ -6,6 +6,16 @@
  *   - audit/23_DATA_MODEL.md (Items table, Bill_Lines)
  *   - audit/03_MASTER_DATA.md (Item hierarchy, Cost_rate)
  *   - audit/16_CALCULATIONS.md (Stock calculations, AVCO)
+ *   - audit/65_LEGACY_COST_RATE_FORMULA_VERIFICATION.md (Cost_rate formula)
+ *
+ * OWNER-CONFIRMED COST_RATE FORMULA (verified against live legacy ERP):
+ *   A = Purchase_Rate (Exclusive Tax Amount)
+ *   B = Retail_Price (Inclusive Tax Amount)
+ *   D = A × Margin
+ *   E = B - D = Cost_rate
+ *
+ * Example (verified): Purchase_Rate=184.90, Retail_Price=203.39, Margin=0.072
+ *   Cost_rate = 203.39 - 184.90 × 0.072 = 203.39 - 13.3128 = 190.0772
  */
 
 import { GstType } from './settings';
@@ -100,6 +110,10 @@ export interface Product {
   advanceTaxSalePercent: number;
   /** Advance income tax on PURCHASES percentage (maps to adv_tax_purchase in legacy) */
   advanceTaxPurchasePercent: number;
+  /** Cost rate — owner-verified: Cost_rate = Retail_Price - Purchase_Rate × Margin */
+  costRate: number;
+  /** Margin percentage — entered during product setup, used to calculate Cost_rate */
+  margin: number;
   /** Active status toggle */
   isActive: boolean;
 }
@@ -129,12 +143,12 @@ export interface CreateProductDTO {
   fedPercent?: number;
   advanceTaxSalePercent?: number;
   advanceTaxPurchasePercent?: number;
+  /** Cost rate — owner-verified: Cost_rate = Retail_Price - Purchase_Rate × Margin */
+  costRate?: number;
+  /** Margin percentage — entered during product setup */
+  margin?: number;
   isActive?: boolean;
 }
-
-/**
- * DTO for updating a Product.
- */
 export interface UpdateProductDTO {
   name?: string;
   category?: string;
@@ -152,6 +166,10 @@ export interface UpdateProductDTO {
   fedPercent?: number;
   advanceTaxSalePercent?: number;
   advanceTaxPurchasePercent?: number;
+  /** Cost rate — owner-verified: Cost_rate = Retail_Price - Purchase_Rate × Margin */
+  costRate?: number;
+  /** Margin percentage — entered during product setup */
+  margin?: number;
   isActive?: boolean;
 }
 
@@ -360,6 +378,32 @@ export function calculateCOGS(quantitySold: number, costRate: number): number {
  */
 export function calculateGrossProfit(saleAmount: number, cogs: number): number {
   return saleAmount - cogs;
+}
+
+/**
+ * Calculate Cost Rate from Purchase Rate, Retail Price, and Margin.
+ * Source: audit/65_LEGACY_COST_RATE_FORMULA_VERIFICATION.md
+ *
+ * OWNER-CONFIRMED FORMULA (verified against 18 legacy items):
+ *   A = Purchase_Rate (Exclusive Tax Amount)
+ *   B = Retail_Price (Inclusive Tax Amount)
+ *   D = A × Margin (Margin Amount)
+ *   E = B - D = Cost_rate (Cost Rate)
+ *
+ * Verification (Item 2 — Baby Powder 90 GM):
+ *   Purchase_Rate = 184.90, Retail_Price = 203.39, Margin = 0.072
+ *   Cost_rate = 203.39 - 184.90 × 0.072 = 203.39 - 13.3128 = 190.0772 ✓
+ *
+ * Legacy observed Margin = 0.072 (7.2%) consistently across all items.
+ * Retail_Price = Purchase_Rate × 1.10 (10% markup).
+ * Cost_rate = Purchase_Rate × 1.028 (verified).
+ */
+export function calculateCostRate(
+  purchaseRate: number,
+  retailPrice: number,
+  margin: number,
+): number {
+  return retailPrice - purchaseRate * margin;
 }
 
 /* ─── Bill-Line Tax Calculations ───────────────────────────── */

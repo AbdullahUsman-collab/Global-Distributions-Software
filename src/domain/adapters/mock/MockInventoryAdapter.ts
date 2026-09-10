@@ -6,6 +6,7 @@
  * Implements AVCO (Average Cost) valuation engine for stock movements.
  *
  * Source: audit/23_DATA_MODEL.md, audit/03_MASTER_DATA.md, audit/16_CALCULATIONS.md
+ *   audit/65_LEGACY_COST_RATE_FORMULA_VERIFICATION.md (Cost_rate formula)
  */
 
 import {
@@ -20,6 +21,7 @@ import {
   CreateProductDTO,
   UpdateProductDTO,
   calculateAVCO,
+  calculateCostRate,
 } from '../../types/inventory';
 import { IInventoryRepository } from '../../repositories/IInventoryRepository';
 
@@ -60,7 +62,11 @@ const serialsStore: Map<string, ItemSerial[]> = new Map();
  * Uses demo product names — never "MotherCare" or real brand names.
  */
 function buildSeedProducts(tenantId: string): Product[] {
-  return [
+  // Legacy-verified Margin = 0.072 (7.2%)
+  // Cost_rate = Retail_Price - Purchase_Rate × Margin
+  const MARGIN = 0.072;
+  
+  const rawProducts: Array<Omit<Product, 'costRate' | 'margin'>> = [
     {
       id: uid(), tenantId,
       sku: 'PROD-001', name: 'Premium Powder 400g',
@@ -142,6 +148,13 @@ function buildSeedProducts(tenantId: string): Product[] {
       isActive: true,
     },
   ];
+  
+  // Calculate costRate for each product using the verified formula
+  return rawProducts.map(p => ({
+    ...p,
+    costRate: calculateCostRate(p.purchaseRate, p.retailPrice, MARGIN),
+    margin: MARGIN,
+  }));
 }
 
 /**
@@ -169,7 +182,7 @@ function buildSeedLocations(tenantId: string, warehouseId: string, warehouseCode
 
 /**
  * Build seed stock levels per tenant.
- * Initial AVCO costs based on purchase rates.
+ * Initial AVCO costs based on Cost_rate (owner-verified formula).
  */
 function buildSeedStockLevels(
   tenantId: string,
@@ -191,7 +204,7 @@ function buildSeedStockLevels(
         warehouseId: wh.id,
         quantityOnHand: qty,
         quantityReserved: 0,
-        unitCost: prod.purchaseRate,
+        unitCost: prod.costRate,
         reorderLevel: 50,
         minimumStock: 20,
         maximumStock: 1000,
@@ -229,8 +242,8 @@ function buildSeedMovements(
       toWarehouseId: wh.id,
       productId: prod.id,
       quantity: qty,
-      unitCost: prod.purchaseRate,
-      totalCost: qty * prod.purchaseRate,
+      unitCost: prod.costRate,
+      totalCost: qty * prod.costRate,
       narration: `Initial GRN for ${prod.name}`,
       status: 'POSTED',
       createdAt: date.toISOString(),
@@ -253,8 +266,8 @@ function buildSeedMovements(
       fromWarehouseId: wh.id,
       productId: prod.id,
       quantity: qty,
-      unitCost: prod.purchaseRate,
-      totalCost: qty * prod.purchaseRate,
+      unitCost: prod.costRate,
+      totalCost: qty * prod.costRate,
       narration: `Stock adjustment for ${prod.name}`,
       status: 'POSTED',
       createdAt: date.toISOString(),
@@ -317,6 +330,9 @@ export class MockInventoryAdapter implements IInventoryRepository {
       throw new Error(`Product SKU ${dto.sku} already exists`);
     }
 
+    const margin = dto.margin ?? 0;
+    const costRate = dto.costRate ?? calculateCostRate(dto.purchaseRate ?? 0, dto.retailPrice ?? 0, margin);
+
     const product: Product = {
       id: uid(),
       tenantId,
@@ -337,6 +353,8 @@ export class MockInventoryAdapter implements IInventoryRepository {
       fedPercent: dto.fedPercent ?? 0,
       advanceTaxSalePercent: dto.advanceTaxSalePercent ?? 0,
       advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? 0,
+      costRate,
+      margin,
       isActive: dto.isActive ?? true,
     };
 
@@ -351,6 +369,11 @@ export class MockInventoryAdapter implements IInventoryRepository {
     if (idx === -1) throw new Error('Product not found');
 
     const existing = products[idx];
+    const newMargin = dto.margin ?? existing.margin;
+    const newPurchaseRate = dto.purchaseRate ?? existing.purchaseRate;
+    const newRetailPrice = dto.retailPrice ?? existing.retailPrice;
+    const newCostRate = dto.costRate ?? calculateCostRate(newPurchaseRate, newRetailPrice, newMargin);
+
     const updated: Product = {
       ...existing,
       name: dto.name ?? existing.name,
@@ -358,8 +381,8 @@ export class MockInventoryAdapter implements IInventoryRepository {
       unit: dto.unit ?? existing.unit,
       pcsPerCarton: dto.pcsPerCarton ?? existing.pcsPerCarton,
       saleRate: dto.saleRate ?? existing.saleRate,
-      purchaseRate: dto.purchaseRate ?? existing.purchaseRate,
-      retailPrice: dto.retailPrice ?? existing.retailPrice,
+      purchaseRate: newPurchaseRate,
+      retailPrice: newRetailPrice,
       tradeDiscount: dto.tradeDiscount ?? existing.tradeDiscount,
       tradeOffer: dto.tradeOffer ?? existing.tradeOffer,
       minQuantity: dto.minQuantity ?? existing.minQuantity,
@@ -369,6 +392,8 @@ export class MockInventoryAdapter implements IInventoryRepository {
       fedPercent: dto.fedPercent ?? existing.fedPercent,
       advanceTaxSalePercent: dto.advanceTaxSalePercent ?? existing.advanceTaxSalePercent,
       advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? existing.advanceTaxPurchasePercent,
+      costRate: newCostRate,
+      margin: newMargin,
       isActive: dto.isActive ?? existing.isActive,
     };
 

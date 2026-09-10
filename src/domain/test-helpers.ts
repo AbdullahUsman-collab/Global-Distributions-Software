@@ -54,15 +54,17 @@ export const SEED_ACCOUNTS: AccountHead[] = [
 export const SEED_PRODUCTS: Product[] = [
   {
     id: 'prod-1', tenantId: TENANT_ID, sku: 'WH-001', name: 'Product Alpha', category: 'General',
-    unit: 'PCS', pcsPerCarton: 24, saleRate: 100, purchaseRate: 60, retailPrice: 120,
+    unit: 'PCS', pcsPerCarton: 24, saleRate: 100, purchaseRate: 60, retailPrice: 66,
     tradeDiscount: 5, tradeOffer: '', minQuantity: 0, hsCode: '001', gstType: 'VAT',
-    gstPercent: 18, fedPercent: 0, advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0, isActive: true,
+    gstPercent: 18, fedPercent: 0, advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
+    costRate: 61.68, margin: 0.072, isActive: true,
   },
   {
     id: 'prod-2', tenantId: TENANT_ID, sku: 'WH-002', name: 'Product Beta', category: 'General',
-    unit: 'PCS', pcsPerCarton: 12, saleRate: 250, purchaseRate: 150, retailPrice: 300,
+    unit: 'PCS', pcsPerCarton: 12, saleRate: 250, purchaseRate: 150, retailPrice: 165,
     tradeDiscount: 0, tradeOffer: '', minQuantity: 0, hsCode: '002', gstType: 'VAT',
-    gstPercent: 18, fedPercent: 5, advanceTaxSalePercent: 3, advanceTaxPurchasePercent: 0, isActive: true,
+    gstPercent: 18, fedPercent: 5, advanceTaxSalePercent: 3, advanceTaxPurchasePercent: 0,
+    costRate: 154.2, margin: 0.072, isActive: true,
   },
 ];
 
@@ -279,6 +281,8 @@ export function createMockInventoryRepo(products: Product[] = SEED_PRODUCTS): II
     getProducts: async (_t: string) => [...productList],
     getProductById: async (_t: string, id: string) => productList.find(p => p.id === id) ?? null,
     createProduct: async (_t: string, dto: any) => {
+      const margin = dto.margin ?? 0;
+      const costRate = dto.costRate ?? (dto.retailPrice ?? 0) - (dto.purchaseRate ?? 0) * margin;
       const p: Product = {
         id: `prod-${Date.now()}`,
         tenantId: TENANT_ID,
@@ -299,6 +303,8 @@ export function createMockInventoryRepo(products: Product[] = SEED_PRODUCTS): II
         fedPercent: dto.fedPercent ?? 0,
         advanceTaxSalePercent: dto.advanceTaxSalePercent ?? 0,
         advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? 0,
+        costRate,
+        margin,
         isActive: dto.isActive ?? true,
       };
       productList.push(p);
