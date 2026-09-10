@@ -30,6 +30,7 @@ import { ISupplierRepository } from '../../domain/repositories/ISupplierReposito
 import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository';
 import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
 import { FinancialReportService } from '../../domain/services/FinancialReportService';
+import { StockReportService } from '../../domain/services/StockReportService';
 import { SystemRoleName } from '../../domain/types/rbac';
 import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO, validId, validDate, requiredString, positiveNumber, nonEmptyArray, validEnum, combineValidations } from '../lib/validation';
 
@@ -54,6 +55,7 @@ export function createProtectedRoutes(
   supplierRepo: ISupplierRepository,
   settingsRepo: ISettingsRepository,
   financialReportService: FinancialReportService,
+  stockReportService: StockReportService,
   brandAccessRepo?: IUserBrandAccessRepository,
 ): Router {
   const router = Router();
@@ -1880,6 +1882,43 @@ export function createProtectedRoutes(
   );
 
   // ─── Customer AR Balance Route ───────────────────────────────
+
+  /**
+   * GET /api/reports/stock-balance-with-activity
+   * Stock Balance With Activity report — shows opening, period activity, and closing stock per product.
+   */
+  router.get('/reports/stock-balance-with-activity',
+    requirePermissionMiddleware('inventory.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const startDate = req.query.startDate as string;
+        const endDate = req.query.endDate as string;
+        const productId = req.query.productId as string | undefined;
+
+        if (!startDate || !endDate) {
+          res.status(400).json({ error: 'startDate and endDate are required' });
+          return;
+        }
+
+        if (startDate > endDate) {
+          res.status(400).json({ error: 'startDate must be before or equal to endDate' });
+          return;
+        }
+
+        const report = await stockReportService.generateStockBWA({
+          tenantId,
+          startDate,
+          endDate,
+          productId: productId || undefined,
+        });
+        res.json(report);
+      } catch (error) {
+        console.error('Stock BWA report error:', error);
+        res.status(500).json({ error: 'Failed to generate stock balance with activity report' });
+      }
+    }
+  );
 
   /**
    * GET /api/customers/:id/ar-balance

@@ -569,6 +569,14 @@ export async function cancelStockMovement(id: string) {
   return apiRequest<any>(`/stock-movements/${id}/cancel`, { method: 'POST' });
 }
 
+// ─── Stock Reports API ───────────────────────────────────────
+
+export async function getStockBalanceWithActivity(startDate: string, endDate: string, productId?: string) {
+  const params = new URLSearchParams({ startDate, endDate });
+  if (productId) params.set('productId', productId);
+  return apiRequest<any>(`/reports/stock-balance-with-activity?${params.toString()}`);
+}
+
 // ─── Customer AR Balance API ─────────────────────────────────
 
 export async function getCustomerARBalance(customerId: string) {

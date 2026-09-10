@@ -70,6 +70,7 @@ import { PartyBalanceService } from '../domain/services/PartyBalanceService';
 import { AgingReportService } from '../domain/services/AgingReportService';
 import { DashboardService } from '../domain/services/DashboardService';
 import { FinancialReportService } from '../domain/services/FinancialReportService';
+import { StockReportService } from '../domain/services/StockReportService';
 
 // ─── Adapter Factory ────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ const billsListService = new BillsListService(voucherAdapter, customerAdapter, s
 const partyBalanceService = new PartyBalanceService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter);
 const agingReportService = new AgingReportService(voucherAdapter, coaAdapter, customerAdapter, supplierAdapter);
 const financialReportService = new FinancialReportService(coaAdapter, voucherAdapter);
+const stockReportService = new StockReportService(inventoryAdapter);
 const dashboardService = new DashboardService(voucherAdapter, inventoryAdapter, coaAdapter, customerAdapter, supplierAdapter, cashBookService, financialReportService);
 
 // ─── CORS Configuration ────────────────────────────────────────
@@ -207,6 +209,7 @@ app.use('/api',
       supplierAdapter,
       settingsAdapter,
       financialReportService,
+      stockReportService,
       brandAccessAdapter,
     )
 );

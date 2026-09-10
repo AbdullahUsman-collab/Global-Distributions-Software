@@ -459,6 +459,47 @@ export interface BillLineTaxResult {
  *   ADV_Tax = To_Amt × (ADV% / 100)
  *   Net = To_Amt + GST + F.Tax + FED + ADV_Tax
  */
+/* ─── Stock Balance With Activity Report ──────────────────── */
+
+/** Filter DTO for Stock Balance With Activity report */
+export interface StockBWAFilter {
+  tenantId: string;
+  startDate: string;
+  endDate: string;
+  productId?: string;
+}
+
+/** Single product row in a Stock Balance With Activity report */
+export interface StockBWARow {
+  productId: string;
+  productCode: string;
+  productName: string;
+  unit: string;
+  openingQty: number;
+  grnQty: number;
+  issueQty: number;
+  returnQty: number;
+  adjustmentQty: number;
+  transferInQty: number;
+  transferOutQty: number;
+  closingQty: number;
+}
+
+/** Complete Stock Balance With Activity report */
+export interface StockBWAReport {
+  startDate: string;
+  endDate: string;
+  rows: StockBWARow[];
+  totalOpeningQty: number;
+  totalGrnQty: number;
+  totalIssueQty: number;
+  totalReturnQty: number;
+  totalAdjustmentQty: number;
+  totalTransferInQty: number;
+  totalTransferOutQty: number;
+  totalClosingQty: number;
+}
+
 export function calculateBillLineTax(input: BillLineTaxInput): BillLineTaxResult {
   const amount = input.quantity * input.rate;
   const discountAmount = amount * (input.tradeDiscountPercent / 100);

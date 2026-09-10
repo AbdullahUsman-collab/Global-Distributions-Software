@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getWarehouseLocations, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement } from '../lib/api';
+import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getWarehouseLocations, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement, getStockBalanceWithActivity } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   Product,
@@ -23,16 +23,19 @@ import {
   CreateProductDTO,
   UpdateProductDTO,
   calculateStockValue,
+  StockBWAReport,
+  StockBWARow,
 } from '../../domain/types/inventory';
 import { GST_TYPE_LABELS } from '../../domain/types/settings';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
-type InventoryTab = 'items' | 'stock' | 'warehouses' | 'movements';
+type InventoryTab = 'items' | 'stock' | 'warehouses' | 'movements' | 'activity';
 
 const TABS: { key: InventoryTab; label: string }[] = [
   { key: 'items',      label: 'Item Master' },
   { key: 'stock',      label: 'Stock Balances' },
+  { key: 'activity',   label: 'Stock BWA' },
   { key: 'warehouses', label: 'Warehouses & Locations' },
   { key: 'movements',  label: 'Stock Movements' },
 ];
@@ -92,6 +95,7 @@ export const Inventory: React.FC = () => {
       {/* Tab Content */}
       {tab === 'items'      && <ItemsTab tenantId={tenant.id} />}
       {tab === 'stock'      && <StockBalancesTab tenantId={tenant.id} />}
+      {tab === 'activity'   && <StockBWATab tenantId={tenant.id} />}
       {tab === 'warehouses' && <WarehousesTab tenantId={tenant.id} />}
       {tab === 'movements'  && <MovementsTab tenantId={tenant.id} />}
     </div>
@@ -804,6 +808,165 @@ const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                 </React.Fragment>
               );
             })}
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Tab: Stock Balance With Activity                            */
+/* ═══════════════════════════════════════════════════════════ */
+
+const StockBWATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
+  const [report, setReport] = useState<StockBWAReport | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [productFilter, setProductFilter] = useState('');
+
+  const loadProducts = useCallback(async () => {
+    const p = await getProducts();
+    setProducts(p);
+  }, [tenantId]);
+
+  useEffect(() => { loadProducts(); }, [loadProducts]);
+
+  const generate = useCallback(async () => {
+    if (!startDate || !endDate || startDate > endDate) return;
+    setLoading(true);
+    try {
+      const result = await getStockBalanceWithActivity(startDate, endDate, productFilter || undefined);
+      setReport(result);
+    } finally {
+      setLoading(false);
+    }
+  }, [startDate, endDate, productFilter]);
+
+  const exportCsv = useCallback(async () => {
+    if (!report) return;
+    const headers = ['SKU', 'Product', 'Unit', 'Opening', 'GRN', 'Issue', 'Return', 'Adjustment', 'Transfer In', 'Transfer Out', 'Closing'];
+    const rows = report.rows.map(r => [
+      r.productCode, r.productName, r.unit,
+      r.openingQty, r.grnQty, r.issueQty, r.returnQty,
+      r.adjustmentQty, r.transferInQty, r.transferOutQty, r.closingQty,
+    ]);
+    const totalRow = ['TOTAL', '', '',
+      report.totalOpeningQty, report.totalGrnQty, report.totalIssueQty,
+      report.totalReturnQty, report.totalAdjustmentQty,
+      report.totalTransferInQty, report.totalTransferOutQty, report.totalClosingQty,
+    ];
+    rows.push(totalRow);
+    const { generateCsv, downloadFile, generateExportFilename } = await import('../utils/export');
+    const csv = generateCsv(headers, rows);
+    downloadFile(csv, generateExportFilename('Stock-BWA', `${startDate}_to_${endDate}`));
+  }, [report, startDate, endDate]);
+
+  const fmtInt = (n: number) => n.toLocaleString('en-PK');
+
+  return (
+    <>
+      {/* Filters */}
+      <div style={styles.toolbar}>
+        <div style={styles.filterGroup}>
+          <label style={styles.label}>From</label>
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={styles.input} />
+        </div>
+        <div style={styles.filterGroup}>
+          <label style={styles.label}>To</label>
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={styles.input} />
+        </div>
+        <div style={styles.filterGroup}>
+          <label style={styles.label}>Product</label>
+          <select value={productFilter} onChange={e => setProductFilter(e.target.value)} style={styles.select}>
+            <option value="">All Products</option>
+            {products.filter(p => p.isActive).map(p => (
+              <option key={p.id} value={p.id}>{p.sku} — {p.name}</option>
+            ))}
+          </select>
+        </div>
+        <button onClick={generate} style={styles.primaryBtn} disabled={loading || !startDate || !endDate || startDate > endDate}>
+          {loading ? 'Generating...' : 'Generate Report'}
+        </button>
+        {report && (
+          <button onClick={exportCsv} style={styles.cancelBtn}>Export CSV</button>
+        )}
+      </div>
+
+      {/* Report */}
+      <div className="table-wrap" style={styles.card}>
+        {!report ? (
+          <div style={styles.empty}>Select date range and click "Generate Report" to view stock balance with activity.</div>
+        ) : report.rows.length === 0 ? (
+          <div style={styles.empty}>No stock movements found for the selected period.</div>
+        ) : (
+          <>
+            {/* Stats */}
+            <div style={{ ...styles.treeHeader, minWidth: 1060 }}>
+              <span style={styles.statChip}>
+                <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{report.rows.length}</span>
+                <span style={styles.statLabel}>Products</span>
+              </span>
+              <span style={styles.statChip}>
+                <span style={styles.statLabel}>Opening: <strong style={{ color: '#1d4ed8' }}>{fmtInt(report.totalOpeningQty)}</strong></span>
+              </span>
+              <span style={styles.statChip}>
+                <span style={styles.statLabel}>Closing: <strong style={{ color: '#15803d' }}>{fmtInt(report.totalClosingQty)}</strong></span>
+              </span>
+            </div>
+
+            {/* Table Header */}
+            <div style={{ ...styles.treeHeader, minWidth: 1060 }}>
+              <span style={{ ...styles.col, flex: '0 0 80px' }}>SKU</span>
+              <span style={{ ...styles.col, flex: '1' }}>Product</span>
+              <span style={{ ...styles.col, flex: '0 0 50px' }}>Unit</span>
+              <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right' }}>Opening</span>
+              <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right' }}>GRN</span>
+              <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right' }}>Issue</span>
+              <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right' }}>Return</span>
+              <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right' }}>Adjust</span>
+              <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right' }}>Trf In</span>
+              <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right' }}>Trf Out</span>
+              <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right' }}>Closing</span>
+            </div>
+
+            {/* Table Rows */}
+            {report.rows.map(r => (
+              <div key={r.productId} style={{ ...styles.voucherRow, minWidth: 1060 }}>
+                <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{r.productCode}</span>
+                <span style={{ ...styles.col, flex: '1' }}>{r.productName}</span>
+                <span style={{ ...styles.col, flex: '0 0 50px', fontSize: 12, color: '#64748b' }}>{r.unit}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.openingQty > 0 ? '#1d4ed8' : '#cbd5e1' }}>{r.openingQty > 0 ? fmtInt(r.openingQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.grnQty > 0 ? '#15803d' : '#cbd5e1' }}>{r.grnQty > 0 ? fmtInt(r.grnQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.issueQty > 0 ? '#dc2626' : '#cbd5e1' }}>{r.issueQty > 0 ? fmtInt(r.issueQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.returnQty > 0 ? '#7c3aed' : '#cbd5e1' }}>{r.returnQty > 0 ? fmtInt(r.returnQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.adjustmentQty !== 0 ? '#b45309' : '#cbd5e1' }}>{r.adjustmentQty !== 0 ? fmtInt(r.adjustmentQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.transferInQty > 0 ? '#2563eb' : '#cbd5e1' }}>{r.transferInQty > 0 ? fmtInt(r.transferInQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.transferOutQty > 0 ? '#9333ea' : '#cbd5e1' }}>{r.transferOutQty > 0 ? fmtInt(r.transferOutQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{fmtInt(r.closingQty)}</span>
+              </div>
+            ))}
+
+            {/* Totals */}
+            <div style={{ ...styles.linesFooter, minWidth: 1060, borderTop: '2px solid #e2e8f0' }}>
+              <span style={{ flex: '0 0 80px', fontWeight: 600, color: '#475569', fontSize: 13 }}>Total</span>
+              <span style={{ flex: '1' }}></span>
+              <span style={{ flex: '0 0 50px' }}></span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8', fontSize: 13 }}>{fmtInt(report.totalOpeningQty)}</span>
+              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#15803d', fontSize: 13 }}>{fmtInt(report.totalGrnQty)}</span>
+              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#dc2626', fontSize: 13 }}>{fmtInt(report.totalIssueQty)}</span>
+              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#7c3aed', fontSize: 13 }}>{fmtInt(report.totalReturnQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#b45309', fontSize: 13 }}>{fmtInt(report.totalAdjustmentQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2563eb', fontSize: 13 }}>{fmtInt(report.totalTransferInQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#9333ea', fontSize: 13 }}>{fmtInt(report.totalTransferOutQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#1e293b', fontSize: 13 }}>{fmtInt(report.totalClosingQty)}</span>
+            </div>
           </>
         )}
       </div>
