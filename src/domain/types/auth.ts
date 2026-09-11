@@ -120,3 +120,21 @@ export interface UpdateUserPayload {
   displayName?: string;
   isActive?: boolean;
 }
+
+/**
+ * Payload for changing the authenticated user's own password.
+ * No userId — derived server-side from session.
+ */
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/**
+ * Result of a password change operation.
+ */
+export interface ChangePasswordResult {
+  success: boolean;
+  error?: string;
+}

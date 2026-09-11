@@ -17,7 +17,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { getSettings, updateSettings } from '../lib/api';
+import { getSettings, updateSettings, changePassword } from '../lib/api';
 import {
   TenantSettings,
   TenantBusinessProfile,
@@ -40,7 +40,8 @@ type TabId =
   | 'fed'
   | 'advanceTax'
   | 'taxAccounts'
-  | 'financial';
+  | 'financial'
+  | 'password';
 
 interface Tab { id: TabId; label: string; }
 
@@ -52,6 +53,7 @@ const TABS: Tab[] = [
   { id: 'advanceTax', label: 'Advance Tax' },
   { id: 'taxAccounts', label: 'Tax Accounts' },
   { id: 'financial', label: 'Financial Rules' },
+  { id: 'password', label: 'Change Password' },
 ];
 
 const CURRENCIES = ['PKR', 'USD', 'EUR', 'GBP', 'AED', 'SAR', 'INR'];
@@ -227,6 +229,9 @@ export const Settings: React.FC = () => {
         )}
         {activeTab === 'financial' && (
           <FinancialTab draft={draftFinancial} onChange={setDraftFinancial} />
+        )}
+        {activeTab === 'password' && (
+          <PasswordTab />
         )}
       </div>
 
@@ -533,6 +538,106 @@ const FinancialTab: React.FC<{
             style={styles.input} maxLength={10} placeholder="e.g. JV, SB, PO" />
         </Field>
       </div>
+    </div>
+  );
+};
+
+/* ─── Change Password Tab ──────────────────────────────────── */
+
+const PasswordTab: React.FC = () => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+
+    if (!currentPassword) {
+      setError('Current password is required');
+      return;
+    }
+    if (!newPassword) {
+      setError('New password is required');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('New password and confirmation do not match');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setError('New password must be different from current password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await changePassword({ currentPassword, newPassword, confirmPassword });
+      setSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={styles.tabContent}>
+      <h2 style={styles.sectionTitle}>Change Password</h2>
+      <p style={styles.sectionDescription}>
+        Update your account password. Your current password is required for verification.
+      </p>
+      {error && <div style={styles.errorBanner}>{error}</div>}
+      {success && <div style={styles.successBanner}>Password changed successfully.</div>}
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '400px' }}>
+        <Field label="Current Password">
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            style={styles.input}
+            autoComplete="current-password"
+            required
+          />
+        </Field>
+        <Field label="New Password">
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            style={styles.input}
+            autoComplete="new-password"
+            required
+            minLength={6}
+          />
+        </Field>
+        <Field label="Confirm New Password">
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            style={styles.input}
+            autoComplete="new-password"
+            required
+          />
+        </Field>
+        <div>
+          <button type="submit" style={styles.saveButton} disabled={loading}>
+            {loading ? 'Changing...' : 'Change Password'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

@@ -14,6 +14,8 @@ import {
   SwitchTenantResult,
   UserSession,
   User,
+  ChangePasswordPayload,
+  ChangePasswordResult,
 } from '../types/auth';
 import { TenantPublicConfig } from '../types/tenant';
 
@@ -65,4 +67,11 @@ export interface IAuthService {
    * Returns only active brand access records with tenant details.
    */
   getAuthorizedTenants(userId: string): Promise<TenantPublicConfig[]>;
+
+  /**
+   * Change the authenticated user's own password.
+   * Verifies current password, validates new password, updates hash.
+   * Preserves the existing session.
+   */
+  changePassword(userId: string, payload: ChangePasswordPayload): Promise<ChangePasswordResult>;
 }

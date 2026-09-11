@@ -636,6 +636,15 @@ export async function activateUser(id: string) {
   return apiRequest<any>(`/users/${encodeURIComponent(id)}/activate`, { method: 'POST' });
 }
 
+// ─── Change Password API ─────────────────────────────────────
+
+export async function changePassword(data: { currentPassword: string; newPassword: string; confirmPassword: string }) {
+  return apiRequest<{ success: boolean }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 // ─── User Brand Access Management API ─────────────────────────
 
 export async function getUserBrandAccess(userId: string) {

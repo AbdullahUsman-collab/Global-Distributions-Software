@@ -238,6 +238,80 @@ export function createAuthRoutes(
     }
   });
 
+  /**
+   * POST /api/auth/change-password
+   * Change the authenticated user's own password.
+   *
+   * SECURITY:
+   * - userId derived from session (NOT from request body)
+   * - currentPassword verified against stored hash
+   * - new password validated for minimum requirements
+   * - session preserved after change
+   * - no password or hash returned in response
+   */
+  router.post('/change-password', async (req: Request, res: Response) => {
+    const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
+
+    if (!sessionId) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
+    try {
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        res.status(401).json({ success: false, error: 'Invalid or expired session' });
+        return;
+      }
+
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+
+      // Validate required fields
+      if (!currentPassword || typeof currentPassword !== 'string') {
+        res.status(400).json({ success: false, error: 'Current password is required' });
+        return;
+      }
+      if (!newPassword || typeof newPassword !== 'string') {
+        res.status(400).json({ success: false, error: 'New password is required' });
+        return;
+      }
+      if (!confirmPassword || typeof confirmPassword !== 'string') {
+        res.status(400).json({ success: false, error: 'Password confirmation is required' });
+        return;
+      }
+
+      // Validate new password minimum length
+      if (newPassword.length < 6) {
+        res.status(400).json({ success: false, error: 'New password must be at least 6 characters' });
+        return;
+      }
+
+      // Validate confirmation matches
+      if (newPassword !== confirmPassword) {
+        res.status(400).json({ success: false, error: 'New password and confirmation do not match' });
+        return;
+      }
+
+      // Delegate to auth service — userId derived from session, NOT from body
+      const result = await authService.changePassword(session.userId, {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      if (!result.success) {
+        res.status(400).json({ success: false, error: result.error });
+        return;
+      }
+
+      // Success — no password, no hash, no session changes returned
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Change password error:', error);
+      res.status(500).json({ success: false, error: 'Password change failed' });
+    }
+  });
+
   return router;
 }
 

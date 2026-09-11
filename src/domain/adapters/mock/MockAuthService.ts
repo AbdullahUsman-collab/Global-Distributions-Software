@@ -21,6 +21,8 @@ import {
   SwitchTenantResult,
   UserSession,
   User,
+  ChangePasswordPayload,
+  ChangePasswordResult,
 } from '../../types/auth';
 import { IAuthService } from '../../services/IAuthService';
 import { ITenantRepository } from '../../repositories/ITenantRepository';
@@ -28,7 +30,7 @@ import { IUserRepository } from '../../repositories/IUserRepository';
 import { IUserCredentialsRepository } from '../../repositories/IUserCredentialsRepository';
 import { ISessionRepository } from '../../repositories/ISessionRepository';
 import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository';
-import { DEMO_PLAIN_PASSWORDS } from './MockUserCredentialsAdapter';
+import { DEMO_PLAIN_PASSWORDS, registerTestPassword } from './MockUserCredentialsAdapter';
 import { TenantPublicConfig } from '../../types/tenant';
 
 /**
@@ -260,5 +262,57 @@ export class MockAuthService implements IAuthService {
     }
 
     return tenants;
+  }
+
+  /**
+   * Change the authenticated user's own password.
+   *
+   * Flow:
+   * 1. Verify user exists and is active
+   * 2. Verify current password (mock: plain-text comparison)
+   * 3. Validate new password
+   * 4. Update mock plain-text password for demo mode
+   * 5. Return success — session preserved
+   */
+  async changePassword(
+    userId: string,
+    payload: ChangePasswordPayload
+  ): Promise<ChangePasswordResult> {
+    const { currentPassword, newPassword, confirmPassword } = payload;
+
+    // 1. Verify user exists and is active
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+    if (!user.isActive) {
+      return { success: false, error: 'Account is deactivated' };
+    }
+
+    // 2. Verify current password (mock mode: plain-text comparison)
+    const storedPlain = DEMO_PLAIN_PASSWORDS[userId];
+    if (storedPlain === undefined || storedPlain !== currentPassword) {
+      return { success: false, error: 'Current password is incorrect' };
+    }
+
+    // 3. Validate new password
+    if (!newPassword || newPassword.trim().length === 0) {
+      return { success: false, error: 'New password cannot be empty' };
+    }
+    if (newPassword.length < 6) {
+      return { success: false, error: 'New password must be at least 6 characters' };
+    }
+    if (newPassword !== confirmPassword) {
+      return { success: false, error: 'New password and confirmation do not match' };
+    }
+    if (newPassword === currentPassword) {
+      return { success: false, error: 'New password must be different from current password' };
+    }
+
+    // 4. Update mock plain-text password for demo mode compatibility
+    registerTestPassword(userId, newPassword);
+
+    // 5. Session preserved — no invalidation
+    return { success: true };
   }
 }
