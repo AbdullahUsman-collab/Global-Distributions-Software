@@ -1,5 +1,8 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export default defineConfig({
   resolve: {
@@ -12,6 +15,5 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.integration.test.ts'],
     exclude: ['node_modules', 'dist'],
-    envDir: '.',
   },
 });
