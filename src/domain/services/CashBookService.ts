@@ -74,6 +74,8 @@ export interface CashBookSummary {
   transactionCount: number;
   /** Transactions with running balance */
   transactions: CashBookTransaction[];
+  /** Draft vouchers awaiting posting (not yet in ledger) */
+  draftVouchers: VoucherHeader[];
 }
 
 /* ─── Service ──────────────────────────────────────────────── */
@@ -136,19 +138,20 @@ export class CashBookService {
       0,
     );
 
-    // Get all cash-related vouchers posted in the date range
-    const allVouchers = await this.voucherRepo.getVouchersByTenantId(tenantId, {
-      status: 'POSTED',
-    });
+    // Get all cash-related vouchers (both DRAFT and POSTED) for the full year,
+    // then filter to the requested date range.  Drafts must be visible so users
+    // can post or delete them; only POSTED entries appear in the transaction list.
+    const allVouchers = await this.voucherRepo.getVouchersByTenantId(tenantId);
     const cashVouchers = allVouchers.filter(
       v => CASH_VOUCHER_TYPES.has(v.voucherType) && v.date >= startDate && v.date <= endDate,
     );
 
-    // Get ledger entries for this account in the date range
+    // Get POSTED ledger entries for this account in the date range
     const rangeEntries = await this.voucherRepo.getLedgerEntries(tenantId, {
       accountId: accountCode,
       startDate,
       endDate,
+      status: 'POSTED',
     });
 
     // Build transaction list with running balance
@@ -191,6 +194,11 @@ export class CashBookService {
     const totalReceipts = rangeEntries.reduce((sum, e) => sum + e.debit, 0);
     const totalPayments = rangeEntries.reduce((sum, e) => sum + e.credit, 0);
 
+    // Collect draft vouchers (not yet posted, so no ledger entries exist)
+    const draftVouchers = allVouchers.filter(
+      v => v.status === 'DRAFT' && CASH_VOUCHER_TYPES.has(v.voucherType),
+    );
+
     return {
       account,
       openingBalance,
@@ -199,6 +207,7 @@ export class CashBookService {
       totalPayments,
       transactionCount: transactions.length,
       transactions,
+      draftVouchers,
     };
   }
 

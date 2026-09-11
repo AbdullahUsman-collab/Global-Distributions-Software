@@ -140,17 +140,19 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
       }
 
       if (dto.lines) {
+        const acctMap = await this.buildAccountCodeMap(client, tenantId);
         await client.query('DELETE FROM voucher_lines WHERE tenant_id = $1 AND voucher_id = $2', [tenantId, id]);
         for (let i = 0; i < dto.lines.length; i++) {
           const line = dto.lines[i];
+          const resolvedAccountId = this.resolveAccountId(line.accountId, acctMap);
           await client.query(
             `INSERT INTO voucher_lines (id, voucher_id, tenant_id, account_id, description, debit, credit, line_order,
                contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
             [
-              uuid(), id, tenantId, line.accountId, line.description,
+              uuid(), id, tenantId, resolvedAccountId, line.description,
               line.debit, line.credit, i + 1,
-              line.contraAccountId ?? null, line.quantity ?? null,
+              line.contraAccountId ? this.resolveAccountId(line.contraAccountId, acctMap) : null, line.quantity ?? null,
               line.productId ?? null, line.branch ?? null,
               line.stInvNo ?? null, line.stRate ?? null,
               line.stAmount ?? null, line.amtExclStd ?? null,
@@ -209,11 +211,23 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
         [tenantId, id]
       );
 
+      // Build a reverse map: DB account_id → account_code
+      // Voucher lines store DB IDs (e.g., 'coa-41101'), but ledger_entries
+      // should store account codes (e.g., '41101') to match the mock adapter
+      // and the LedgerEntry spec ("Account code, 5-digit string").
+      const acctMap = await this.buildAccountCodeMap(client, tenantId);
+      const reverseMap = new Map<string, string>();
+      for (const [code, dbId] of acctMap) {
+        reverseMap.set(dbId, code);
+      }
+
       for (const line of lines) {
+        // Resolve DB ID back to account code for ledger storage
+        const ledgerAccountId = reverseMap.get(line.accountId) || line.accountId;
         await client.query(
           `INSERT INTO ledger_entries (id, tenant_id, voucher_id, voucher_line_id, account_id, debit, credit, entry_date, voucher_type, voucher_number, narration)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-          [uuid(), tenantId, id, line.id, line.accountId, line.debit, line.credit, existing.date, existing.voucherType, existing.voucherNumber, line.description]
+          [uuid(), tenantId, id, line.id, ledgerAccountId, line.debit, line.credit, existing.date, existing.voucherType, existing.voucherNumber, line.description]
         );
       }
 

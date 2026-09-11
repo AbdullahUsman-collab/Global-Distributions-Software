@@ -554,6 +554,52 @@ export const CashBook: React.FC = () => {
         </form>
       </div>
 
+      {/* ── Draft Vouchers Pending Posting ── */}
+      {summary && summary.draftVouchers && summary.draftVouchers.length > 0 && (
+        <div style={{ ...styles.tableCard, borderLeft: '3px solid #f59e0b', marginBottom: 16 }}>
+          <h2 style={{ ...styles.tableTitle, color: '#92400e' }}>
+            Pending Drafts ({summary.draftVouchers.length})
+          </h2>
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Date</th>
+                  <th style={styles.th}>Voucher #</th>
+                  <th style={styles.th}>Type</th>
+                  <th style={styles.th}>Description</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.draftVouchers.map((dv) => (
+                  <tr key={dv.id} style={styles.tr}>
+                    <td style={styles.td}>{dv.date}</td>
+                    <td style={styles.td}>#{dv.voucherNumber}</td>
+                    <td style={styles.td}>
+                      <span style={styles.typeBadge}>
+                        {VOUCHER_TYPE_LABELS[dv.voucherType] ?? dv.voucherType}
+                      </span>
+                    </td>
+                    <td style={styles.td}>{dv.narration || '—'}</td>
+                    <td style={styles.td}>
+                      <span style={{ ...styles.statusBadge, backgroundColor: '#fef3c7', color: '#92400e' }}>Draft</span>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button onClick={() => handlePost(dv.id)} style={styles.postBtn} title="Post voucher">Post</button>
+                        <button onClick={() => handleDelete(dv.id)} style={styles.deleteBtn} title="Delete draft">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* ── Entries Table ── */}
       <div style={styles.tableCard}>
         <h2 style={styles.tableTitle}>All Entries</h2>

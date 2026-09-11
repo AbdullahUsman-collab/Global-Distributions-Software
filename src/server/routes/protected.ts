@@ -651,6 +651,9 @@ export function createProtectedRoutes(
   /**
    * GET /api/ledger/:accountId
    * Get ledger for a specific account with running balance.
+   * The frontend sends the account code (e.g., '11101') or a full ID.
+   * Ledger entries store account codes, so we pass the code directly.
+   * If the value looks like a DB ID (contains '-'), resolve to the code first.
    */
   router.get('/ledger/:accountId',
     requirePermissionMiddleware('finance.view'),
@@ -659,7 +662,19 @@ export function createProtectedRoutes(
         const tenantId = req.user!.tenantId;
         const startDate = req.query.startDate as string | undefined;
         const endDate = req.query.endDate as string | undefined;
-        const entries = await voucherRepo.getLedgerForAccount(tenantId, req.params.accountId, { startDate, endDate });
+        const rawAccountId = req.params.accountId;
+
+        // Ledger entries store account codes (e.g., '11101'), not DB IDs.
+        // If the frontend sends a DB ID like 'coa-11101', resolve to the code.
+        let ledgerAccountId = rawAccountId;
+        if (rawAccountId.includes('-')) {
+          const account = await coaRepo.getAccountById(tenantId, rawAccountId);
+          if (account) {
+            ledgerAccountId = account.accountCode;
+          }
+        }
+
+        const entries = await voucherRepo.getLedgerForAccount(tenantId, ledgerAccountId, { startDate, endDate });
         res.json(entries);
       } catch (error) {
         console.error('Get account ledger error:', error);
