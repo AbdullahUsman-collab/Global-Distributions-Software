@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getAccounts, createAccount, updateAccount, deleteAccount, getAccountLedger, getProducts, getVouchers, postVoucher, deleteVoucher, createVoucher, updateVoucher, getVoucherLines } from '../lib/api';
 import {
@@ -111,7 +111,7 @@ export const Finance: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+          <Link to="/dashboard" style={styles.backBtn}>← Dashboard</Link>
           <h1 style={styles.title}>Finance</h1>
           <p style={styles.subtitle}>{tenant.brandName}</p>
         </div>
@@ -887,7 +887,7 @@ const VoucherModal: React.FC<{
                           rate: vType === 'PRV' ? prod.purchaseRate : prod.saleRate,
                           tradeDiscountPercent: prod.tradeDiscount,
                           gstPercent: prod.gstPercent,
-                          furtherTaxPercent: 0,
+                          furtherTaxPercent: prod.furtherTaxPercent,
                           fedPercent: prod.fedPercent,
                           advanceTaxPercent: vType === 'PRV' ? prod.advanceTaxPurchasePercent : prod.advanceTaxSalePercent,
                         };
@@ -1534,7 +1534,7 @@ function deriveNormalBalanceLabel(type: AccountType): string {
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0 },
+  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
   title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
   subtitle: { fontSize: 14, color: '#64748b' },
 

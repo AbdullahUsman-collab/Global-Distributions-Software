@@ -23,7 +23,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       `SELECT id, tenant_id, sku, name, category, unit, pcs_per_carton,
               sale_rate, purchase_rate, retail_price, trade_discount, trade_offer,
               min_quantity, hs_code, gst_type, gst_percent, fed_percent,
-              advance_tax_sale_percent, advance_tax_purchase_percent, cost_rate, margin, is_active
+              advance_tax_sale_percent, advance_tax_purchase_percent, further_tax_percent, cost_rate, margin, is_active
        FROM products WHERE tenant_id = $1 ORDER BY sku`,
       [tenantId]
     );
@@ -37,6 +37,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       gstPercent: Number(r.gst_percent), fedPercent: Number(r.fed_percent),
       advanceTaxSalePercent: Number(r.advance_tax_sale_percent),
       advanceTaxPurchasePercent: Number(r.advance_tax_purchase_percent),
+      furtherTaxPercent: Number(r.further_tax_percent),
       costRate: Number(r.cost_rate), margin: Number(r.margin),
       isActive: r.is_active,
     }));
@@ -47,7 +48,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       `SELECT id, tenant_id, sku, name, category, unit, pcs_per_carton,
               sale_rate, purchase_rate, retail_price, trade_discount, trade_offer,
               min_quantity, hs_code, gst_type, gst_percent, fed_percent,
-              advance_tax_sale_percent, advance_tax_purchase_percent, cost_rate, margin, is_active
+              advance_tax_sale_percent, advance_tax_purchase_percent, further_tax_percent, cost_rate, margin, is_active
        FROM products WHERE tenant_id = $1 AND id = $2`,
       [tenantId, id]
     );
@@ -63,6 +64,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       gstPercent: Number(r.gst_percent), fedPercent: Number(r.fed_percent),
       advanceTaxSalePercent: Number(r.advance_tax_sale_percent),
       advanceTaxPurchasePercent: Number(r.advance_tax_purchase_percent),
+      furtherTaxPercent: Number(r.further_tax_percent),
       costRate: Number(r.cost_rate), margin: Number(r.margin),
       isActive: r.is_active,
     };
@@ -74,14 +76,15 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       `INSERT INTO products (id, tenant_id, sku, name, category, unit, pcs_per_carton,
          sale_rate, purchase_rate, retail_price, trade_discount, trade_offer,
          min_quantity, hs_code, gst_type, gst_percent, fed_percent,
-         advance_tax_sale_percent, advance_tax_purchase_percent, cost_rate, margin)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+         advance_tax_sale_percent, advance_tax_purchase_percent, further_tax_percent, cost_rate, margin)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
        RETURNING *`,
       [id, tenantId, dto.sku, dto.name, dto.category, dto.unit || 'PCS', dto.pcsPerCarton || 1,
        dto.saleRate || 0, dto.purchaseRate || 0, dto.retailPrice || 0,
        dto.tradeDiscount || 0, dto.tradeOffer || '', dto.minQuantity || 0,
        dto.hsCode || '', dto.gstType || 'VAT', dto.gstPercent || 0, dto.fedPercent || 0,
        dto.advanceTaxSalePercent || 0, dto.advanceTaxPurchasePercent || 0,
+       dto.furtherTaxPercent || 0,
        dto.costRate ?? (dto.retailPrice || 0) - (dto.purchaseRate || 0) * (dto.margin || 0),
        dto.margin || 0]
     );
@@ -95,6 +98,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       hsCode: r.hs_code, gstType: r.gst_type, gstPercent: Number(r.gst_percent),
       fedPercent: Number(r.fed_percent), advanceTaxSalePercent: Number(r.advance_tax_sale_percent),
       advanceTaxPurchasePercent: Number(r.advance_tax_purchase_percent),
+      furtherTaxPercent: Number(r.further_tax_percent),
       costRate: Number(r.cost_rate), margin: Number(r.margin),
       isActive: r.is_active,
     };
@@ -117,6 +121,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
     fedPercent: 'fed_percent',
     advanceTaxSalePercent: 'advance_tax_sale_percent',
     advanceTaxPurchasePercent: 'advance_tax_purchase_percent',
+    furtherTaxPercent: 'further_tax_percent',
     costRate: 'cost_rate',
     margin: 'margin',
     isActive: 'is_active',
@@ -150,6 +155,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
       hsCode: r.hs_code, gstType: r.gst_type, gstPercent: Number(r.gst_percent),
       fedPercent: Number(r.fed_percent), advanceTaxSalePercent: Number(r.advance_tax_sale_percent),
       advanceTaxPurchasePercent: Number(r.advance_tax_purchase_percent),
+      furtherTaxPercent: Number(r.further_tax_percent),
       costRate: Number(r.cost_rate), margin: Number(r.margin),
       isActive: r.is_active,
     };

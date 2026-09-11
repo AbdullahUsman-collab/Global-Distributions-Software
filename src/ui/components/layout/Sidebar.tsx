@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../auth/ProtectedRoute';
 import { hasPermission, Permission } from '../../lib/auth';
 
@@ -152,7 +152,6 @@ const navItems: NavItem[] = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const isActive = (path: string) => {
@@ -160,11 +159,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
       return location.pathname === '/dashboard';
     }
     return location.pathname.startsWith(path);
-  };
-
-  const handleNav = (path: string) => {
-    navigate(path);
-    onClose();
   };
 
   const visibleItems = navItems.filter(
@@ -175,9 +169,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     <aside className={`erp-sidebar ${open ? 'open' : ''}`} style={styles.sidebar}>
       <nav style={styles.nav}>
         {visibleItems.map((item) => (
-          <button
+          <Link
             key={item.path}
-            onClick={() => handleNav(item.path)}
+            to={item.path}
+            onClick={onClose}
             style={{
               ...styles.navItem,
               backgroundColor: isActive(item.path) ? '#eff6ff' : 'transparent',
@@ -186,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           >
             <span style={styles.navIcon}>{item.icon}</span>
             <span style={styles.navLabel}>{item.label}</span>
-          </button>
+          </Link>
         ))}
       </nav>
 

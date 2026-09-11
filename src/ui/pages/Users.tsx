@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getUsers, createUser, updateUser, deactivateUser, activateUser, getUserBrandAccess } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
@@ -101,7 +101,7 @@ export const Users: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+          <Link to="/dashboard" style={styles.backBtn}>← Dashboard</Link>
           <h1 style={styles.title}>User Management</h1>
           <p style={styles.subtitle}>{tenant.brandName}</p>
         </div>
@@ -381,7 +381,7 @@ const EditUserModal: React.FC<{
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0 },
+  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
   title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
   subtitle: { fontSize: 14, color: '#64748b' },
 

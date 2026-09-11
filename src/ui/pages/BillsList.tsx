@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getBills, deleteSaleBill, deletePurchaseBill, getCustomers, getSuppliers, getProducts } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
@@ -238,7 +238,7 @@ export const BillsList: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+          <Link to="/dashboard" style={styles.backBtn}>← Dashboard</Link>
           <h1 style={styles.title}>Bills List</h1>
           <p style={styles.subtitle}>{tenant.brandName} — All transactions</p>
         </div>
@@ -494,6 +494,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '13px',
     padding: 0,
     marginBottom: '8px',
+    textDecoration: 'none',
   },
   title: {
     fontSize: '24px',

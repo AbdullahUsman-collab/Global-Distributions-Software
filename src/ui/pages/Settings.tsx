@@ -4,41 +4,27 @@
  *
  * Tabs:
  *  1. Business Profile — company info, NTN, STN
- *  2. Sales Tax (GST) — GST type, rate, tax-inclusive, tax ID label
- *  3. Further Tax — further sales tax config
- *  4. FED — Federal Excise Duty config
- *  5. Advance Tax — separate purchase/sale rates
- *  6. Tax Accounts — GL account mapping readiness (optional, no invented codes)
- *  7. Financial Rules — fiscal year, decimal precision, voucher prefix
+ *  2. Tax Accounts — GL account mapping readiness (optional, no invented codes)
+ *  3. Financial Rules — fiscal year, decimal precision, voucher prefix
  *
  * Active tenant is resolved from the authenticated session context.
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getSettings, updateSettings, changePassword } from '../lib/api';
 import {
   TenantSettings,
   TenantBusinessProfile,
-  SalesTaxConfig,
-  FurtherTaxConfig,
-  FedConfig,
-  AdvanceTaxConfig,
   TaxAccountMapping,
   TenantFinancialRules,
-  GstType,
-  GST_TYPE_LABELS,
 } from '../../domain/types/settings';
 
 /* ─── Tab Definitions ──────────────────────────────────────── */
 
 type TabId =
   | 'profile'
-  | 'salesTax'
-  | 'furtherTax'
-  | 'fed'
-  | 'advanceTax'
   | 'taxAccounts'
   | 'financial'
   | 'password';
@@ -47,10 +33,6 @@ interface Tab { id: TabId; label: string; }
 
 const TABS: Tab[] = [
   { id: 'profile', label: 'Business Profile' },
-  { id: 'salesTax', label: 'Sales Tax' },
-  { id: 'furtherTax', label: 'Further Tax' },
-  { id: 'fed', label: 'FED' },
-  { id: 'advanceTax', label: 'Advance Tax' },
   { id: 'taxAccounts', label: 'Tax Accounts' },
   { id: 'financial', label: 'Financial Rules' },
   { id: 'password', label: 'Change Password' },
@@ -66,7 +48,6 @@ const MONTHS = [
 
 export const Settings: React.FC = () => {
   const { tenant } = useAuth();
-  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [loading, setLoading] = useState(true);
@@ -80,18 +61,6 @@ export const Settings: React.FC = () => {
   const [draftProfile, setDraftProfile] = useState<TenantBusinessProfile>({
     businessName: '', tradeName: '', ntn: '', stn: '',
     email: '', phone: '', address: '', baseCurrency: 'PKR',
-  });
-  const [draftSalesTax, setDraftSalesTax] = useState<SalesTaxConfig>({
-    isEnabled: true, defaultRate: 0, defaultGstType: '3RD', isTaxInclusiveDefault: false,
-  });
-  const [draftFurtherTax, setDraftFurtherTax] = useState<FurtherTaxConfig>({
-    isEnabled: false, defaultRate: 0,
-  });
-  const [draftFed, setDraftFed] = useState<FedConfig>({
-    isEnabled: false, defaultRate: 0,
-  });
-  const [draftAdvanceTax, setDraftAdvanceTax] = useState<AdvanceTaxConfig>({
-    isEnabled: false, saleRate: 0, purchaseRate: 0,
   });
   const [draftTaxAccounts, setDraftTaxAccounts] = useState<TaxAccountMapping>({});
   const [draftFinancial, setDraftFinancial] = useState<TenantFinancialRules>({
@@ -108,10 +77,6 @@ export const Settings: React.FC = () => {
       }
       setSettings(existing);
       setDraftProfile(existing.profile ?? { businessName: '', tradeName: '', ntn: '', stn: '', email: '', phone: '', address: '', baseCurrency: 'PKR' });
-      setDraftSalesTax(existing.salesTax ?? { isEnabled: true, defaultRate: 0, defaultGstType: '3RD', isTaxInclusiveDefault: false });
-      setDraftFurtherTax(existing.furtherTax ?? { isEnabled: false, defaultRate: 0 });
-      setDraftFed(existing.fed ?? { isEnabled: false, defaultRate: 0 });
-      setDraftAdvanceTax(existing.advanceTax ?? { isEnabled: false, saleRate: 0, purchaseRate: 0 });
       setDraftTaxAccounts(existing.taxAccounts ?? {});
       setDraftFinancial(existing.financial ?? { fiscalYearStartMonth: 7, decimalPrecision: 2, voucherNumberingPrefix: '' });
     } catch {
@@ -130,10 +95,6 @@ export const Settings: React.FC = () => {
     try {
       const updated = await updateSettings({
         profile: draftProfile,
-        salesTax: draftSalesTax,
-        furtherTax: draftFurtherTax,
-        fed: draftFed,
-        advanceTax: draftAdvanceTax,
         taxAccounts: draftTaxAccounts,
         financial: draftFinancial,
       });
@@ -150,10 +111,6 @@ export const Settings: React.FC = () => {
   const handleReset = () => {
     if (settings) {
       setDraftProfile(settings.profile ?? { businessName: '', tradeName: '', ntn: '', stn: '', email: '', phone: '', address: '', baseCurrency: 'PKR' });
-      setDraftSalesTax(settings.salesTax ?? { isEnabled: true, defaultRate: 0, defaultGstType: '3RD', isTaxInclusiveDefault: false });
-      setDraftFurtherTax(settings.furtherTax ?? { isEnabled: false, defaultRate: 0 });
-      setDraftFed(settings.fed ?? { isEnabled: false, defaultRate: 0 });
-      setDraftAdvanceTax(settings.advanceTax ?? { isEnabled: false, saleRate: 0, purchaseRate: 0 });
       setDraftTaxAccounts(settings.taxAccounts ?? {});
       setDraftFinancial(settings.financial ?? { fiscalYearStartMonth: 7, decimalPrecision: 2, voucherNumberingPrefix: '' });
     }
@@ -183,9 +140,9 @@ export const Settings: React.FC = () => {
           <h1 style={styles.title}>Settings</h1>
           <p style={styles.subtitle}>{tenant.brandName}</p>
         </div>
-        <button onClick={() => navigate('/dashboard')} style={styles.backButton}>
+        <Link to="/dashboard" style={styles.backButton}>
           ← Back to Dashboard
-        </button>
+        </Link>
       </div>
 
       {/* Tabs */}
@@ -211,18 +168,6 @@ export const Settings: React.FC = () => {
       <div style={styles.card}>
         {activeTab === 'profile' && (
           <ProfileTab draft={draftProfile} onChange={setDraftProfile} />
-        )}
-        {activeTab === 'salesTax' && (
-          <SalesTaxTab draft={draftSalesTax} onChange={setDraftSalesTax} />
-        )}
-        {activeTab === 'furtherTax' && (
-          <FurtherTaxTab draft={draftFurtherTax} onChange={setDraftFurtherTax} />
-        )}
-        {activeTab === 'fed' && (
-          <FedTab draft={draftFed} onChange={setDraftFed} />
-        )}
-        {activeTab === 'advanceTax' && (
-          <AdvanceTaxTab draft={draftAdvanceTax} onChange={setDraftAdvanceTax} />
         )}
         {activeTab === 'taxAccounts' && (
           <TaxAccountsTab draft={draftTaxAccounts} onChange={setDraftTaxAccounts} />
@@ -296,152 +241,6 @@ const ProfileTab: React.FC<{
         <textarea value={draft.address} onChange={(e) => set('address', e.target.value)}
           style={styles.textarea} rows={3} placeholder="Business address" />
       </Field>
-    </div>
-  );
-};
-
-/* ─── Sales Tax (GST) Tab ──────────────────────────────────── */
-
-const SalesTaxTab: React.FC<{
-  draft: SalesTaxConfig;
-  onChange: (t: SalesTaxConfig) => void;
-}> = ({ draft, onChange }) => {
-  const set = <K extends keyof SalesTaxConfig>(field: K, value: SalesTaxConfig[K]) =>
-    onChange({ ...draft, [field]: value });
-
-  return (
-    <div style={styles.tabContent}>
-      <h2 style={styles.sectionTitle}>Sales Tax (GST)</h2>
-      <p style={styles.sectionDescription}>
-        Primary sales tax configuration. Per-item rates auto-fill on bill lines and can be overridden.
-        Calculation: GST = To_Amt × (ST% / 100)
-      </p>
-      <div className="settings-form-grid" style={styles.formGrid}>
-        <Field label="Sales Tax Enabled">
-          <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
-        </Field>
-        <Field label="Default GST Rate (%)">
-          <input type="number" min={0} max={100} step={0.5}
-            value={draft.defaultRate}
-            onChange={(e) => set('defaultRate', parseFloat(e.target.value) || 0)}
-            style={styles.input} disabled={!draft.isEnabled} />
-        </Field>
-        <Field label="Default GST Type (Tax Schedule)">
-          <select value={draft.defaultGstType}
-            onChange={(e) => set('defaultGstType', e.target.value as GstType)}
-            style={styles.select} disabled={!draft.isEnabled}>
-            {(Object.keys(GST_TYPE_LABELS) as GstType[]).map((g) => (
-              <option key={g} value={g}>{GST_TYPE_LABELS[g]} ({g})</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Tax Inclusive by Default">
-          <Toggle value={draft.isTaxInclusiveDefault}
-            onChange={(v) => set('isTaxInclusiveDefault', v)}
-            disabled={!draft.isEnabled}
-            trueLabel="Tax Inclusive" falseLabel="Tax Exclusive" />
-        </Field>
-      </div>
-    </div>
-  );
-};
-
-/* ─── Further Tax Tab ──────────────────────────────────────── */
-
-const FurtherTaxTab: React.FC<{
-  draft: FurtherTaxConfig;
-  onChange: (t: FurtherTaxConfig) => void;
-}> = ({ draft, onChange }) => {
-  const set = <K extends keyof FurtherTaxConfig>(field: K, value: FurtherTaxConfig[K]) =>
-    onChange({ ...draft, [field]: value });
-
-  return (
-    <div style={styles.tabContent}>
-      <h2 style={styles.sectionTitle}>Further Sales Tax</h2>
-      <p style={styles.sectionDescription}>
-        Additional sales tax layer applied per bill line. Separate from the primary GST.
-        Calculation: F.Tax = To_Amt × (F-ST% / 100)
-      </p>
-      <div className="settings-form-grid" style={styles.formGrid}>
-        <Field label="Further Tax Enabled">
-          <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
-        </Field>
-        <Field label="Default Further Tax Rate (%)">
-          <input type="number" min={0} max={100} step={0.5}
-            value={draft.defaultRate}
-            onChange={(e) => set('defaultRate', parseFloat(e.target.value) || 0)}
-            style={styles.input} disabled={!draft.isEnabled} />
-        </Field>
-      </div>
-    </div>
-  );
-};
-
-/* ─── FED Tab ──────────────────────────────────────────────── */
-
-const FedTab: React.FC<{
-  draft: FedConfig;
-  onChange: (t: FedConfig) => void;
-}> = ({ draft, onChange }) => {
-  const set = <K extends keyof FedConfig>(field: K, value: FedConfig[K]) =>
-    onChange({ ...draft, [field]: value });
-
-  return (
-    <div style={styles.tabContent}>
-      <h2 style={styles.sectionTitle}>Federal Excise Duty (FED)</h2>
-      <p style={styles.sectionDescription}>
-        Federal excise duty configured per item and applied on bill lines.
-        Calculation: FED = To_Amt × (FED% / 100)
-      </p>
-      <div className="settings-form-grid" style={styles.formGrid}>
-        <Field label="FED Enabled">
-          <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
-        </Field>
-        <Field label="Default FED Rate (%)">
-          <input type="number" min={0} max={100} step={0.5}
-            value={draft.defaultRate}
-            onChange={(e) => set('defaultRate', parseFloat(e.target.value) || 0)}
-            style={styles.input} disabled={!draft.isEnabled} />
-        </Field>
-      </div>
-    </div>
-  );
-};
-
-/* ─── Advance Tax Tab ──────────────────────────────────────── */
-
-const AdvanceTaxTab: React.FC<{
-  draft: AdvanceTaxConfig;
-  onChange: (t: AdvanceTaxConfig) => void;
-}> = ({ draft, onChange }) => {
-  const set = <K extends keyof AdvanceTaxConfig>(field: K, value: AdvanceTaxConfig[K]) =>
-    onChange({ ...draft, [field]: value });
-
-  return (
-    <div style={styles.tabContent}>
-      <h2 style={styles.sectionTitle}>Advance Tax</h2>
-      <p style={styles.sectionDescription}>
-        Advance tax with separate purchase and sale rates per item.
-        Calculation: ADV_Tax = To_Amt × (ADV% / 100)
-      </p>
-      <div className="settings-form-grid" style={styles.formGrid}>
-        <Field label="Advance Tax Enabled">
-          <Toggle value={draft.isEnabled} onChange={(v) => set('isEnabled', v)} />
-        </Field>
-        <div /> {/* spacer for 2-col grid */}
-        <Field label="Default Sale Rate (%)">
-          <input type="number" min={0} max={100} step={0.5}
-            value={draft.saleRate}
-            onChange={(e) => set('saleRate', parseFloat(e.target.value) || 0)}
-            style={styles.input} disabled={!draft.isEnabled} />
-        </Field>
-        <Field label="Default Purchase Rate (%)">
-          <input type="number" min={0} max={100} step={0.5}
-            value={draft.purchaseRate}
-            onChange={(e) => set('purchaseRate', parseFloat(e.target.value) || 0)}
-            style={styles.input} disabled={!draft.isEnabled} />
-        </Field>
-      </div>
     </div>
   );
 };
@@ -686,7 +485,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#1e293b', marginBottom: '4px' },
   subtitle: { fontSize: '15px', color: '#64748b' },
-  backButton: { padding: '8px 16px', fontSize: '14px', color: '#64748b', background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer' },
+  backButton: { padding: '8px 16px', fontSize: '14px', color: '#64748b', background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' },
   tabBar: { display: 'flex', gap: '4px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px', flexWrap: 'wrap' },
   tab: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', border: 'none', borderBottom: '2px solid transparent', marginBottom: '-2px', cursor: 'pointer', transition: 'color 0.15s ease, border-color 0.15s ease' },
   tabActive: { color: '#2563eb', borderBottomColor: '#2563eb', backgroundColor: 'transparent' },

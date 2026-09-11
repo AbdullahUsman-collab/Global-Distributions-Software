@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getAgingReport, getCustomers, getSuppliers } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
@@ -179,7 +179,7 @@ export const AgingReport: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+          <Link to="/dashboard" style={styles.backBtn}>← Dashboard</Link>
           <h1 style={styles.title}>Aging Report</h1>
           <p style={styles.subtitle}>{tenant.brandName} — Accounts receivable / payable aging</p>
         </div>
@@ -434,6 +434,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '13px',
     padding: 0,
     marginBottom: '8px',
+    textDecoration: 'none',
   },
   title: {
     fontSize: '24px',

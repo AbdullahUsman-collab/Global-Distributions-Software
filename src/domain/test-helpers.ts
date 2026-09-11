@@ -57,6 +57,7 @@ export const SEED_PRODUCTS: Product[] = [
     unit: 'PCS', pcsPerCarton: 24, saleRate: 100, purchaseRate: 60, retailPrice: 66,
     tradeDiscount: 5, tradeOffer: '', minQuantity: 0, hsCode: '001', gstType: 'VAT',
     gstPercent: 18, fedPercent: 0, advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
+    furtherTaxPercent: 0,
     costRate: 61.68, margin: 0.072, isActive: true,
   },
   {
@@ -64,6 +65,7 @@ export const SEED_PRODUCTS: Product[] = [
     unit: 'PCS', pcsPerCarton: 12, saleRate: 250, purchaseRate: 150, retailPrice: 165,
     tradeDiscount: 0, tradeOffer: '', minQuantity: 0, hsCode: '002', gstType: 'VAT',
     gstPercent: 18, fedPercent: 5, advanceTaxSalePercent: 3, advanceTaxPurchasePercent: 0,
+    furtherTaxPercent: 0,
     costRate: 154.2, margin: 0.072, isActive: true,
   },
 ];
@@ -303,6 +305,7 @@ export function createMockInventoryRepo(products: Product[] = SEED_PRODUCTS): II
         fedPercent: dto.fedPercent ?? 0,
         advanceTaxSalePercent: dto.advanceTaxSalePercent ?? 0,
         advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? 0,
+        furtherTaxPercent: dto.furtherTaxPercent ?? 0,
         costRate,
         margin,
         isActive: dto.isActive ?? true,

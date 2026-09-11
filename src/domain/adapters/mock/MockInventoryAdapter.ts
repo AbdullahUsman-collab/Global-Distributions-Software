@@ -75,6 +75,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 5, tradeOffer: 'Buy 10 Get 1', minQuantity: 5,
       hsCode: '3304.99', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
+      furtherTaxPercent: 0,
       isActive: true,
     },
     {
@@ -85,6 +86,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 3, tradeOffer: '', minQuantity: 10,
       hsCode: '3304.99', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
+      furtherTaxPercent: 0,
       isActive: true,
     },
     {
@@ -95,6 +97,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 8, tradeOffer: 'Buy 5 Get 1', minQuantity: 3,
       hsCode: '4819.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
+      furtherTaxPercent: 0,
       isActive: true,
     },
     {
@@ -105,6 +108,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 4, tradeOffer: '', minQuantity: 10,
       hsCode: '3305.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
+      furtherTaxPercent: 0,
       isActive: true,
     },
     {
@@ -115,6 +119,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 2, tradeOffer: '', minQuantity: 20,
       hsCode: '3401.19', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
+      furtherTaxPercent: 0,
       isActive: true,
     },
     {
@@ -125,6 +130,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 5, tradeOffer: 'Buy 12 Get 2', minQuantity: 6,
       hsCode: '1509.10', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 1, advanceTaxPurchasePercent: 1,
+      furtherTaxPercent: 0,
       isActive: true,
     },
     {
@@ -135,6 +141,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 3, tradeOffer: '', minQuantity: 30,
       hsCode: '3401.11', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
+      furtherTaxPercent: 0,
       isActive: true,
     },
     {
@@ -145,6 +152,7 @@ function buildSeedProducts(tenantId: string): Product[] {
       tradeDiscount: 4, tradeOffer: 'Buy 20 Get 3', minQuantity: 10,
       hsCode: '1905.90', gstType: 'VAT', gstPercent: 17, fedPercent: 0,
       advanceTaxSalePercent: 0, advanceTaxPurchasePercent: 0,
+      furtherTaxPercent: 0,
       isActive: true,
     },
   ];
@@ -353,6 +361,7 @@ export class MockInventoryAdapter implements IInventoryRepository {
       fedPercent: dto.fedPercent ?? 0,
       advanceTaxSalePercent: dto.advanceTaxSalePercent ?? 0,
       advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? 0,
+      furtherTaxPercent: dto.furtherTaxPercent ?? 0,
       costRate,
       margin,
       isActive: dto.isActive ?? true,
@@ -392,6 +401,7 @@ export class MockInventoryAdapter implements IInventoryRepository {
       fedPercent: dto.fedPercent ?? existing.fedPercent,
       advanceTaxSalePercent: dto.advanceTaxSalePercent ?? existing.advanceTaxSalePercent,
       advanceTaxPurchasePercent: dto.advanceTaxPurchasePercent ?? existing.advanceTaxPurchasePercent,
+      furtherTaxPercent: dto.furtherTaxPercent ?? existing.furtherTaxPercent,
       costRate: newCostRate,
       margin: newMargin,
       isActive: dto.isActive ?? existing.isActive,

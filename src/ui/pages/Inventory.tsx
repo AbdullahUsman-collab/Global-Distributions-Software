@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getWarehouseLocations, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement, getStockBalanceWithActivity } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
@@ -65,7 +65,6 @@ const fmtInt = (n: number) => n.toLocaleString('en-PK');
 
 export const Inventory: React.FC = () => {
   const { tenant } = useAuth();
-  const navigate = useNavigate();
   const [tab, setTab] = useState<InventoryTab>('stock');
 
   return (
@@ -73,7 +72,7 @@ export const Inventory: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+          <Link to="/dashboard" style={styles.backBtn}>← Dashboard</Link>
           <h1 style={styles.title}>Inventory</h1>
           <p style={styles.subtitle}>{tenant.brandName}</p>
         </div>
@@ -279,6 +278,7 @@ const ProductModal: React.FC<{
   const [fedPercent, setFedPercent] = useState(product?.fedPercent ?? 0);
   const [advanceTaxSalePercent, setAdvanceTaxSalePercent] = useState(product?.advanceTaxSalePercent ?? 0);
   const [advanceTaxPurchasePercent, setAdvanceTaxPurchasePercent] = useState(product?.advanceTaxPurchasePercent ?? 0);
+  const [furtherTaxPercent, setFurtherTaxPercent] = useState(product?.furtherTaxPercent ?? 0);
   const [margin, setMargin] = useState(product?.margin ?? 0.072);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -313,6 +313,7 @@ const ProductModal: React.FC<{
         fedPercent,
         advanceTaxSalePercent,
         advanceTaxPurchasePercent,
+        furtherTaxPercent,
         margin,
         costRate: computedCostRate,
       });
@@ -426,6 +427,10 @@ const ProductModal: React.FC<{
             <div style={styles.field}>
               <label style={styles.label}>Adv Tax (Purchase) %</label>
               <input type="number" min={0} max={100} step={0.1} value={advanceTaxPurchasePercent} onChange={e => setAdvanceTaxPurchasePercent(parseFloat(e.target.value) || 0)} style={styles.input} />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Further Tax %</label>
+              <input type="number" min={0} max={100} step={0.1} value={furtherTaxPercent} onChange={e => setFurtherTaxPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
           {error && <div style={styles.error}>{error}</div>}
@@ -1369,7 +1374,7 @@ const CreateMovementModal: React.FC<{
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0 },
+  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
   title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
   subtitle: { fontSize: 14, color: '#64748b' },
 

@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import {
   getCustomers, createCustomer, updateCustomer, deleteCustomer,
@@ -75,7 +75,7 @@ export const Sales: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/dashboard')} style={styles.backBtn}>← Dashboard</button>
+          <Link to="/dashboard" style={styles.backBtn}>← Dashboard</Link>
           <h1 style={styles.title}>Sales</h1>
           <p style={styles.subtitle}>{tenant.brandName}</p>
         </div>
@@ -579,7 +579,7 @@ const SaleBillForm: React.FC<{
       rate: products[0]?.saleRate ?? 0,
       tradeDiscountPercent: products[0]?.tradeDiscount ?? 0,
       gstPercent: products[0]?.gstPercent ?? 0,
-      furtherTaxPercent: 0,
+      furtherTaxPercent: products[0]?.furtherTaxPercent ?? 0,
       fedPercent: products[0]?.fedPercent ?? 0,
       advanceTaxPercent: products[0]?.advanceTaxSalePercent ?? 0,
     }]);
@@ -597,6 +597,7 @@ const SaleBillForm: React.FC<{
           updated.rate = product.saleRate;
           updated.tradeDiscountPercent = product.tradeDiscount;
           updated.gstPercent = product.gstPercent;
+          updated.furtherTaxPercent = product.furtherTaxPercent;
           updated.fedPercent = product.fedPercent;
           updated.advanceTaxPercent = product.advanceTaxSalePercent;
         }
@@ -1097,6 +1098,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '13px',
     padding: 0,
     marginBottom: '4px',
+    textDecoration: 'none',
   },
   title: {
     fontSize: '24px',

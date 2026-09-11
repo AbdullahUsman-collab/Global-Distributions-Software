@@ -110,6 +110,8 @@ export interface Product {
   advanceTaxSalePercent: number;
   /** Advance income tax on PURCHASES percentage (maps to adv_tax_purchase in legacy) */
   advanceTaxPurchasePercent: number;
+  /** Further Sales Tax percentage — additional tax layer per bill line */
+  furtherTaxPercent: number;
   /** Cost rate — owner-verified: Cost_rate = Retail_Price - Purchase_Rate × Margin */
   costRate: number;
   /** Margin percentage — entered during product setup, used to calculate Cost_rate */
@@ -143,6 +145,7 @@ export interface CreateProductDTO {
   fedPercent?: number;
   advanceTaxSalePercent?: number;
   advanceTaxPurchasePercent?: number;
+  furtherTaxPercent?: number;
   /** Cost rate — owner-verified: Cost_rate = Retail_Price - Purchase_Rate × Margin */
   costRate?: number;
   /** Margin percentage — entered during product setup */
@@ -166,6 +169,7 @@ export interface UpdateProductDTO {
   fedPercent?: number;
   advanceTaxSalePercent?: number;
   advanceTaxPurchasePercent?: number;
+  furtherTaxPercent?: number;
   /** Cost rate — owner-verified: Cost_rate = Retail_Price - Purchase_Rate × Margin */
   costRate?: number;
   /** Margin percentage — entered during product setup */
