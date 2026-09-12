@@ -802,6 +802,31 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
       return { success: true };
     }
 
+    // Product create
+    if (cleanPath === '/api/products' && method === 'POST' && body) {
+      const newId = `prod-${String(DEMO_PRODUCTS.length + 1).padStart(2, '0')}`;
+      const product = { id: newId, tenantId: T, isActive: true, ...body };
+      DEMO_PRODUCTS.push(product);
+      return product;
+    }
+
+    // Product update
+    const productUpdate = matchPath('/api/products/:id', cleanPath);
+    if (productUpdate && method === 'PUT' && body) {
+      const idx = DEMO_PRODUCTS.findIndex(p => p.id === productUpdate.groups!.id);
+      if (idx === -1) return { error: 'Product not found' };
+      DEMO_PRODUCTS[idx] = { ...DEMO_PRODUCTS[idx], ...body, id: DEMO_PRODUCTS[idx].id, tenantId: T };
+      return DEMO_PRODUCTS[idx];
+    }
+
+    // Product delete (deactivate)
+    if (productUpdate && method === 'DELETE') {
+      const idx = DEMO_PRODUCTS.findIndex(p => p.id === productUpdate.groups!.id);
+      if (idx === -1) return { error: 'Product not found' };
+      DEMO_PRODUCTS[idx].isActive = false;
+      return { success: true };
+    }
+
     // Cash Book: create voucher + ledger entries in-memory
     if (cleanPath === '/api/cash-book' && method === 'POST' && body) {
       const { type, cashAccountId, counterAccountId, amount, date, narration } = body;

@@ -79,16 +79,33 @@ async function apiRequest<T>(
     });
 
     if (!res.ok) {
-      // For state-changing requests (POST/PUT/DELETE), NEVER silently fall back to demo data.
-      // The server returned a real error — propagate it so the user knows the save failed.
+      // For state-changing requests (POST/PUT/DELETE):
+      // If the response is JSON, it's from our server — propagate the error.
+      // If the response is NOT JSON (e.g., Vercel HTML 404), try demo fallback.
       if (isStateChanging) {
-        let message = `Request failed (${res.status})`;
-        try {
-          const data = await res.json();
-          message = data.error || message;
-        } catch {
-          // Ignore parse errors
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          let message = `Request failed (${res.status})`;
+          try {
+            const data = await res.json();
+            message = data.error || message;
+          } catch {
+            // Ignore parse errors
+          }
+          throw { status: res.status, message } as ApiError;
         }
+        // Infrastructure error (Vercel 404 page, etc.) — try demo handler
+        {
+          let parsedBody: any = undefined;
+          if (options.body && typeof options.body === 'string') {
+            try { parsedBody = JSON.parse(options.body); } catch { /* ignore */ }
+          }
+          const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, parsedBody);
+          if (demoResult !== null && demoResult !== undefined) {
+            return demoResult as T;
+          }
+        }
+        let message = `Request failed (${res.status})`;
         throw { status: res.status, message } as ApiError;
       }
 
@@ -123,9 +140,16 @@ async function apiRequest<T>(
     // Network error / server unavailable → fall back to demo data
     // This allows the app to work on Vercel (static-only, no backend)
     if (err instanceof TypeError && err.message.includes('fetch')) {
-      // For state-changing requests on network error, still throw —
-      // user must know the save didn't reach the server
+      // For state-changing requests on network error, try demo fallback first
       if (isStateChanging) {
+        let parsedBody: any = undefined;
+        if (options.body && typeof options.body === 'string') {
+          try { parsedBody = JSON.parse(options.body); } catch { /* ignore */ }
+        }
+        const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, parsedBody);
+        if (demoResult !== null && demoResult !== undefined) {
+          return demoResult as T;
+        }
         throw { status: 0, message: 'Server unavailable — changes were NOT saved. Please try again.' } as ApiError;
       }
       let body: any = undefined;
