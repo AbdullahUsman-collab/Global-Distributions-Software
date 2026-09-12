@@ -566,7 +566,8 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
     // Bill detail — must return BillDetail shape (not BillRecord)
     const billDetail = matchPath('/api/bills/:id', cleanPath);
     if (billDetail) {
-      const record = DEMO_BILLS.find(b => b.voucher.id === billDetail.groups!.id);
+      const id = billDetail.groups!.id;
+      const record = DEMO_BILLS.find(b => b.voucher.id === id);
       if (record) {
         const partyType = record.partyId.startsWith('cust-') ? 'customer' : record.partyId.startsWith('sup-') ? 'supplier' : 'unknown';
         const subtotal = record.total;
@@ -589,6 +590,29 @@ export function handleDemoRequest(path: string, method: string, body?: any): any
             totalTax: gst,
             grandTotal: subtotal + gst,
           },
+          stockLevels: [],
+        };
+      }
+      // Fallback: find voucher from DEMO_VOUCHERS (covers JV, CR, CP, BPV, etc. shown in GL)
+      const voucher = DEMO_VOUCHERS.find(v => v.id === id);
+      if (voucher) {
+        return {
+          voucher,
+          partyType: 'unknown' as const,
+          partyId: '',
+          partyName: '',
+          partyAccountCode: '',
+          lines: [],
+          accountingEntries: DEMO_LEDGER.filter(e => e.voucherId === id).map(e => ({
+            accountId: e.accountId,
+            accountCode: e.accountId,
+            accountName: e.accountId,
+            description: e.narration,
+            debit: e.debit,
+            credit: e.credit,
+          })),
+          inventoryMovements: [],
+          taxSummary: { subtotal: 0, gst: 0, furtherTax: 0, fed: 0, advanceTax: 0, totalTax: 0, grandTotal: 0 },
           stockLevels: [],
         };
       }
