@@ -36,8 +36,8 @@ export class PostgresSettingsAdapter implements ISettingsRepository {
     // Read existing settings
     const existing = await this.getSettingsByTenantId(tenantId);
 
-    // Merge each section independently
-    const merged = existing ? { ...existing, ...partial } : { tenantId, ...partial } as TenantSettings;
+    // Deep merge: recursively merge nested objects instead of shallow replacing
+    const merged = existing ? deepMerge(existing, partial) : { tenantId, ...partial } as TenantSettings;
 
     // Upsert into tenant_settings
     await query(
@@ -50,4 +50,26 @@ export class PostgresSettingsAdapter implements ISettingsRepository {
 
     return merged;
   }
+}
+
+/**
+ * Deep merge two objects. Source values override target values.
+ * Arrays are replaced (not merged). Primitives are overwritten.
+ */
+function deepMerge(target: any, source: any): any {
+  if (!source) return target;
+  if (!target) return source;
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (source[key] === undefined) continue;
+    if (
+      result[key] && typeof result[key] === 'object' && !Array.isArray(result[key]) &&
+      source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])
+    ) {
+      result[key] = deepMerge(result[key], source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
 }

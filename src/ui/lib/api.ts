@@ -79,8 +79,20 @@ async function apiRequest<T>(
     });
 
     if (!res.ok) {
-      // Try demo data fallback when server is unavailable (e.g. 404 on Vercel)
-      // Applies to ALL methods: GET, POST, PUT, DELETE
+      // For state-changing requests (POST/PUT/DELETE), NEVER silently fall back to demo data.
+      // The server returned a real error — propagate it so the user knows the save failed.
+      if (isStateChanging) {
+        let message = `Request failed (${res.status})`;
+        try {
+          const data = await res.json();
+          message = data.error || message;
+        } catch {
+          // Ignore parse errors
+        }
+        throw { status: res.status, message } as ApiError;
+      }
+
+      // For read-only requests (GET), try demo data fallback (e.g. 404 on Vercel)
       {
         let body: any = undefined;
         if (options.body && typeof options.body === 'string') {
@@ -109,7 +121,13 @@ async function apiRequest<T>(
     return res.json();
   } catch (err) {
     // Network error / server unavailable → fall back to demo data
+    // This allows the app to work on Vercel (static-only, no backend)
     if (err instanceof TypeError && err.message.includes('fetch')) {
+      // For state-changing requests on network error, still throw —
+      // user must know the save didn't reach the server
+      if (isStateChanging) {
+        throw { status: 0, message: 'Server unavailable — changes were NOT saved. Please try again.' } as ApiError;
+      }
       let body: any = undefined;
       if (options.body && typeof options.body === 'string') {
         try { body = JSON.parse(options.body); } catch { /* ignore */ }
