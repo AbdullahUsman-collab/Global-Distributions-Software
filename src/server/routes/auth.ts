@@ -23,6 +23,22 @@ const SESSION_COOKIE_NAME = getSessionCookieName();
 
 const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 
+/**
+ * Get cookie options based on environment.
+ * Cross-origin production uses SameSite=None; Secure.
+ */
+function getCookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+  const isCrossOrigin = isProd && !!process.env.ALLOWED_ORIGINS;
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isCrossOrigin ? ('none' as const) : (isProd ? ('strict' as const) : ('lax' as const)),
+    maxAge: SESSION_DURATION_MS,
+    path: '/',
+  };
+}
+
 export function createAuthRoutes(
   authService: IAuthService,
   tenantRepo: ITenantRepository
@@ -51,13 +67,7 @@ export function createAuthRoutes(
       }
 
       // Set session as HTTP-only cookie
-      res.cookie(SESSION_COOKIE_NAME, result.session.sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        maxAge: SESSION_DURATION_MS,
-        path: '/',
-      });
+      res.cookie(SESSION_COOKIE_NAME, result.session.sessionId, getCookieOptions());
 
       // Return user info (NOT the session ID)
       res.json({
@@ -180,13 +190,7 @@ export function createAuthRoutes(
       }
 
       // Set new session as HTTP-only cookie (session rotation)
-      res.cookie(SESSION_COOKIE_NAME, result.session.sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        maxAge: SESSION_DURATION_MS,
-        path: '/',
-      });
+      res.cookie(SESSION_COOKIE_NAME, result.session.sessionId, getCookieOptions());
 
       // Return updated user context (NOT the session ID)
       res.json({

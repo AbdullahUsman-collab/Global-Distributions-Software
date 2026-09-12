@@ -1,0 +1,36 @@
+# Distribution Software ERP — Render Deployment
+# This file configures automatic deployment on Render.
+#
+# Prerequisites:
+# 1. Create a Render account at https://render.com
+# 2. Connect your GitHub repository
+# 3. Create a Web Service using this Blueprint
+# 4. Set environment variables in Render dashboard
+
+services:
+  - type: web
+    name: distribution-erp
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npx tsx src/server/index.ts
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SESSION_MAX_AGE_MS
+        value: "1800000"
+      - key: SESSION_COOKIE_NAME
+        value: erp_session
+      - key: ALLOWED_ORIGINS
+        value: "https://global-distributions-software-mauve.vercel.app"
+      - key: VITE_API_URL
+        value: ""  # Set to your Render service URL e.g. https://distribution-erp.onrender.com/api
+    envVarsFrom:
+      - group: distribution-erp-env

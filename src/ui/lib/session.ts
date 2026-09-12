@@ -16,7 +16,12 @@ const USER_KEY = 'erp_current_user';
 
 // ─── Server API Functions ──────────────────────────────────────
 
-const API_BASE = '/api';
+/**
+ * API base URL — configurable for cross-origin deployments.
+ * Development: '/api' (proxied by Vite to localhost:3000)
+ * Production: set VITE_API_URL to the deployed backend URL
+ */
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Production mode flag.

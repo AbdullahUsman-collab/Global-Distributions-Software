@@ -30,6 +30,7 @@ import { ISupplierRepository } from '../../domain/repositories/ISupplierReposito
 import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository';
 import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
+import { ITenantRepository } from '../../domain/repositories/ITenantRepository';
 import { FinancialReportService } from '../../domain/services/FinancialReportService';
 import { StockReportService } from '../../domain/services/StockReportService';
 import { SystemRoleName } from '../../domain/types/rbac';
@@ -59,6 +60,7 @@ export function createProtectedRoutes(
   stockReportService: StockReportService,
   userRepo: IUserRepository,
   brandAccessRepo?: IUserBrandAccessRepository,
+  tenantRepo?: ITenantRepository,
 ): Router {
   const router = Router();
 
@@ -2145,6 +2147,129 @@ export function createProtectedRoutes(
       }
     }
   );
+
+  // ─── Brand Management (Admin) ────────────────────────────────
+
+  if (tenantRepo) {
+    /**
+     * GET /api/brands
+     * List all tenants (brands) — admin only.
+     */
+    router.get('/brands',
+      requirePermissionMiddleware('tenant.manage'),
+      async (_req: Request, res: Response) => {
+        try {
+          const tenants = await tenantRepo!.getPublicTenants();
+          res.json(tenants);
+        } catch (error) {
+          console.error('List brands error:', error);
+          res.status(500).json({ error: 'Failed to list brands' });
+        }
+      }
+    );
+
+    /**
+     * POST /api/brands
+     * Create a new brand (tenant) — admin only.
+     */
+    router.post('/brands',
+      mutationRateLimiter,
+      requirePermissionMiddleware('tenant.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const { slug, brandName, logoUrl, primaryColor, accentColor } = req.body;
+          if (!slug || typeof slug !== 'string' || slug.trim() === '') {
+            res.status(400).json({ error: 'slug is required' });
+            return;
+          }
+          if (!brandName || typeof brandName !== 'string' || brandName.trim() === '') {
+            res.status(400).json({ error: 'brandName is required' });
+            return;
+          }
+          if (slug.length > 128) {
+            res.status(400).json({ error: 'slug must be 128 characters or less' });
+            return;
+          }
+          if (brandName.length > 256) {
+            res.status(400).json({ error: 'brandName must be 256 characters or less' });
+            return;
+          }
+          // Check slug uniqueness
+          const existing = await tenantRepo!.getTenantBySlug(slug);
+          if (existing) {
+            res.status(409).json({ error: 'A brand with this slug already exists' });
+            return;
+          }
+          const brand = await tenantRepo!.createTenant({
+            slug,
+            brandName,
+            logoUrl: logoUrl || '',
+            primaryColor: primaryColor || '#3b82f6',
+            accentColor: accentColor || '#1e40af',
+          });
+          res.status(201).json(brand);
+        } catch (error) {
+          console.error('Create brand error:', error);
+          res.status(500).json({ error: 'Failed to create brand' });
+        }
+      }
+    );
+
+    /**
+     * PUT /api/brands/:id
+     * Update a brand — admin only.
+     */
+    router.put('/brands/:id',
+      mutationRateLimiter,
+      requirePermissionMiddleware('tenant.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const { id } = req.params;
+          const existing = await tenantRepo!.getTenantById(id);
+          if (!existing) {
+            res.status(404).json({ error: 'Brand not found' });
+            return;
+          }
+          const { brandName, logoUrl, primaryColor, accentColor, isActive } = req.body;
+          const updated = await tenantRepo!.updateTenant(id, {
+            ...(brandName !== undefined && { brandName }),
+            ...(logoUrl !== undefined && { logoUrl }),
+            ...(primaryColor !== undefined && { primaryColor }),
+            ...(accentColor !== undefined && { accentColor }),
+            ...(isActive !== undefined && { isActive }),
+          });
+          res.json(updated);
+        } catch (error) {
+          console.error('Update brand error:', error);
+          res.status(500).json({ error: 'Failed to update brand' });
+        }
+      }
+    );
+
+    /**
+     * POST /api/brands/:id/deactivate
+     * Deactivate a brand — admin only.
+     */
+    router.post('/brands/:id/deactivate',
+      mutationRateLimiter,
+      requirePermissionMiddleware('tenant.manage'),
+      async (req: Request, res: Response) => {
+        try {
+          const { id } = req.params;
+          const existing = await tenantRepo!.getTenantById(id);
+          if (!existing) {
+            res.status(404).json({ error: 'Brand not found' });
+            return;
+          }
+          await tenantRepo!.deactivateTenant(id);
+          res.json({ success: true });
+        } catch (error) {
+          console.error('Deactivate brand error:', error);
+          res.status(500).json({ error: 'Failed to deactivate brand' });
+        }
+      }
+    );
+  }
 
   // ─── User Brand Access Management ───────────────────────────
 

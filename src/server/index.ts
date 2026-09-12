@@ -129,6 +129,24 @@ function getCorsOrigins(): string[] {
   ];
 }
 
+/**
+ * Detect cross-origin production deployment.
+ * When frontend and backend are on different domains,
+ * cookies must use SameSite=None; Secure.
+ */
+function isCrossOriginProduction(): boolean {
+  return process.env.NODE_ENV === 'production' && !!process.env.ALLOWED_ORIGINS;
+}
+
+/**
+ * Get cookie SameSite setting based on deployment mode.
+ */
+function getCookieSameSite(): 'strict' | 'lax' | 'none' {
+  if (isCrossOriginProduction()) return 'none';
+  if (process.env.NODE_ENV === 'production') return 'strict';
+  return 'lax';
+}
+
 // ─── Express App ───────────────────────────────────────────────
 
 const app = express();
@@ -212,6 +230,7 @@ app.use('/api',
       stockReportService,
       userAdapter,
       brandAccessAdapter,
+      tenantAdapter,
     )
 );
 
@@ -300,6 +319,11 @@ async function start() {
 ║  - POST /api/cash-book       Create cash voucher             ║
 ║  - GET  /api/bills           List bills                      ║
 ║  - GET  /api/bills/:id       Bill detail                     ║
+║  - GET  /api/brands          List brands (admin)             ║
+║  - POST /api/brands          Create brand (admin)            ║
+║  - PUT  /api/brands/:id      Update brand (admin)            ║
+║  - GET  /api/users           List users (admin)              ║
+║  - POST /api/users           Create user (admin)             ║
 ╚══════════════════════════════════════════════════════════════╝
     `);
   });

@@ -19,7 +19,13 @@
 
 import { handleDemoRequest } from './demoData';
 
-const API_BASE = '/api';
+/**
+ * API base URL — configurable for cross-origin deployments.
+ * Development: '/api' (proxied by Vite to localhost:3000)
+ * Production: set VITE_API_URL to the deployed backend URL
+ *             e.g. 'https://erp-backend.onrender.com/api'
+ */
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Production mode flag.
@@ -713,4 +719,28 @@ export async function deactivateUserBrandAccess(id: string) {
 
 export async function activateUserBrandAccess(id: string) {
   return apiRequest<any>(`/user-brand-access/${id}/activate`, { method: 'POST' });
+}
+
+// ─── Brand Management API (Admin) ─────────────────────────────
+
+export async function getBrands() {
+  return apiRequest<any[]>('/brands');
+}
+
+export async function createBrand(data: { slug: string; brandName: string; logoUrl?: string; primaryColor?: string; accentColor?: string }) {
+  return apiRequest<any>('/brands', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBrand(id: string, data: { brandName?: string; logoUrl?: string; primaryColor?: string; accentColor?: string; isActive?: boolean }) {
+  return apiRequest<any>(`/brands/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deactivateBrand(id: string) {
+  return apiRequest<any>(`/brands/${encodeURIComponent(id)}/deactivate`, { method: 'POST' });
 }

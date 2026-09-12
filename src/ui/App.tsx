@@ -22,6 +22,7 @@ import { AgingReport } from './pages/AgingReport';
 import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
 import { UserBrandAccessPage } from './pages/UserBrandAccess';
+import { Brands } from './pages/Brands';
 import { Layout } from './components/layout/Layout';
 
 export const App: React.FC = () => {
@@ -49,6 +50,7 @@ export const App: React.FC = () => {
               <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
               <Route path="/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />
               <Route path="/brand-access" element={<ErrorBoundary><UserBrandAccessPage /></ErrorBoundary>} />
+              <Route path="/brands" element={<ErrorBoundary><Brands /></ErrorBoundary>} />
             </Route>
           </Route>
         </Routes>
