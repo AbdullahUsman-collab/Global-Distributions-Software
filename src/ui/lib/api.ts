@@ -8,14 +8,25 @@
  * RULE: No database access from browser.
  * RULE: Consistent error handling across all API calls.
  *
- * DEMO MODE: When running on Vercel (static hosting with no Express server),
- * all API calls are intercepted and served from client-side deterministic
- * mock data. This allows the full demo to work without a backend.
+ * PRODUCTION MODE (VITE_DEMO_MODE=false or unset):
+ *   All requests go to the real Express API.
+ *   If the server is unavailable, errors are thrown — NEVER silent demo fallback.
+ *
+ * DEMO MODE (VITE_DEMO_MODE=true):
+ *   API calls are intercepted and served from client-side deterministic
+ *   mock data. For development/Vercel demo only.
  */
 
 import { handleDemoRequest } from './demoData';
 
 const API_BASE = '/api';
+
+/**
+ * Production mode flag.
+ * When false (default), demo fallback is disabled.
+ * Set VITE_DEMO_MODE=true in .env for development/Vercel demo.
+ */
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 // ─── CSRF Token Management ────────────────────────────────────
 
@@ -79,55 +90,38 @@ async function apiRequest<T>(
     });
 
     if (!res.ok) {
-      // For state-changing requests (POST/PUT/DELETE):
-      // If the response is JSON, it's from our server — propagate the error.
-      // If the response is NOT JSON (e.g., Vercel HTML 404), try demo fallback.
-      if (isStateChanging) {
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          let message = `Request failed (${res.status})`;
-          try {
-            const data = await res.json();
-            message = data.error || message;
-          } catch {
-            // Ignore parse errors
-          }
-          throw { status: res.status, message } as ApiError;
-        }
-        // Infrastructure error (Vercel 404 page, etc.) — try demo handler
-        {
-          let parsedBody: any = undefined;
-          if (options.body && typeof options.body === 'string') {
-            try { parsedBody = JSON.parse(options.body); } catch { /* ignore */ }
-          }
-          const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, parsedBody);
-          if (demoResult !== null && demoResult !== undefined) {
-            return demoResult as T;
-          }
-        }
+      // If response is JSON, it's from our server — propagate the error.
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
         let message = `Request failed (${res.status})`;
+        try {
+          const data = await res.json();
+          message = data.error || message;
+        } catch {
+          // Ignore parse errors
+        }
         throw { status: res.status, message } as ApiError;
       }
 
-      // For read-only requests (GET), try demo data fallback (e.g. 404 on Vercel)
-      {
-        let body: any = undefined;
+      // Non-JSON response (e.g., Vercel HTML 404 = backend not deployed)
+      // In production: NEVER pretend this succeeded. Throw a clear error.
+      // In demo mode: try client-side demo handler.
+      if (DEMO_MODE) {
+        let parsedBody: any = undefined;
         if (options.body && typeof options.body === 'string') {
-          try { body = JSON.parse(options.body); } catch { /* ignore */ }
+          try { parsedBody = JSON.parse(options.body); } catch { /* ignore */ }
         }
-        const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, body);
+        const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, parsedBody);
         if (demoResult !== null && demoResult !== undefined) {
           return demoResult as T;
         }
       }
-      let message = `Request failed (${res.status})`;
-      try {
-        const data = await res.json();
-        message = data.error || message;
-      } catch {
-        // Ignore parse errors
-      }
-      throw { status: res.status, message } as ApiError;
+
+      // Production: clear error — backend is not available
+      const errMsg = isStateChanging
+        ? `Server unavailable (HTTP ${res.status}) — your changes were NOT saved. Ensure the backend API is running.`
+        : `Request failed (${res.status})`;
+      throw { status: res.status, message: errMsg } as ApiError;
     }
 
     // Handle 204 No Content
@@ -137,31 +131,33 @@ async function apiRequest<T>(
 
     return res.json();
   } catch (err) {
-    // Network error / server unavailable → fall back to demo data
-    // This allows the app to work on Vercel (static-only, no backend)
+    // If this is already an ApiError we threw above, re-throw
+    if (err && typeof err === 'object' && 'status' in err && 'message' in err) {
+      throw err;
+    }
+
+    // Network error / server unavailable
     if (err instanceof TypeError && err.message.includes('fetch')) {
-      // For state-changing requests on network error, try demo fallback first
-      if (isStateChanging) {
-        let parsedBody: any = undefined;
+      // In demo mode: try client-side demo handler
+      if (DEMO_MODE) {
+        let body: any = undefined;
         if (options.body && typeof options.body === 'string') {
-          try { parsedBody = JSON.parse(options.body); } catch { /* ignore */ }
+          try { body = JSON.parse(options.body); } catch { /* ignore */ }
         }
-        const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, parsedBody);
+        const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, body);
         if (demoResult !== null && demoResult !== undefined) {
           return demoResult as T;
         }
-        throw { status: 0, message: 'Server unavailable — changes were NOT saved. Please try again.' } as ApiError;
       }
-      let body: any = undefined;
-      if (options.body && typeof options.body === 'string') {
-        try { body = JSON.parse(options.body); } catch { /* ignore */ }
-      }
-      const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, body);
-      if (demoResult !== null && demoResult !== undefined) {
-        return demoResult as T;
-      }
+
+      // Production: clear error
+      const errMsg = isStateChanging
+        ? 'Server unavailable — your changes were NOT saved. Please try again.'
+        : 'Server unavailable — could not load data.';
+      throw { status: 0, message: errMsg } as ApiError;
     }
-    // Re-throw if demo fallback didn't handle it
+
+    // Re-throw other errors
     throw err;
   }
 }

@@ -290,7 +290,7 @@ describe('Server Adapter Selection', () => {
     const content = fs.readFileSync(envPath, 'utf-8');
     expect(content).toContain('DATABASE_URL');
     expect(content).toContain('SESSION_SECRET');
-    expect(content).toContain('CORS_ORIGINS');
+    expect(content).toContain('ALLOWED_ORIGINS');
   });
 
   it('should have barrel export for PostgreSQL adapters', async () => {

@@ -10,29 +10,30 @@ import { resolve } from 'path';
 
 describe('Step 78 — API Client Persistence Guard', () => {
   it('should NOT silently fall back to demo data for state-changing requests', () => {
-    // Read the api.ts source and verify the fix
     const apiSource = readFileSync(resolve('src/ui/lib/api.ts'), 'utf-8');
 
-    // Verify: for state-changing requests on !res.ok, it throws instead of demo fallback
-    expect(apiSource).toContain('if (isStateChanging)');
-    expect(apiSource).toContain('throw { status: res.status, message } as ApiError');
+    // Verify: DEMO_MODE flag controls fallback behavior
+    expect(apiSource).toContain('DEMO_MODE');
+    expect(apiSource).toContain('VITE_DEMO_MODE');
 
-    // Verify: for state-changing requests on network error, it throws
-    expect(apiSource).toContain('Server unavailable — changes were NOT saved');
+    // Verify: throws on non-JSON server error for state-changing requests
+    expect(apiSource).toContain('Server unavailable (HTTP');
+    expect(apiSource).toContain('your changes were NOT saved');
 
-    // Verify: demo fallback still exists for GET requests (read-only)
-    expect(apiSource).toContain('For read-only requests (GET), try demo data fallback');
+    // Verify: throws on network error for state-changing requests
+    expect(apiSource).toContain('Server unavailable — your changes were NOT saved');
   });
 
-  it('should still allow demo fallback for GET requests (read-only)', () => {
+  it('should only allow demo fallback when DEMO_MODE is enabled', () => {
     const apiSource = readFileSync(resolve('src/ui/lib/api.ts'), 'utf-8');
-    // GET requests should still fall back to demo data on Vercel
-    expect(apiSource).toContain('For read-only requests (GET), try demo data fallback');
+    // Demo fallback is gated behind DEMO_MODE check
+    expect(apiSource).toContain('if (DEMO_MODE)');
+    // GET fallback is also gated
+    expect(apiSource).toContain('Server unavailable — could not load data');
   });
 
   it('should handle network errors for state-changing requests by throwing', () => {
     const apiSource = readFileSync(resolve('src/ui/lib/api.ts'), 'utf-8');
-    // Network error path should throw for state-changing requests
     expect(apiSource).toContain('isStateChanging');
     expect(apiSource).toContain('Server unavailable');
   });

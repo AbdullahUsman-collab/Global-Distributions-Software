@@ -2,11 +2,13 @@
  * Client-side Session Management
  * Handles authentication state via server API and HTTP-only cookies.
  *
- * PRODUCTION: Session is stored as HTTP-only cookie set by the server.
- * The browser never sees the session token directly.
+ * PRODUCTION (VITE_DEMO_MODE=false or unset):
+ *   All auth goes through the real Express API.
+ *   If the server is unavailable, errors are thrown — NEVER silent demo fallback.
  *
- * DEV FALLBACK: localStorage is used only for tenantId resolution
- * (not for session validation — that's always server-side).
+ * DEMO MODE (VITE_DEMO_MODE=true):
+ *   Falls back to client-side mock auth when no server is available.
+ *   For development/Vercel demo only.
  */
 
 const TENANT_KEY = 'erp_tenant_id';
@@ -17,9 +19,17 @@ const USER_KEY = 'erp_current_user';
 const API_BASE = '/api';
 
 /**
- * Login via server API with client-side fallback.
+ * Production mode flag.
+ * When false (default), demo fallback is disabled.
+ * Set VITE_DEMO_MODE=true in .env for development/Vercel demo.
+ */
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
+/**
+ * Login via server API.
  * Server sets HTTP-only cookie on success.
- * Falls back to client-side mock auth when no server is available (e.g. Vercel).
+ * In production: throws error if server is unavailable.
+ * In demo mode: falls back to client-side mock auth.
  */
 export async function apiLogin(
   username: string,
@@ -42,14 +52,17 @@ export async function apiLogin(
     }
     return { success: false, error: data.error || 'Login failed' };
   } catch {
-    // Server unavailable — fall back to client-side mock auth
-    return clientSideLogin(username, password, tenantId);
+    if (DEMO_MODE) {
+      return clientSideLogin(username, password, tenantId);
+    }
+    return { success: false, error: 'Server unavailable — cannot login. Please ensure the backend API is running.' };
   }
 }
 
 /**
  * Get current authenticated user from server.
- * Falls back to localStorage when no server is available.
+ * In production: throws error if server is unavailable.
+ * In demo mode: falls back to localStorage session.
  */
 export async function apiGetMe(): Promise<{ user: any; tenant: any } | null> {
   try {
@@ -58,15 +71,15 @@ export async function apiGetMe(): Promise<{ user: any; tenant: any } | null> {
     });
 
     if (!res.ok) {
-      // Fall back to local session
-      return getLocalMe();
+      if (DEMO_MODE) return getLocalMe();
+      return null;
     }
 
     const data = await res.json();
     return data;
   } catch {
-    // Server unavailable — use local session
-    return getLocalMe();
+    if (DEMO_MODE) return getLocalMe();
+    return null;
   }
 }
 
@@ -210,7 +223,8 @@ const DEMO_TENANT_LIST: Array<{ id: string; slug: string; brandName: string; log
 
 /**
  * Get public tenants (brand selection).
- * Tries the server API first; falls back to client-side mock data.
+ * In production: only returns server data, throws on failure.
+ * In demo mode: falls back to client-side mock data.
  */
 export async function apiGetTenants(): Promise<Array<{ id: string; slug: string; brandName: string; logoUrl: string; primaryColor: string }>> {
   try {
@@ -220,35 +234,42 @@ export async function apiGetTenants(): Promise<Array<{ id: string; slug: string;
     if (Array.isArray(data) && data.length > 0) return data;
     throw new Error('Empty tenant list');
   } catch {
-    // Server unavailable — return client-side demo tenants
-    return DEMO_TENANT_LIST.map(t => ({
-      id: t.id,
-      slug: t.slug,
-      brandName: t.brandName,
-      logoUrl: t.logoUrl,
-      primaryColor: t.primaryColor,
-    }));
+    if (DEMO_MODE) {
+      return DEMO_TENANT_LIST.map(t => ({
+        id: t.id,
+        slug: t.slug,
+        brandName: t.brandName,
+        logoUrl: t.logoUrl,
+        primaryColor: t.primaryColor,
+      }));
+    }
+    throw new Error('Server unavailable — cannot load tenants. Please ensure the backend API is running.');
   }
 }
 
 /**
  * Get a single tenant by slug (login page).
- * Tries the server API first; falls back to client-side mock data.
+ * In production: only returns server data.
+ * In demo mode: falls back to client-side mock data.
  */
 export async function apiGetTenantBySlug(slug: string): Promise<{ id: string; slug: string; brandName: string; logoUrl: string; primaryColor: string; accentColor: string; isActive: boolean; createdAt: Date; updatedAt: Date } | null> {
   try {
     const res = await fetch(`${API_BASE}/tenants/${encodeURIComponent(slug)}`, { credentials: 'include' });
     if (res.status === 404) {
-      // Try client-side fallback
-      const fallback = DEMO_TENANT_LIST.find(t => t.slug === slug);
-      return fallback || null;
+      if (DEMO_MODE) {
+        const fallback = DEMO_TENANT_LIST.find(t => t.slug === slug);
+        return fallback || null;
+      }
+      return null;
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch {
-    // Server unavailable — find in client-side mock data
-    const fallback = DEMO_TENANT_LIST.find(t => t.slug === slug);
-    return fallback || null;
+    if (DEMO_MODE) {
+      const fallback = DEMO_TENANT_LIST.find(t => t.slug === slug);
+      return fallback || null;
+    }
+    return null;
   }
 }
 

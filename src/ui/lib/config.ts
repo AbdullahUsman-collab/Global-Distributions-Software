@@ -2,29 +2,22 @@
  * Application Mode Configuration
  * Controls whether the application runs in DEMO mode (mock data) or PRODUCTION mode (PostgreSQL).
  *
- * To switch to production:
- *   Set APP_MODE=production (or leave unset)
- *   Configure DATABASE_URL environment variable
+ * Production (VITE_DEMO_MODE=false or unset):
+ *   - Real PostgreSQL adapters are used
+ *   - All API calls go to the Express backend
+ *   - Errors are thrown if backend is unavailable
  *
- * In DEMO mode:
- *   - Mock/in-memory adapters are used
- *   - Demo data is seeded on startup
- *   - A "DEMO MODE" indicator is displayed in the UI
- *   - No real database is required
+ * Demo (VITE_DEMO_MODE=true):
+ *   - Client-side mock data is used
+ *   - For development/Vercel demo only
  */
 
 /**
  * Check if the application is running in DEMO mode.
- * Server-side: checks process.env.APP_MODE
- * Client-side: always returns true (demo mode is the default for static deployment)
+ * Uses Vite's import.meta.env on the client side.
  */
 export function isDemoMode(): boolean {
-  // Server-side check
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env.APP_MODE !== 'production';
-  }
-  // Client-side: always demo mode unless explicitly set
-  return true;
+  return import.meta.env.VITE_DEMO_MODE === 'true';
 }
 
 /**
