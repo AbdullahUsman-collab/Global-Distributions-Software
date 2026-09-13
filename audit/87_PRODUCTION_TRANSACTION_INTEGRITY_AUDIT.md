@@ -1,7 +1,7 @@
 # Step 87 — Production Transaction Integrity, CSRF Protection & Full ERP Reconciliation Audit
 
 **Date:** 2026-09-13  
-**Commit:** 4637c80 (CSRF fix)  
+**Commits:** 4637c80 (CSRF fix), b49a939 (bcrypt auth fix)  
 **Status:** ✅ COMPLETE  
 
 ---
@@ -41,7 +41,7 @@ This audit covers CSRF protection remediation, production environment verificati
 | Cookie policy | ✅ | SameSite=None; Secure (cross-origin production) |
 | Rate limiting | ✅ | 500 req/15min API, 10/15min login |
 | Node env | ✅ | production |
-| PostgreSQL | ✅ | Connected (Supabase pooler, port 5432) |
+| PostgreSQL | ✅ | Connected (Supabase pooler, port 6543, host aws-0-ap-northeast-1.pooler.supabase.com) |
 | Tenant count | ✅ | 2 tenants (system-000 + tenant-apex-trading-003) |
 
 ---
@@ -187,10 +187,21 @@ Test Files  1 passed (1)
 | `src/ui/lib/session.ts` | Added CSRF token generation + headers to all POST fetch calls |
 | `src/ui/lib/api.ts` | Exported `getCsrfToken` |
 | `src/server/middleware/csrf.ts` | Added exempt paths for unauthenticated endpoints |
+| `src/domain/adapters/mock/MockAuthService.ts` | Added `useBcrypt` flag; production uses `bcrypt.compare()` against stored hashes |
+| `src/server/index.ts` | Passes `usePg` as `useBcrypt` flag to MockAuthService |
+| `.env` | Updated DATABASE_URL to pooler (port 6543) to match Vercel production |
 | `src/server/Step87_ProductionIntegrityAndCSRF.test.ts` | New — 67 comprehensive tests |
 
 ---
 
 ## Conclusion
 
-The CSRF login failure was the most critical production defect. It has been fixed with a minimal, surgical change: exempting unauthenticated paths from CSRF and adding CSRF headers to all client-side POST calls. The full ERP system has been verified end-to-end: authentication, transaction flows, financial reports, inventory, tenant isolation, and source code compliance — all passing against the live Vercel deployment with Supabase PostgreSQL.
+Two critical production defects were found and fixed in Step 87:
+
+1. **CSRF login failure** — `session.ts` used raw `fetch()` without CSRF headers, and the CSRF middleware blocked unauthenticated POST routes. Fixed by exempting unauthenticated paths and adding CSRF headers to all client-side POST calls.
+
+2. **Plaintext auth in production** — `MockAuthService.authenticate()` used `===` comparison against `DEMO_PLAIN_PASSWORDS` even when `DATABASE_URL` was set, ignoring bcrypt hashes in `user_credentials`. Fixed by adding a `useBcrypt` flag that enables `bcrypt.compare()` against stored password hashes in production mode.
+
+Additionally, the local `.env` was corrected to match Vercel's production DATABASE_URL (Supabase pooler at port 6543), and the audit documentation was updated to reflect the actual production configuration.
+
+The full ERP system has been verified end-to-end: authentication, transaction flows, financial reports, inventory, tenant isolation, and source code compliance — all passing against the live Vercel deployment with Supabase PostgreSQL.
