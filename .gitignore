@@ -35,3 +35,9 @@ seed_minimal.mjs
 
 # Compiled server output in src/ (from tsc attempts)
 src/**/*.js
+
+# Temporary test files
+cookies*.txt
+headers.txt
+temp_*.json
+src/server/db/run-migrate.ts
