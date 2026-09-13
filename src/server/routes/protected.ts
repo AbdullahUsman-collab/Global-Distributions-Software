@@ -40,6 +40,23 @@ import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, va
 
 const VALID_ROLES: readonly SystemRoleName[] = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
 
+/**
+ * Resolve an implicit default warehouse for the tenant.
+ *
+ * SPECIFICATION GAP (legacy forensic audit): Warehouse/Warehouse Locations has NO
+ * verified source in the legacy ERP — only Stock Balance, Stock BWA, Item Ledger
+ * were confirmed. Warehouse is a required internal dependency of bill/return
+ * posting, so it is auto-defaulted server-side (single active warehouse) and the
+ * selection UI is hidden. No warehouse creation/master workflows are exposed.
+ */
+async function resolveImplicitWarehouseId(tenantId: string): Promise<string | null> {
+  const result = await getPool().query(
+    `SELECT id FROM warehouses WHERE tenant_id = $1 AND is_active = true ORDER BY code`,
+    [tenantId]
+  );
+  return result.rows[0]?.id ?? null;
+}
+
 export function createProtectedRoutes(
   salesService: SalesService,
   purchaseService: PurchaseService,
@@ -77,16 +94,26 @@ export function createProtectedRoutes(
     requirePermissionMiddleware('sales.create'),
     async (req: Request, res: Response) => {
       try {
+        const tenantId = req.user!.tenantId;
+        const createdBy = req.user!.username;
+        const role = req.user!.role;
+
+        // Warehouse selection UI is hidden (spec gap) — default BEFORE validation,
+        // which requires a warehouseId.
+        if (!req.body?.warehouseId) {
+          const implicitWh = await resolveImplicitWarehouseId(tenantId);
+          if (!implicitWh) {
+            res.status(409).json({ error: 'No active warehouse configured for this brand. Stock posting requires one. Contact your administrator.' });
+            return;
+          }
+          req.body.warehouseId = implicitWh;
+        }
+
         const validation = validateSaleBillDTO(req.body);
         if (!validation.valid) {
           res.status(400).json({ error: validation.error });
           return;
         }
-
-        // Server resolves tenantId and createdBy from session
-        const tenantId = req.user!.tenantId;
-        const createdBy = req.user!.username;
-        const role = req.user!.role;
 
         const voucher = await salesService.createSaleBill(tenantId, req.body, createdBy, role);
         res.status(201).json(voucher);
@@ -162,15 +189,26 @@ export function createProtectedRoutes(
     requirePermissionMiddleware('purchases.create'),
     async (req: Request, res: Response) => {
       try {
+        const tenantId = req.user!.tenantId;
+        const createdBy = req.user!.username;
+        const role = req.user!.role;
+
+        // Warehouse selection UI is hidden (spec gap) — default BEFORE validation,
+        // which requires a warehouseId.
+        if (!req.body?.warehouseId) {
+          const implicitWh = await resolveImplicitWarehouseId(tenantId);
+          if (!implicitWh) {
+            res.status(409).json({ error: 'No active warehouse configured for this brand. Stock posting requires one. Contact your administrator.' });
+            return;
+          }
+          req.body.warehouseId = implicitWh;
+        }
+
         const validation = validatePurchaseBillDTO(req.body);
         if (!validation.valid) {
           res.status(400).json({ error: validation.error });
           return;
         }
-
-        const tenantId = req.user!.tenantId;
-        const createdBy = req.user!.username;
-        const role = req.user!.role;
 
         const voucher = await purchaseService.createPurchaseBill(tenantId, req.body, createdBy, role);
         res.status(201).json(voucher);
@@ -432,6 +470,21 @@ export function createProtectedRoutes(
     requirePermissionMiddleware('returns.create'),
     async (req: Request, res: Response) => {
       try {
+        const tenantId = req.user!.tenantId;
+        const createdBy = req.user!.username;
+        const role = req.user!.role;
+
+        // Warehouse selection UI is hidden (spec gap) — default BEFORE validation,
+        // which requires a warehouseId.
+        if (!req.body?.warehouseId) {
+          const implicitWh = await resolveImplicitWarehouseId(tenantId);
+          if (!implicitWh) {
+            res.status(409).json({ error: 'No active warehouse configured for this brand. Stock posting requires one. Contact your administrator.' });
+            return;
+          }
+          req.body.warehouseId = implicitWh;
+        }
+
         const validation = validateSaleReturnDTO(req.body);
         if (!validation.valid) {
           res.status(400).json({ error: validation.error });
@@ -442,9 +495,7 @@ export function createProtectedRoutes(
           res.status(400).json({ error: lineValidation.error });
           return;
         }
-        const tenantId = req.user!.tenantId;
-        const createdBy = req.user!.username;
-        const role = req.user!.role;
+
         const voucher = await saleReturnService.createSaleReturn(tenantId, req.body, createdBy, role);
         res.status(201).json(voucher);
       } catch (error: any) {
@@ -1004,6 +1055,17 @@ export function createProtectedRoutes(
         const tenantId = req.user!.tenantId;
         const createdBy = req.user!.username;
         const role = req.user!.role;
+
+        // Warehouse selection UI is hidden (spec gap) — default server-side when absent.
+        if (!req.body?.warehouseId) {
+          const implicitWh = await resolveImplicitWarehouseId(tenantId);
+          if (!implicitWh) {
+            res.status(409).json({ error: 'No active warehouse configured for this brand. Stock posting requires one. Contact your administrator.' });
+            return;
+          }
+          req.body.warehouseId = implicitWh;
+        }
+
         const voucher = await purchaseReturnService.createPurchaseReturn(tenantId, req.body, createdBy, role);
         res.status(201).json(voucher);
       } catch (error: any) {
@@ -1835,12 +1897,43 @@ export function createProtectedRoutes(
           return;
         }
 
+        // Warehouse selection UI is hidden (spec gap) — default the applicable side
+        // server-side. TRANSFER needs two distinct warehouses; if the tenant has fewer
+        // than two, reject with a clear message rather than defaulting both sides.
+        const activeWarehouses = await getPool().query(
+          `SELECT id FROM warehouses WHERE tenant_id = $1 AND is_active = true ORDER BY code`,
+          [tenantId]
+        );
+        const whIds: string[] = activeWarehouses.rows.map((r: any) => r.id);
+        const needsFrom = ['ISSUE', 'TRANSFER', 'ADJUSTMENT'].includes(movementType);
+        const needsTo = ['GRN', 'RETURN', 'TRANSFER', 'ADJUSTMENT'].includes(movementType);
+        if ((needsFrom && !fromWarehouseId) || (needsTo && !toWarehouseId)) {
+          if (movementType === 'TRANSFER') {
+            if (whIds.length < 2) {
+              res.status(409).json({ error: 'Stock transfer requires two warehouses, but this brand has fewer than two configured. Transfer is unavailable.' });
+              return;
+            }
+            req.body.fromWarehouseId = req.body.fromWarehouseId || whIds[0];
+            req.body.toWarehouseId = req.body.toWarehouseId || whIds[1];
+          } else {
+            const implicitWh = whIds[0] ?? null;
+            if (!implicitWh) {
+              res.status(409).json({ error: 'No active warehouse configured for this brand. Stock movements require one. Contact your administrator.' });
+              return;
+            }
+            if (needsFrom && !req.body.fromWarehouseId) req.body.fromWarehouseId = implicitWh;
+            if (needsTo && !req.body.toWarehouseId) req.body.toWarehouseId = implicitWh;
+          }
+        }
+
+        // Read from req.body (not the earlier destructured consts) — the implicit
+        // default above mutates req.body after destructuring.
         const movement = await inventoryRepo.createStockMovement(tenantId, {
           tenantId,
           movementType,
           movementDate,
-          fromWarehouseId: fromWarehouseId || undefined,
-          toWarehouseId: toWarehouseId || undefined,
+          fromWarehouseId: req.body.fromWarehouseId || undefined,
+          toWarehouseId: req.body.toWarehouseId || undefined,
           productId,
           quantity,
           unitCost,

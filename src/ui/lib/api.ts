@@ -189,7 +189,9 @@ async function apiRequest<T>(
 export interface SaleBillDTO {
   customerId: string;
   date: string;
-  warehouseId: string;
+  // Spec gap: warehouse selection UI is hidden; server resolves the implicit
+  // default warehouse when omitted.
+  warehouseId?: string;
   narration?: string;
   lines: {
     productId: string;

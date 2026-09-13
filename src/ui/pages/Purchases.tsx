@@ -16,7 +16,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import {
   getSuppliers, createSupplier, updateSupplier, deleteSupplier,
-  getAccounts, getLedger, getProducts, getWarehouses,
+  getAccounts, getLedger, getProducts,
   getPurchases, createPurchaseBill, postPurchaseBill, deletePurchaseBill,
   getPurchaseReturns, createPurchaseReturn, postPurchaseReturn, deletePurchaseReturn,
 } from '../lib/api';
@@ -28,7 +28,6 @@ import {
 } from '../../domain/types/supplier';
 import {
   Product,
-  Warehouse,
   StockLevel,
   calculateBillLineTax,
   BillLineTaxInput,
@@ -523,10 +522,8 @@ const PurchaseBillForm: React.FC<{
   const { user } = useAuth();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
   const [supplierId, setSupplierId] = useState('');
-  const [warehouseId, setWarehouseId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [narration, setNarration] = useState('');
   const [lines, setLines] = useState<PurchaseBillLine[]>([]);
@@ -535,15 +532,12 @@ const PurchaseBillForm: React.FC<{
   // Load master data
   useEffect(() => {
     const load = async () => {
-      const [supps, prods, whs] = await Promise.all([
+      const [supps, prods] = await Promise.all([
         getSuppliers(),
         getProducts(),
-        getWarehouses(),
       ]);
       setSuppliers(supps);
       setProducts(prods.filter(p => p.isActive));
-      setWarehouses(whs.filter(w => w.isActive));
-      if (whs.length > 0) setWarehouseId(whs[0].id);
     };
     load();
   }, [tenantId]);
@@ -643,13 +637,12 @@ const PurchaseBillForm: React.FC<{
   const handleSave = async () => {
     if (!supplierId) { alert('Select a supplier'); return; }
     if (lines.length === 0) { alert('Add at least one line'); return; }
-    if (!warehouseId) { alert('Select a warehouse'); return; }
 
     setSaving(true);
     try {
       const voucher = await createPurchaseBill({
         supplierId,
-        warehouseId,
+        // warehouseId intentionally omitted — server resolves the implicit default
         date,
         narration: narration || undefined,
         lines,
@@ -679,14 +672,6 @@ const PurchaseBillForm: React.FC<{
               <option value="">Select Supplier</option>
               {suppliers.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Warehouse *</label>
-            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} style={styles.select}>
-              {warehouses.map(w => (
-                <option key={w.id} value={w.id}>{w.name}</option>
               ))}
             </select>
           </div>
@@ -968,10 +953,8 @@ const PurchaseReturnForm: React.FC<{
   const { user } = useAuth();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
   const [supplierId, setSupplierId] = useState('');
-  const [warehouseId, setWarehouseId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [narration, setNarration] = useState('');
   const [lines, setLines] = useState<PurchaseReturnLine[]>([]);
@@ -979,14 +962,12 @@ const PurchaseReturnForm: React.FC<{
 
   useEffect(() => {
     const load = async () => {
-      const [sups, prods, whs] = await Promise.all([
+      const [sups, prods] = await Promise.all([
         getSuppliers(),
         getProducts(),
-        getWarehouses(),
       ]);
       setSuppliers(sups);
       setProducts(prods.filter(p => p.isActive));
-      setWarehouses(whs.filter(w => w.isActive));
     };
     load();
   }, [tenantId]);
@@ -1017,7 +998,6 @@ const PurchaseReturnForm: React.FC<{
 
   const handleSave = async () => {
     if (!supplierId) { alert('Select a supplier'); return; }
-    if (!warehouseId) { alert('Select a warehouse'); return; }
     if (lines.length === 0) { alert('Add at least one line'); return; }
     for (const line of lines) {
       if (!line.productId) { alert('Select a product for all lines'); return; }
@@ -1027,7 +1007,7 @@ const PurchaseReturnForm: React.FC<{
     try {
       await createPurchaseReturn({
         supplierId,
-        warehouseId,
+        // warehouseId intentionally omitted — server resolves the implicit default
         date,
         narration: narration || undefined,
         lines,
@@ -1051,13 +1031,6 @@ const PurchaseReturnForm: React.FC<{
             <select value={supplierId} onChange={e => setSupplierId(e.target.value)} style={styles.select}>
               <option value="">-- Select Supplier --</option>
               {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Warehouse *</label>
-            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} style={styles.select}>
-              <option value="">-- Select Warehouse --</option>
-              {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
           </div>
           <div style={styles.formGroup}>

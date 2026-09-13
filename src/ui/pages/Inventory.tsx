@@ -8,12 +8,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getWarehouseLocations, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement, getStockBalanceWithActivity } from '../lib/api';
+import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement, getStockBalanceWithActivity } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   Product,
   Warehouse,
-  WarehouseLocation,
   StockLevel,
   StockMovement,
   StockMovementType,
@@ -30,13 +29,12 @@ import { GST_TYPE_LABELS } from '../../domain/types/settings';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
-type InventoryTab = 'items' | 'stock' | 'warehouses' | 'movements' | 'activity';
+type InventoryTab = 'items' | 'stock' | 'movements' | 'activity';
 
 const TABS: { key: InventoryTab; label: string }[] = [
   { key: 'items',      label: 'Item Master' },
   { key: 'stock',      label: 'Stock Balances' },
   { key: 'activity',   label: 'Stock BWA' },
-  { key: 'warehouses', label: 'Warehouses & Locations' },
   { key: 'movements',  label: 'Stock Movements' },
 ];
 
@@ -95,7 +93,6 @@ export const Inventory: React.FC = () => {
       {tab === 'items'      && <ItemsTab tenantId={tenant.id} />}
       {tab === 'stock'      && <StockBalancesTab tenantId={tenant.id} />}
       {tab === 'activity'   && <StockBWATab tenantId={tenant.id} />}
-      {tab === 'warehouses' && <WarehousesTab tenantId={tenant.id} />}
       {tab === 'movements'  && <MovementsTab tenantId={tenant.id} />}
     </div>
   );
@@ -457,7 +454,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [warehouseFilter, setWarehouseFilter] = useState('');
+  // Warehouse filter select hidden — spec gap: warehouse master has no verified legacy source.
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [batches, setBatches] = useState<any[]>([]);
   const [serials, setSerials] = useState<any[]>([]);
@@ -504,9 +501,6 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   // Filtered stock levels
   const filteredLevels = useMemo(() => {
     let result = stockLevels;
-    if (warehouseFilter) {
-      result = result.filter(l => l.warehouseId === warehouseFilter);
-    }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(l => {
@@ -515,7 +509,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       });
     }
     return result;
-  }, [stockLevels, warehouseFilter, search, productMap]);
+  }, [stockLevels, search, productMap]);
 
   // Aggregate by product
   const productAggregates = useMemo(() => {
@@ -584,16 +578,7 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           placeholder="Search by name or SKU..."
           style={styles.searchInput}
         />
-        <select
-          value={warehouseFilter}
-          onChange={e => setWarehouseFilter(e.target.value)}
-          style={styles.filterSelect}
-        >
-          <option value="">All Warehouses</option>
-          {warehouses.map(w => (
-            <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
-          ))}
-        </select>
+        {/* Warehouse filter hidden — spec gap: no verified legacy warehouse master */}
       </div>
 
       {/* Stock Table */}
@@ -698,127 +683,12 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 };
 
 /* ═══════════════════════════════════════════════════════════ */
-/* Tab: Warehouses & Locations                                */
+/* Warehouses & Locations tab removed — SPECIFICATION GAP:     */
+/* no verified legacy source (audit). Warehouse master data    */
+/* exists only as an internal dependency of stock posting.     */
 /* ═══════════════════════════════════════════════════════════ */
 
-const WarehousesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [locations, setLocations] = useState<WarehouseLocation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedWh, setExpandedWh] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const w = await getWarehouses();
-      setWarehouses(w);
-      // Load locations for all warehouses
-      const allLocs: WarehouseLocation[] = [];
-      for (const wh of w) {
-        const locs = await getWarehouseLocations(wh.id);
-        allLocs.push(...locs);
-      }
-      setLocations(allLocs);
-    } finally {
-      setLoading(false);
-    }
-  }, [tenantId]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const locationsByWarehouse = useMemo(() => {
-    const m = new Map<string, WarehouseLocation[]>();
-    for (const loc of locations) {
-      const list = m.get(loc.warehouseId) ?? [];
-      list.push(loc);
-      m.set(loc.warehouseId, list);
-    }
-    return m;
-  }, [locations]);
-
-  return (
-    <>
-      <div className="section-header-responsive" style={styles.sectionHeader}>
-        <div style={styles.statsBar}>
-          <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{warehouses.length}</span>
-            <span style={styles.statLabel}>Warehouses</span>
-          </div>
-          <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#dcfce7', color: '#15803d' }}>{locations.length}</span>
-            <span style={styles.statLabel}>Locations</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="table-wrap" style={styles.card}>
-        {loading ? (
-          <div style={{ padding: 24 }}>
-            <div className="skeleton" style={{ width: '100%', height: 200 }} />
-          </div>
-        ) : (
-          <>
-            <div style={{ ...styles.treeHeader, minWidth: 380 }}>
-              <span style={{ ...styles.col, flex: '0 0 80px' }}>Code</span>
-              <span style={{ ...styles.col, flex: '1' }}>Warehouse Name</span>
-              <span style={{ ...styles.col, flex: '0 0 80px' }}>Status</span>
-              <span style={{ ...styles.col, flex: '0 0 80px' }}>Locations</span>
-              <span style={{ ...styles.col, flex: '0 0 60px' }}></span>
-            </div>
-            {warehouses.length === 0 && (
-              <div style={styles.empty}>No warehouses found.</div>
-            )}
-            {warehouses.map(wh => {
-              const locs = locationsByWarehouse.get(wh.id) ?? [];
-              return (
-                <React.Fragment key={wh.id}>
-                  <div style={{ ...styles.voucherRow, minWidth: 380 }}>
-                    <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600 }}>{wh.code}</span>
-                    <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{wh.name}</span>
-                    <span style={{ ...styles.col, flex: '0 0 80px' }}>
-                      <span style={{ ...styles.typeBadge, backgroundColor: wh.isActive ? '#dcfce7' : '#fee2e2', color: wh.isActive ? '#166534' : '#991b1b' }}>
-                        {wh.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </span>
-                    <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'center', fontSize: 13 }}>{locs.length}</span>
-                    <span style={{ ...styles.col, flex: '0 0 60px' }}>
-                      <button
-                        onClick={() => setExpandedWh(expandedWh === wh.id ? null : wh.id)}
-                        style={styles.expandBtn}
-                      >
-                        {expandedWh === wh.id ? '▼' : '▶'}
-                      </button>
-                    </span>
-                  </div>
-                  {expandedWh === wh.id && locs.length > 0 && (
-                    <div style={styles.linesContainer}>
-                      <div style={{ ...styles.linesHeader, minWidth: 380 }}>
-                        <span style={{ ...styles.col, flex: '0 0 120px' }}>Code</span>
-                        <span style={{ ...styles.col, flex: '1' }}>Name</span>
-                        <span style={{ ...styles.col, flex: '0 0 60px' }}>Rack</span>
-                        <span style={{ ...styles.col, flex: '0 0 60px' }}>Shelf</span>
-                        <span style={{ ...styles.col, flex: '0 0 60px' }}>Bin</span>
-                      </div>
-                      {locs.map(loc => (
-                        <div key={loc.id} style={{ ...styles.lineRow, minWidth: 380 }}>
-                          <span style={{ ...styles.col, flex: '0 0 120px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{loc.code}</span>
-                          <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{loc.name}</span>
-                          <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{loc.rack ?? '—'}</span>
-                          <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{loc.shelf ?? '—'}</span>
-                          <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{loc.bin ?? '—'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </>
-        )}
-      </div>
-    </>
-  );
-};
+const WarehousesTab_REMOVED = null;
 
 /* ═══════════════════════════════════════════════════════════ */
 /* Tab: Stock Balance With Activity                            */
@@ -1173,7 +1043,6 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
         <CreateMovementModal
           tenantId={tenantId}
           products={products}
-          warehouses={warehouses}
           onClose={() => setShowCreate(false)}
           onCreated={async () => { setShowCreate(false); await load(); }}
         />
@@ -1187,15 +1056,13 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 const CreateMovementModal: React.FC<{
   tenantId: string;
   products: Product[];
-  warehouses: Warehouse[];
   onClose: () => void;
   onCreated: () => void;
-}> = ({ tenantId, products, warehouses, onClose, onCreated }) => {
+}> = ({ tenantId, products, onClose, onCreated }) => {
   const [movementType, setMovementType] = useState<StockMovementType>('GRN');
   const [movementDate, setMovementDate] = useState(new Date().toISOString().split('T')[0]);
   const [productId, setProductId] = useState('');
-  const [fromWarehouseId, setFromWarehouseId] = useState('');
-  const [toWarehouseId, setToWarehouseId] = useState('');
+  // Warehouse selection UI hidden (spec gap) — server resolves the implicit default.
   const [quantity, setQuantity] = useState(0);
   const [unitCost, setUnitCost] = useState(0);
   const [narration, setNarration] = useState('');
@@ -1212,26 +1079,13 @@ const CreateMovementModal: React.FC<{
     if (quantity <= 0) { setError('Quantity must be greater than 0.'); return; }
     if (unitCost < 0) { setError('Unit cost cannot be negative.'); return; }
 
-    // Validate warehouse requirements
-    if (['GRN', 'RETURN'].includes(movementType) && !toWarehouseId && !fromWarehouseId) {
-      setError('Target warehouse is required for GRN/RETURN.'); return;
-    }
-    if (movementType === 'ISSUE' && !fromWarehouseId) {
-      setError('Source warehouse is required for ISSUE.'); return;
-    }
-    if (movementType === 'TRANSFER') {
-      if (!fromWarehouseId) { setError('Source warehouse is required for TRANSFER.'); return; }
-      if (!toWarehouseId) { setError('Target warehouse is required for TRANSFER.'); return; }
-      if (fromWarehouseId === toWarehouseId) { setError('Source and target warehouses must be different.'); return; }
-    }
-
     setSaving(true);
     try {
       await createStockMovement({
         movementType,
         movementDate,
-        fromWarehouseId: fromWarehouseId || undefined,
-        toWarehouseId: toWarehouseId || undefined,
+        // from/to warehouseIds intentionally omitted — server resolves the implicit
+        // default per movement type (TRANSFER with <2 warehouses is rejected there).
         productId,
         quantity,
         unitCost,
@@ -1251,9 +1105,6 @@ const CreateMovementModal: React.FC<{
     const prod = products.find(p => p.id === pid);
     if (prod) setUnitCost(prod.purchaseRate);
   };
-
-  const needsFromWarehouse = ['ISSUE', 'TRANSFER', 'ADJUSTMENT'].includes(movementType);
-  const needsToWarehouse = ['GRN', 'RETURN', 'TRANSFER', 'ADJUSTMENT'].includes(movementType);
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -1286,29 +1137,7 @@ const CreateMovementModal: React.FC<{
             </select>
           </div>
 
-          {needsFromWarehouse && (
-            <div style={styles.field}>
-              <label style={styles.label}>Source Warehouse</label>
-              <select value={fromWarehouseId} onChange={e => setFromWarehouseId(e.target.value)} style={styles.select}>
-                <option value="">Select warehouse...</option>
-                {warehouses.filter(w => w.isActive).map(w => (
-                  <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {needsToWarehouse && (
-            <div style={styles.field}>
-              <label style={styles.label}>Destination Warehouse</label>
-              <select value={toWarehouseId} onChange={e => setToWarehouseId(e.target.value)} style={styles.select}>
-                <option value="">Select warehouse...</option>
-                {warehouses.filter(w => w.isActive).map(w => (
-                  <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Source/Destination warehouse selects hidden — spec gap; server defaults them */}
 
           <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>

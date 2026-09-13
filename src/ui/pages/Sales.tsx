@@ -16,7 +16,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import {
   getCustomers, createCustomer, updateCustomer, deleteCustomer,
-  getAccounts, getLedger, getProducts, getWarehouses, getStockLevels,
+  getAccounts, getLedger, getProducts, getStockLevels,
   getSales, createSaleBill, postSaleBill, deleteSaleBill,
   getSaleReturns, createSaleReturn, postSaleReturn, deleteSaleReturn,
 } from '../lib/api';
@@ -28,7 +28,6 @@ import {
 } from '../../domain/types/customer';
 import {
   Product,
-  Warehouse,
   StockLevel,
   calculateBillLineTax,
   BillLineTaxInput,
@@ -498,11 +497,9 @@ const SaleBillForm: React.FC<{
 }> = ({ tenantId, onSaved, onCancel }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
 
   const [customerId, setCustomerId] = useState('');
-  const [warehouseId, setWarehouseId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [narration, setNarration] = useState('');
   const [lines, setLines] = useState<SaleBillLine[]>([]);
@@ -511,17 +508,14 @@ const SaleBillForm: React.FC<{
   // Load master data
   useEffect(() => {
     const load = async () => {
-      const [custs, prods, whs, lvls] = await Promise.all([
+      const [custs, prods, lvls] = await Promise.all([
         getCustomers().then(c => c.filter((c: any) => c.isActive)),
         getProducts(),
-        getWarehouses(),
         getStockLevels(),
       ]);
       setCustomers(custs);
       setProducts(prods.filter(p => p.isActive));
-      setWarehouses(whs.filter(w => w.isActive));
       setStockLevels(lvls);
-      if (whs.length > 0) setWarehouseId(whs[0].id);
     };
     load();
   }, [tenantId]);
@@ -621,13 +615,12 @@ const SaleBillForm: React.FC<{
   const handleSave = async () => {
     if (!customerId) { alert('Select a customer'); return; }
     if (lines.length === 0) { alert('Add at least one line'); return; }
-    if (!warehouseId) { alert('Select a warehouse'); return; }
 
     setSaving(true);
     try {
       const voucher = await createSaleBill({
         customerId,
-        warehouseId,
+        // warehouseId intentionally omitted — server resolves the implicit default
         date,
         narration: narration || undefined,
         lines,
@@ -657,14 +650,6 @@ const SaleBillForm: React.FC<{
               <option value="">Select Customer</option>
               {customers.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Warehouse *</label>
-            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} style={styles.select}>
-              {warehouses.map(w => (
-                <option key={w.id} value={w.id}>{w.name}</option>
               ))}
             </select>
           </div>
@@ -945,10 +930,8 @@ const SaleReturnForm: React.FC<{
 }> = ({ tenantId, onSaved, onCancel }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
   const [customerId, setCustomerId] = useState('');
-  const [warehouseId, setWarehouseId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [narration, setNarration] = useState('');
   const [lines, setLines] = useState<SaleReturnLine[]>([]);
@@ -956,14 +939,12 @@ const SaleReturnForm: React.FC<{
 
   useEffect(() => {
     const load = async () => {
-      const [custs, prods, whs] = await Promise.all([
+      const [custs, prods] = await Promise.all([
         getCustomers().then(c => c.filter((c: any) => c.isActive)),
         getProducts(),
-        getWarehouses(),
       ]);
       setCustomers(custs);
       setProducts(prods.filter(p => p.isActive));
-      setWarehouses(whs.filter(w => w.isActive));
     };
     load();
   }, [tenantId]);
@@ -994,7 +975,6 @@ const SaleReturnForm: React.FC<{
 
   const handleSave = async () => {
     if (!customerId) { alert('Select a customer'); return; }
-    if (!warehouseId) { alert('Select a warehouse'); return; }
     if (lines.length === 0) { alert('Add at least one line'); return; }
     for (const line of lines) {
       if (!line.productId) { alert('Select a product for all lines'); return; }
@@ -1004,7 +984,7 @@ const SaleReturnForm: React.FC<{
     try {
       await createSaleReturn({
         customerId,
-        warehouseId,
+        // warehouseId intentionally omitted — server resolves the implicit default
         date,
         narration: narration || undefined,
         lines,
@@ -1028,13 +1008,6 @@ const SaleReturnForm: React.FC<{
             <select value={customerId} onChange={e => setCustomerId(e.target.value)} style={styles.select}>
               <option value="">-- Select Customer --</option>
               {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Warehouse *</label>
-            <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} style={styles.select}>
-              <option value="">-- Select Warehouse --</option>
-              {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
           </div>
           <div style={styles.formGroup}>
