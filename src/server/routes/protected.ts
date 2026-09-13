@@ -1255,6 +1255,14 @@ export function createProtectedRoutes(
           return;
         }
         const settings = await settingsRepo.updateSettings(tenantId, dto);
+        
+        // Also update the tenants table brand_name so it's reflected in the UI
+        // (Header reads tenant.brandName from the tenants table, not tenant_settings)
+        await pool.query(
+          `UPDATE tenants SET brand_name = $1 WHERE id = $2`,
+          [dto.profile?.businessName || settings.profile?.businessName || '', tenantId]
+        );
+        
         res.json(settings);
       } catch (error) {
         console.error('Update settings error:', error);
