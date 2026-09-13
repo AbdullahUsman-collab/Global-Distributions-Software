@@ -1,43 +1,18 @@
 /**
  * Vercel Serverless Entry Point
  *
- * Dynamic-import approach: loads src/server/index lazily so any
- * import-time crash is caught and reported instead of silently
- * producing FUNCTION_INVOCATION_FAILED.
+ * Re-exports the Express app from src/server/index.ts with proper
+ * database initialization lifecycle management.
+ *
+ * Architecture:
+ *   1. Module loads → src/server/index.ts creates Express app + fires initDatabase()
+ *   2. Vercel handler awaits dbReady before passing request to Express
+ *   3. Express handles the request with fully initialized pool
  */
 
-import type { IncomingMessage, ServerResponse } from 'http';
+import app, { dbReady } from '../src/server/index';
 
-let appPromise: Promise<any> | null = null;
-
-function getApp(): Promise<any> {
-  if (!appPromise) {
-    appPromise = import('../src/server/index').then((mod) => {
-      const app = mod.default;
-      const dbReady = mod.dbReady as Promise<void>;
-      return { app, dbReady };
-    });
-  }
-  return appPromise;
-}
-
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('X-Powered-By', 'distribution-erp');
-
-  try {
-    const { app, dbReady } = await getApp();
-    await dbReady;
-    return app(req, res);
-  } catch (error: any) {
-    console.error('Vercel handler error:', error);
-    const statusCode = 500;
-    res.statusCode = statusCode;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      status: 'error',
-      message: 'Server initialization failed',
-      detail: error?.message || String(error),
-      stack: process.env.DEBUG ? error?.stack : undefined,
-    }));
-  }
+export default async function handler(req: any, res: any) {
+  await dbReady;
+  return app(req, res);
 }
