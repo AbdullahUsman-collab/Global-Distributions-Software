@@ -18,6 +18,7 @@ import { IUserRepository } from '../../domain/repositories/IUserRepository.js';
 import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository.js';
 import { UserSession, User } from '../../domain/types/auth.js';
 import { hasPermission } from '../../domain/services/AuthorizationService.js';
+import { Permission } from '../../domain/types/rbac.js';
 
 declare global {
   namespace Express {
@@ -102,7 +103,7 @@ export function createAuthMiddleware(
  * Middleware to require a specific permission.
  * Must be used AFTER requireAuth.
  */
-export function requirePermissionMiddleware(permission: string) {
+export function requirePermissionMiddleware(permission: Permission) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
