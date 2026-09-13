@@ -1,10 +1,19 @@
 /**
  * Vercel Serverless Function Entry Point
- * Wraps the Express app for Vercel deployment.
+ * Lazily initializes the Express app on first request.
  */
 
-import app from '../src/server/index';
+let app: any = null;
 
-// Export the Express app as a Vercel serverless function.
-// DB initialization is triggered at module import time by src/server/index.ts.
-export default app;
+async function getApp() {
+  if (!app) {
+    const mod = await import('../src/server/index');
+    app = mod.default;
+  }
+  return app;
+}
+
+export default async function handler(req: any, res: any) {
+  const expressApp = await getApp();
+  return expressApp(req, res);
+}
