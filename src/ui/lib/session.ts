@@ -243,8 +243,8 @@ export async function apiGetTenants(): Promise<Array<{ id: string; slug: string;
     }
 
     const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) return data;
-    throw new Error('Empty tenant list');
+    if (Array.isArray(data)) return data;
+    throw new Error('Invalid response format');
   } catch (err) {
     if (DEMO_MODE) {
       return DEMO_TENANT_LIST.map(t => ({
@@ -262,6 +262,91 @@ export async function apiGetTenants(): Promise<Array<{ id: string; slug: string;
       throw new Error('Unable to connect to the ERP server. Please check your network connection and ensure the backend is running.');
     }
     throw new Error('Unable to load brands. Please try again.');
+  }
+}
+
+/**
+ * Check if system is bootstrapped (has brands).
+ * Returns system status from the backend.
+ */
+export async function apiGetSystemStatus(): Promise<{ bootstrapped: boolean; brandCount: number; message: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/system/status`, { credentials: 'include' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error('BACKEND_NOT_DEPLOYED');
+    }
+
+    return await res.json();
+  } catch (err) {
+    if (DEMO_MODE) {
+      return { bootstrapped: true, brandCount: 3, message: 'System is ready (demo mode)' };
+    }
+    if (err instanceof Error && err.message === 'BACKEND_NOT_DEPLOYED') {
+      throw new Error('Unable to connect to the ERP server. The backend API is not available.');
+    }
+    throw new Error('Unable to check system status. Please try again.');
+  }
+}
+
+/**
+ * Bootstrap login for system admin.
+ * Only works when zero brands exist.
+ */
+export async function apiBootstrapLogin(
+  username: string,
+  password: string,
+  newPassword?: string
+): Promise<{ success: true; user: any; isBootstrap: boolean } | { success: false; error: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/system/bootstrap`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, password, newPassword }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      storeTenantId(data.user.tenantId);
+      storeCurrentUser(data.user);
+      return { success: true, user: data.user, isBootstrap: data.isBootstrap };
+    }
+    return { success: false, error: data.error || 'Bootstrap login failed' };
+  } catch {
+    if (DEMO_MODE) {
+      return { success: false, error: 'Bootstrap not available in demo mode' };
+    }
+    return { success: false, error: 'Server unavailable — cannot bootstrap. Please ensure the backend API is running.' };
+  }
+}
+
+/**
+ * Complete bootstrap by creating first brand.
+ */
+export async function apiCompleteBootstrap(
+  brandName: string,
+  slug: string,
+  primaryColor?: string,
+  accentColor?: string
+): Promise<{ success: true; brand: any } | { success: false; error: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/system/complete-bootstrap`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ brandName, slug, primaryColor, accentColor }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      return { success: true, brand: data.brand };
+    }
+    return { success: false, error: data.error || 'Failed to complete bootstrap' };
+  } catch {
+    return { success: false, error: 'Server unavailable — cannot complete bootstrap.' };
   }
 }
 

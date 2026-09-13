@@ -160,8 +160,45 @@ PASS — 6.77s
 | `src/ui/lib/session.ts` | Added HTML response detection, better error messages |
 | `src/ui/lib/api.ts` | Added HTML response detection on 200 OK responses |
 
+## Forensic Analysis: Live Production Failure
+
+### Evidence Collected
+
+1. **Git State**: Branch `main`, commit `f132d48` (Step 84), working tree clean
+2. **Deployed Build Hash**: `index-Cho8FCKB.js` ≠ local build `index-KwQ1iX7K.js`
+3. **Live API Test**: `curl https://global-distributions-software-mauve.vercel.app/api/tenants` returns `404 text/plain "The page could not be found"`
+4. **Deployed JavaScript Analysis**: Contains `const C1="/api",$p=!1;` — confirms `API_BASE="/api"` and `DEMO_MODE=false`
+
+### Root Cause Confirmation
+
+**CASE A**: Vercel frontend is calling `/api/tenants` but no backend exists.
+
+**Failure Chain**:
+```
+Browser → fetch("https://global-distributions-software-mauve.vercel.app/api/tenants")
+→ Vercel: no serverless function for /api/tenants
+→ Vercel returns: 404 text/plain "The page could not be found"
+→ session.ts: !res.ok → throws error
+→ BrandSelection.tsx catch → shows "Failed to load brands. Please try again."
+```
+
+### Why Step 84 Did Not Solve The Live Problem
+
+1. **dotenv fix** — Server-side only. Irrelevant to Vercel deployment (no Express server on Vercel).
+2. **HTML detection** — Checks for `text/html` Content-Type. Vercel returns `text/plain`, so detection doesn't trigger.
+3. **Deployed build is stale** — Hash `Cho8FCKB` ≠ `KwQ1iX7K`. The deployed version does not contain Step 84 code.
+
+### Required Fix
+
+Three deployment actions are required (no source code changes needed):
+
+1. **Deploy Express backend to Render** — `render.yaml` and `Dockerfile` ready
+2. **Set `VITE_API_URL` in Vercel** — Point to deployed Render backend
+3. **Verify CORS** — `ALLOWED_ORIGINS` must include Vercel frontend URL
+
 ## Remaining Limitations
 
 1. **Backend not deployed to Render** — requires Render account + manual deployment
 2. **Vercel `VITE_API_URL` not set** — must be set after backend deployment
 3. **Browser testing not executed** — CLI environment limitation
+4. **Deployed build is stale** — Vercel has not auto-deployed commit `f132d48`

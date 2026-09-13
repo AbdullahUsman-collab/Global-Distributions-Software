@@ -24,6 +24,7 @@ import { Users } from './pages/Users';
 import { UserBrandAccessPage } from './pages/UserBrandAccess';
 import { Brands } from './pages/Brands';
 import { Layout } from './components/layout/Layout';
+import { SystemSetup } from './pages/SystemSetup';
 
 export const App: React.FC = () => {
   return (
@@ -33,6 +34,7 @@ export const App: React.FC = () => {
           {/* Public Routes */}
           <Route path="/" element={<ErrorBoundary><BrandSelection /></ErrorBoundary>} />
           <Route path="/login/:brandSlug" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+          <Route path="/setup" element={<ErrorBoundary><SystemSetup /></ErrorBoundary>} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>

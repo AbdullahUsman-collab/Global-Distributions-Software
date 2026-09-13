@@ -53,6 +53,7 @@ export async function runMigrations(): Promise<string[]> {
       { version: '003', name: 'user_brand_access', file: '003_user_brand_access.sql' },
       { version: '004', name: 'cost_rate_margin', file: '004_cost_rate_margin.sql' },
       { version: '005', name: 'further_tax_percent', file: '005_further_tax_percent.sql' },
+      { version: '006', name: 'system_bootstrap', file: '006_system_bootstrap.sql' },
     ];
 
     for (const migration of migrations) {
@@ -107,6 +108,7 @@ export async function getMigrationStatus(): Promise<{ version: string; name: str
       { version: '003', name: 'user_brand_access' },
       { version: '004', name: 'cost_rate_margin' },
       { version: '005', name: 'further_tax_percent' },
+      { version: '006', name: 'system_bootstrap' },
     ];
 
     return migrations.map(m => ({

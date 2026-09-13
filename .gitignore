@@ -29,3 +29,5 @@ npm-debug.log*
 start-server.bat
 test-api.mts
 test-bills.mts
+legacy_verify*.cjs
+seed_minimal.mjs

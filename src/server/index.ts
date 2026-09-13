@@ -29,6 +29,7 @@ import { csrfProtection } from './middleware/csrf';
 import { apiRateLimiter } from './middleware/rateLimit';
 import { createAuthRoutes, createTenantRoutes } from './routes/auth';
 import { createProtectedRoutes } from './routes/protected';
+import { createSystemRoutes } from './routes/system';
 
 // Domain adapters — mock
 import { MockTenantAdapter } from '../domain/adapters/mock/MockTenantAdapter';
@@ -202,6 +203,15 @@ const authMiddleware = createAuthMiddleware(sessionAdapter, userAdapter, brandAc
 // Public routes (no auth required)
 app.use('/api/auth', createAuthRoutes(authService, tenantAdapter));
 app.use('/api', createTenantRoutes(tenantAdapter));
+
+// System bootstrap routes (public, but restricted by logic)
+app.use('/api/system', createSystemRoutes(
+  tenantAdapter,
+  userAdapter,
+  credentialsAdapter,
+  brandAccessAdapter,
+  sessionAdapter
+));
 
 // Health check (no auth required — registered before protected routes)
 app.get('/api/health', (_req, res) => {

@@ -19,14 +19,19 @@ export const BrandSelection: React.FC = () => {
   const [tenants, setTenants] = useState<TenantPublicConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEmpty, setIsEmpty] = useState(false);
   const navigate = useNavigate();
 
   const fetchTenants = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setIsEmpty(false);
     try {
       const data = await apiGetTenants();
       setTenants(data);
+      if (data.length === 0) {
+        setIsEmpty(true);
+      }
     } catch (err) {
       setError('Failed to load brands. Please try again.');
       console.error('Error fetching tenants:', err);
@@ -39,6 +44,10 @@ export const BrandSelection: React.FC = () => {
 
   const handleBrandSelect = (tenant: TenantPublicConfig) => {
     navigate(`/login/${tenant.slug}`);
+  };
+
+  const handleSetupClick = () => {
+    navigate('/setup');
   };
 
   // Loading skeleton
@@ -85,15 +94,24 @@ export const BrandSelection: React.FC = () => {
     );
   }
 
-  // Empty state
-  if (tenants.length === 0) {
+  // Empty state - system needs setup
+  if (isEmpty) {
     return (
       <div style={styles.container}>
         <div style={styles.errorContainer}>
           <div style={styles.errorIcon}>📋</div>
-          <h2 style={styles.errorTitle}>No Brands Available</h2>
+          <h2 style={styles.errorTitle}>System Setup Required</h2>
           <p style={styles.errorMessage}>
-            There are no brands configured yet. Please contact your administrator.
+            No brands have been configured yet. The system administrator needs to create the first brand.
+          </p>
+          <button
+            onClick={handleSetupClick}
+            style={styles.setupButton}
+          >
+            System Setup
+          </button>
+          <p style={styles.helpText}>
+            If you are not the administrator, please contact them to set up the system.
           </p>
         </div>
       </div>
@@ -192,5 +210,23 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
     minHeight: '44px',
+  },
+  setupButton: {
+    padding: '12px 24px',
+    backgroundColor: '#6366f1',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '15px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+    minHeight: '44px',
+    marginBottom: '16px',
+  },
+  helpText: {
+    fontSize: '13px',
+    color: '#94a3b8',
+    marginTop: '12px',
   },
 };
