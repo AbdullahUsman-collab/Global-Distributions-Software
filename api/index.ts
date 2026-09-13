@@ -3,9 +3,9 @@
  * 
  * Handles core API routes directly without the full server import chain.
  * Connects to Supabase PostgreSQL when DATABASE_URL is set.
+ * Uses snake_case column names matching the actual database schema.
  */
 
-import 'dotenv/config';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
@@ -16,7 +16,6 @@ app.use(cookieParser());
 app.use(express.json());
 
 // ─── Helpers ────────────────────────────────────────────────
-const SALT_ROUNDS = 12;
 
 let pgPool: any = null;
 
@@ -25,7 +24,13 @@ async function getPool() {
   const url = process.env.DATABASE_URL;
   if (!url) return null;
   const { default: pg } = await import('pg');
-  pgPool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  pgPool = new pg.Pool({
+    connectionString: url.replace('sslmode=require', 'sslmode=no-verify'),
+    ssl: { rejectUnauthorized: false },
+    max: 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
   return pgPool;
 }
 
@@ -62,8 +67,8 @@ app.get('/api/system/status', async (_req, res) => {
 app.get('/api/tenants', async (_req, res) => {
   try {
     const result = await query(
-      `SELECT id, "tenantId" as "tenantId", "brandName" as "brandName", slug, "primaryColor" as "primaryColor", "isActive" as "isActive"
-       FROM tenants WHERE "isActive" = true ORDER BY "brandName"`
+      `SELECT id, slug, brand_name as "brandName", primary_color as "primaryColor", is_active as "isActive"
+       FROM tenants WHERE is_active = true ORDER BY brand_name`
     );
     res.json(result.rows);
   } catch {
@@ -73,7 +78,11 @@ app.get('/api/tenants', async (_req, res) => {
 
 app.get('/api/tenants/:slug', async (req, res) => {
   try {
-    const result = await query(`SELECT * FROM tenants WHERE slug = $1 AND "isActive" = true`, [req.params.slug]);
+    const result = await query(
+      `SELECT id, slug, brand_name as "brandName", primary_color as "primaryColor", is_active as "isActive"
+       FROM tenants WHERE slug = $1 AND is_active = true`,
+      [req.params.slug]
+    );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Brand not found' });
     res.json(result.rows[0]);
   } catch {
@@ -88,23 +97,18 @@ function generateToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function getCorsOrigins(): string[] {
-  if (process.env.NODE_ENV === 'production' && process.env.ALLOWED_ORIGINS) {
-    return process.env.ALLOWED_ORIGINS.split(',').map((o: string) => o.trim());
-  }
-  return ['http://localhost:5173', 'http://localhost:3000'];
-}
-
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password, tenantId } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
+    const targetTenant = tenantId || 'tenant-demo-wholesale-001';
+
     const userResult = await query(
-      `SELECT u.id, u.username, u."fullName" as "fullName", u.role, u."isActive" as "isActive"
+      `SELECT u.id, u.username, u.display_name as "fullName", u.role, u.is_active as "isActive", u.tenant_id
        FROM users u JOIN user_credentials uc ON u.id = uc.user_id
-       WHERE u.username = $1 AND u."tenantId" = $2 AND u."isActive" = true`,
-      [username, tenantId || 'tenant-demo-wholesale-001']
+       WHERE u.username = $1 AND u.tenant_id = $2 AND u.is_active = true`,
+      [username, targetTenant]
     );
     if (userResult.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
 
@@ -117,13 +121,24 @@ app.post('/api/auth/login', async (req, res) => {
 
     const token = generateToken();
     const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString();
-    await query(`INSERT INTO sessions (id, user_id, "tenantId", "expiresAt") VALUES ($1, $2, $3, $4)`,
-      [token, user.id, user.tenant_id || tenantId || 'tenant-demo-wholesale-001', expiresAt]);
+    await query(
+      `INSERT INTO sessions (id, user_id, tenant_id, expires_at, created_at) VALUES ($1, $2, $3, $4, NOW())`,
+      [token, user.id, user.tenant_id, expiresAt]
+    );
 
-    const origins = getCorsOrigins();
     const sameSite = process.env.NODE_ENV === 'production' && process.env.ALLOWED_ORIGINS ? 'none' : 'lax';
-    res.setHeader('Set-Cookie', `session=${token}; HttpOnly; Path=/; SameSite=${sameSite}; Max-Age=${SESSION_DURATION / 1000}${sameSite === 'none' ? '; Secure' : ''}`);
-    res.json({ user: { id: user.id, username: user.username, fullName: user.fullName, role: user.role, tenantId: user.tenant_id || tenantId || 'tenant-demo-wholesale-001' } });
+    res.setHeader('Set-Cookie',
+      `session=${token}; HttpOnly; Path=/; SameSite=${sameSite}; Max-Age=${SESSION_DURATION / 1000}${sameSite === 'none' ? '; Secure' : ''}`
+    );
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        role: user.role,
+        tenantId: user.tenant_id,
+      },
+    });
   } catch (err: any) {
     console.error('Login error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -137,15 +152,15 @@ app.get('/api/auth/me', async (req, res) => {
     if (!match) return res.status(401).json({ error: 'Not authenticated' });
 
     const sessionResult = await query(
-      `SELECT s.*, u.username, u."fullName" as "fullName", u.role
+      `SELECT s.user_id, s.tenant_id, s.expires_at, u.username, u.display_name as "fullName", u.role
        FROM sessions s JOIN users u ON s.user_id = u.id
-       WHERE s.id = $1 AND s."expiresAt" > NOW()`,
+       WHERE s.id = $1 AND s.expires_at > NOW()`,
       [match[1]]
     );
     if (sessionResult.rows.length === 0) return res.status(401).json({ error: 'Session expired' });
 
     const s = sessionResult.rows[0];
-    res.json({ user: { id: s.user_id, username: s.username, fullName: s.fullName, role: s.role, tenantId: s.tenantId } });
+    res.json({ user: { id: s.user_id, username: s.username, fullName: s.fullName, role: s.role, tenantId: s.tenant_id } });
   } catch {
     res.status(401).json({ error: 'Not authenticated' });
   }
@@ -163,25 +178,26 @@ app.post('/api/auth/logout', async (req, res) => {
   }
 });
 
-// ─── Brands (admin) ─────────────────────────────────────────
+// ─── Auth helper ────────────────────────────────────────────
 async function requireAuth(req: any, res: any): Promise<any | null> {
   const cookie = req.headers.cookie || '';
   const match = cookie.match(/session=([^;]+)/);
   if (!match) { res.status(401).json({ error: 'Not authenticated' }); return null; }
   const r = await query(
-    `SELECT s.*, u.username, u."fullName" as "fullName", u.role
+    `SELECT s.user_id, s.tenant_id, s.expires_at, u.username, u.display_name as "fullName", u.role
      FROM sessions s JOIN users u ON s.user_id = u.id
-     WHERE s.id = $1 AND s."expiresAt" > NOW()`, [match[1]]);
+     WHERE s.id = $1 AND s.expires_at > NOW()`, [match[1]]);
   if (r.rows.length === 0) { res.status(401).json({ error: 'Session expired' }); return null; }
   return r.rows[0];
 }
 
+// ─── Brands (admin) ─────────────────────────────────────────
 app.get('/api/brands', async (req, res) => {
   const user = await requireAuth(req, res);
   if (!user) return;
   if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin access required' });
   try {
-    const result = await query(`SELECT * FROM tenants ORDER BY "brandName"`);
+    const result = await query(`SELECT * FROM tenants WHERE id != 'system-000' ORDER BY brand_name`);
     res.json(result.rows);
   } catch { res.json([]); }
 });
@@ -196,8 +212,11 @@ app.post('/api/brands', async (req, res) => {
     const existing = await query(`SELECT id FROM tenants WHERE slug = $1`, [slug]);
     if (existing.rows.length > 0) return res.status(409).json({ error: 'Slug already exists' });
     const id = `tenant-${slug}-${Date.now()}`;
-    await query(`INSERT INTO tenants (id, "tenantId", slug, "brandName", "primaryColor", "isActive", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())`, [id, id, slug, brandName, primaryColor || '#1a5276']);
+    await query(
+      `INSERT INTO tenants (id, slug, brand_name, primary_color, is_active, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, true, NOW(), NOW())`,
+      [id, slug, brandName, primaryColor || '#1a5276']
+    );
     res.status(201).json({ id, slug, brandName, primaryColor: primaryColor || '#1a5276', isActive: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -210,8 +229,10 @@ app.put('/api/brands/:id', async (req, res) => {
   if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin access required' });
   const { brandName, primaryColor } = req.body;
   try {
-    await query(`UPDATE tenants SET "brandName" = COALESCE($1, "brandName"), "primaryColor" = COALESCE($2, "primaryColor"), "updatedAt" = NOW() WHERE id = $3`,
-      [brandName, primaryColor, req.params.id]);
+    await query(
+      `UPDATE tenants SET brand_name = COALESCE($1, brand_name), primary_color = COALESCE($2, primary_color), updated_at = NOW() WHERE id = $3`,
+      [brandName, primaryColor, req.params.id]
+    );
     res.json({ ok: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -221,7 +242,7 @@ app.get('/api/user-brand-access', async (req, res) => {
   const user = await requireAuth(req, res);
   if (!user) return;
   try {
-    const result = await query(`SELECT * FROM user_brand_access WHERE "tenantId" = $1`, [user.tenantId]);
+    const result = await query(`SELECT * FROM user_brand_access WHERE tenant_id = $1`, [user.tenant_id]);
     res.json(result.rows);
   } catch { res.json([]); }
 });
@@ -232,7 +253,11 @@ app.get('/api/users', async (req, res) => {
   if (!user) return;
   if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin access required' });
   try {
-    const result = await query(`SELECT id, username, "fullName" as "fullName", role, "isActive" as "isActive", "tenantId" FROM users ORDER BY "fullName"`);
+    const result = await query(
+      `SELECT id, username, display_name as "fullName", role, is_active as "isActive", tenant_id as "tenantId"
+       FROM users WHERE tenant_id = $1 ORDER BY display_name`,
+      [user.tenant_id]
+    );
     res.json(result.rows);
   } catch { res.json([]); }
 });
