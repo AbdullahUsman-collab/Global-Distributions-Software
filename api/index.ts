@@ -36,9 +36,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.end(JSON.stringify({
       status: 'error',
       message: 'Server initialization failed',
-      detail: process.env.NODE_ENV === 'production'
-        ? 'Internal server error — check function logs'
-        : error?.message || String(error),
+      detail: error?.message || String(error),
+      stack: process.env.DEBUG ? error?.stack : undefined,
     }));
   }
 }
