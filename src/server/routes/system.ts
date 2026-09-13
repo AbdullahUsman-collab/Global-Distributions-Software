@@ -135,12 +135,12 @@ export function createSystemRoutes(
         ];
 
         const tenantsResult = await client.query(
-          'SELECT id, slug, "brandName", "isActive" FROM tenants ORDER BY id'
+          'SELECT id, slug, brand_name, is_active FROM tenants ORDER BY id'
         );
 
         const inventory: any[] = [];
         for (const t of tenantsResult.rows) {
-          const counts: Record<string, string> = { id: t.id, slug: t.slug, name: t.brandName, active: String(t.isActive) };
+          const counts: Record<string, string> = { id: t.id, slug: t.slug, name: t.brand_name, active: String(t.is_active) };
           for (const table of tables) {
             try {
               const r = await client.query(`SELECT count(*)::int AS c FROM ${table} WHERE tenant_id = $1`, [t.id]);
