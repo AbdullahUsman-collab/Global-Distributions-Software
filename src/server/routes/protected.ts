@@ -12,6 +12,7 @@ import { Router, Request, Response } from 'express';
 import { requirePermissionMiddleware } from '../middleware/auth.js';
 import { mutationRateLimiter } from '../middleware/rateLimit.js';
 import { seedDefaultCOA } from '../lib/seedCOA.js';
+import { getPool } from '../db/pool.js';
 import { SalesService } from '../../domain/services/SalesService.js';
 import { PurchaseService } from '../../domain/services/PurchaseService.js';
 import { CustomerReceiptService } from '../../domain/services/CustomerReceiptService.js';
@@ -2211,6 +2212,18 @@ export function createProtectedRoutes(
 
           // Seed default Chart of Accounts for the new tenant
           const accountsSeeded = await seedDefaultCOA(brand.id);
+
+          // Assign creator as ADMIN of the new brand
+          const pool = getPool();
+          const creatorId = req.user!.id;
+          if (creatorId) {
+            await pool.query(
+              `INSERT INTO user_brand_access (id, user_id, tenant_id, role, is_active)
+               VALUES ($1, $2, $3, 'ADMIN', true)
+               ON CONFLICT (user_id, tenant_id) DO NOTHING`,
+              [`uba-creator-${creatorId}-${brand.id}`, creatorId, brand.id]
+            );
+          }
 
           res.status(201).json({ ...brand, accountsSeeded });
         } catch (error) {

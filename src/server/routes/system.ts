@@ -287,9 +287,10 @@ DELETE FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale');
    */
   router.post('/bootstrap', loginRateLimiter, async (req: Request, res: Response) => {
     try {
-      // Check if brands already exist
+      // Check if non-system brands already exist
       const tenants = await tenantRepo.getPublicTenants();
-      if (tenants.length > 0) {
+      const nonSystemTenants = tenants.filter((t: any) => t.slug !== 'system');
+      if (nonSystemTenants.length > 0) {
         res.status(400).json({ 
           error: 'System is already bootstrapped. Use normal login.' 
         });

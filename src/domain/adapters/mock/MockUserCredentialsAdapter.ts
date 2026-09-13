@@ -74,6 +74,7 @@ export const DEMO_PLAIN_PASSWORDS: Record<string, string> = {
   'user-inactive-001': 'former123',
   'user-admin-002': 'admin123',
   'user-admin-003': 'admin123',
+  'user-system-admin-000': 'changeme123',
 };
 
 /**
@@ -97,6 +98,7 @@ export function resetPasswordStore(): void {
   DEMO_PLAIN_PASSWORDS['user-inactive-001'] = 'former123';
   DEMO_PLAIN_PASSWORDS['user-admin-002'] = 'admin123';
   DEMO_PLAIN_PASSWORDS['user-admin-003'] = 'admin123';
+  DEMO_PLAIN_PASSWORDS['user-system-admin-000'] = 'changeme123';
 }
 
 /**
