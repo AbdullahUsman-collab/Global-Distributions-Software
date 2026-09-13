@@ -22,19 +22,15 @@ import { resolve } from 'path';
 
 // ─── TEST 1: Demo tenant cleanup ────────────────────────────
 describe('Step 86 — Demo Tenant Cleanup', () => {
-  it('should have migration 008 that removes only demo/test tenants', () => {
+  it('should have migration 008 that removes demo tenants', () => {
     const sql = readFileSync(
       resolve('src/server/db/migrations/008_cleanup_demo_tenants.sql'),
       'utf-8'
     );
 
-    // Must target test slugs
-    expect(sql).toContain('test123');
-    expect(sql).toContain('test-brand-step83');
-    expect(sql).toContain('test-brand-step85');
-    expect(sql).toContain("slug LIKE 'test-dup-%'");
-    expect(sql).toContain("slug LIKE 'lifecycle-test-%'");
-    expect(sql).toContain("slug LIKE 'test-brand-step85-%'");
+    // Must target actual demo slugs
+    expect(sql).toContain('demo-distribution');
+    expect(sql).toContain('demo-wholesale');
 
     // Must NOT delete system-000 (check actual DELETE statements, not comments)
     const deleteStatements = sql.split('\n').filter(l => l.trim().startsWith('DELETE'));
@@ -68,7 +64,7 @@ describe('Step 86 — Demo Tenant Cleanup', () => {
     expect(tenantsIdx).toBeGreaterThan(usersIdx);
   });
 
-  it('should NOT delete system, apex-trading, demo-distribution, or demo-wholesale', () => {
+  it('should NOT delete system-000 or apex-trading', () => {
     const sql = readFileSync(
       resolve('src/server/db/migrations/008_cleanup_demo_tenants.sql'),
       'utf-8'
@@ -147,7 +143,7 @@ describe('Step 86 — File Verification', () => {
     const path = resolve('src/server/db/migrations/008_cleanup_demo_tenants.sql');
     const content = readFileSync(path, 'utf-8');
     expect(content).toContain('DELETE FROM');
-    expect(content).toContain('demo/test tenants');
+    expect(content).toContain('demo tenants');
   });
 
   it('system.ts should import and call seedDefaultCOA', () => {
