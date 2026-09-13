@@ -31,14 +31,15 @@ import {
   StockLevel,
   calculateBillLineTax,
   BillLineTaxInput,
-} from '../../domain/types/inventory';
-import {
+} from '../../domain/types/inventory';import {
   VoucherHeader,
   VoucherStatus,
   VOUCHER_STATUS_LABELS,
+
 } from '../../domain/types/voucher';
 import { AccountHead } from '../../domain/types/coa';
 import { SaleBillLine, SaleBillCalculation, SaleLineTaxDetail } from '../../domain/services/SalesService';
+import { BillRecord } from '../lib/billLabels';
 import { SaleReturnLine, SaleReturnBillCalculation, SaleReturnLineTaxDetail } from '../../domain/services/SaleReturnService';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
@@ -377,7 +378,9 @@ const CustomerForm: React.FC<{
 /* ═══════════════════════════════════════════════════════════ */
 
 const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
-  const [bills, setBills] = useState<VoucherHeader[]>([]);
+  // GET /api/sales returns enriched BillRecord[] ({ voucher, partyName, total, ... }) —
+  // not flat voucher headers. Render from b.voucher.*.
+  const [bills, setBills] = useState<BillRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
@@ -386,7 +389,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     setLoading(true);
     try {
       const data = await getSales();
-      if (data) setBills(data.sort((a, b) => b.date.localeCompare(a.date)));
+      if (data) setBills(data.sort((a, b) => (b.voucher.date || '').localeCompare(a.voucher.date || '')));
     } catch (err) {
       console.error('Failed to load bills:', err);
     } finally {
@@ -456,25 +459,25 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             </thead>
             <tbody>
               {bills.map(b => (
-                <tr key={b.id} style={styles.tr}>
-                  <td style={styles.td}>{b.voucherNumber}</td>
-                  <td style={styles.td}>{b.date}</td>
-                  <td style={styles.td}>{b.narration}</td>
+                <tr key={b.voucher.id} style={styles.tr}>
+                  <td style={styles.td}>{b.voucher.voucherNumber}</td>
+                  <td style={styles.td}>{b.voucher.date}</td>
+                  <td style={styles.td}>{b.voucher.narration}</td>
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[b.status]?.bg ?? '#f1f5f9',
-                      color: STATUS_COLORS[b.status]?.fg ?? '#475569',
+                      backgroundColor: STATUS_COLORS[b.voucher.status]?.bg ?? '#f1f5f9',
+                      color: STATUS_COLORS[b.voucher.status]?.fg ?? '#475569',
                     }}>
-                      {VOUCHER_STATUS_LABELS[b.status]}
+                      {VOUCHER_STATUS_LABELS[b.voucher.status]}
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <button onClick={() => navigate('/bills/' + b.id)} style={styles.linkBtn}>View</button>
-                    {b.status === 'DRAFT' && (
+                    <button onClick={() => navigate('/bills/' + b.voucher.id)} style={styles.linkBtn}>View</button>
+                    {b.voucher.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => handlePost(b.id)} style={styles.linkBtn}>Post</button>
-                        <button onClick={() => handleDelete(b.id)} style={styles.dangerBtn}>Delete</button>
+                        <button onClick={() => handlePost(b.voucher.id)} style={styles.linkBtn}>Post</button>
+                        <button onClick={() => handleDelete(b.voucher.id)} style={styles.dangerBtn}>Delete</button>
                       </>
                     )}
                   </td>
