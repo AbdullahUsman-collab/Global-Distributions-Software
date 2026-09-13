@@ -353,6 +353,11 @@ export async function deletePurchaseBill(id: string) {
 
 // ─── Customer Receipts API ────────────────────────────────────
 
+/** List all customer receipt vouchers (CR) — flat VoucherHeader[] (getBills only covers SV/PV/SRV/PRV) */
+export async function getCustomerReceipts() {
+  return apiRequest<any[]>('/customer-receipts');
+}
+
 export async function createCustomerReceipt(dto: any) {
   return apiRequest<any>('/customer-receipts', {
     method: 'POST',

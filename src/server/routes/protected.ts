@@ -308,6 +308,25 @@ export function createProtectedRoutes(
   );
 
   /**
+   * GET /api/customer-receipts
+   * List all customer receipt vouchers (CR type) for the tenant.
+   * Returns flat VoucherHeader[] — distinct from /bills, which only covers SV/PV/SRV/PRV.
+   */
+  router.get('/customer-receipts',
+    requirePermissionMiddleware('receipts.view'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const receipts = await customerReceiptService.getReceipts(tenantId);
+        res.json(receipts);
+      } catch (error) {
+        console.error('List receipts error:', error);
+        res.status(500).json({ error: 'Failed to list receipts' });
+      }
+    }
+  );
+
+  /**
    * GET /api/cash-book/accounts
    * Get cash/bank accounts for the tenant.
    */

@@ -12,7 +12,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { emitDataRefresh } from '../utils/dataRefresh';
-import { getBills, getCustomers, getAccounts, createCustomerReceipt, postCustomerReceipt, deleteCustomerReceipt, getVoucherLines, getCustomerARBalance } from '../lib/api';
+import { getCustomerReceipts, getCustomers, getAccounts, createCustomerReceipt, postCustomerReceipt, deleteCustomerReceipt, getVoucherLines, getCustomerARBalance } from '../lib/api';
 import {
   Customer,
 } from '../../domain/types/customer';
@@ -72,21 +72,25 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [receipts, setReceipts] = useState<VoucherHeader[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cashAccounts, setCashAccounts] = useState<AccountHead[]>([]);
+  const [accounts, setAccounts] = useState<AccountHead[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [allBills, customerData, coaData] = await Promise.all([
-        getBills(),
+      const [receiptData, customerData, coaData] = await Promise.all([
+        getCustomerReceipts(),
         getCustomers(),
         getAccounts(),
       ]);
-      const receiptData = (allBills as any[]).filter((b: any) => b.voucher?.voucherType === 'CR');
-      setReceipts(receiptData.sort((a: any, b: any) => (b.date ?? b.voucher?.date ?? '').localeCompare(a.date ?? a.voucher?.date ?? '')));
+      // CR vouchers are not bill types — /bills (SV/PV/SRV/PRV) never contains them;
+      // use the dedicated receipts endpoint (flat VoucherHeader[], newest first).
+      const sorted = [...(receiptData as VoucherHeader[])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      setReceipts(sorted);
       setCustomers((customerData as any[]).filter((c: any) => c.isActive));
       setCashAccounts((coaData as any[]).filter((a: any) => a.isPosting && CASH_BANK_CODES.has(a.accountCode) && a.isActive));
+      setAccounts(coaData as AccountHead[]);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -96,20 +100,23 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Build customer map for display
+  // Build customer map for display (voucher lines carry account CODES, not ids —
+  // bridge customer.accountHeadId → account.accountCode)
   const customerMap = useMemo(() => {
     const map = new Map<string, Customer>();
     for (const c of customers) {
-      map.set(c.accountHeadId, c);
+      if (!c.accountHeadId) continue;
+      const arAccount = accounts.find(a => a.id === c.accountHeadId);
+      if (arAccount) map.set(arAccount.accountCode, c);
     }
     return map;
-  }, [customers]);
+  }, [customers, accounts]);
 
-  // Build cash account map for display
+  // Build cash account map for display (voucher lines carry account CODES, not ids)
   const cashAccountMap = useMemo(() => {
     const map = new Map<string, AccountHead>();
     for (const a of cashAccounts) {
-      map.set(a.id, a);
+      map.set(a.accountCode, a);
     }
     return map;
   }, [cashAccounts]);
@@ -399,6 +406,14 @@ const ReceiptForm: React.FC<{
   // Get selected customer name
   const selectedCustomer = customers.find(c => c.id === customerId);
 
+  // Surface WHY the save button is disabled instead of leaving it silently dead
+  const missingFields: string[] = [];
+  if (!customerId) missingFields.push('Customer');
+  if (!cashAccountId) missingFields.push('Receiving Account');
+  if (!(amount > 0)) missingFields.push('Amount');
+  if (!narration.trim()) missingFields.push('Narration');
+  const canSave = !saving && missingFields.length === 0;
+
   return (
     <div style={styles.modalOverlay}>
       <div style={styles.modal}>
@@ -495,12 +510,17 @@ const ReceiptForm: React.FC<{
             <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
             <button
               type="submit"
-              disabled={saving || !customerId || !cashAccountId || amount <= 0 || !narration.trim()}
-              style={styles.primaryBtn}
+              disabled={!canSave}
+              style={{ ...styles.primaryBtn, ...(!canSave ? styles.disabledBtn : null) }}
             >
               {saving ? 'Saving...' : 'Save & Post Receipt'}
             </button>
           </div>
+          {!canSave && !saving && (
+            <p style={styles.disabledHint}>
+              Fill required fields to save: {missingFields.join(', ')}
+            </p>
+          )}
         </form>
       </div>
     </div>
@@ -563,6 +583,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
+  },
+  disabledBtn: {
+    backgroundColor: '#93c5fd',
+    cursor: 'not-allowed',
+  },
+  disabledHint: {
+    marginTop: '6px',
+    fontSize: '12px',
+    color: '#b45309',
+    textAlign: 'right',
   },
   secondaryBtn: {
     padding: '8px 16px',
