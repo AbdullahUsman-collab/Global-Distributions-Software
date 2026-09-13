@@ -9,6 +9,8 @@
 import { randomBytes } from 'crypto';
 import { Supplier, CreateSupplierDTO, UpdateSupplierDTO } from '../../../domain/types/supplier.js';
 import { ISupplierRepository } from '../../../domain/repositories/ISupplierRepository.js';
+import { CreateAccountHeadDTO } from '../../../domain/types/coa.js';
+import { PostgresCOAAdapter } from './PostgresCOAAdapter.js';
 import { query } from '../pool.js';
 
 function uuid(): string { return randomBytes(16).toString('hex'); }
@@ -17,6 +19,16 @@ function uuid(): string { return randomBytes(16).toString('hex'); }
  * PostgreSQL implementation of ISupplierRepository.
  */
 export class PostgresSupplierAdapter implements ISupplierRepository {
+
+  private coaAdapter: PostgresCOAAdapter | null = null;
+
+  /**
+   * Inject the COA adapter (optional so existing constructor call sites keep working).
+   * Required for the AP auto-create behavior on supplier creation.
+   */
+  setCoaAdapter(coaAdapter: PostgresCOAAdapter): void {
+    this.coaAdapter = coaAdapter;
+  }
 
   async getSuppliers(tenantId: string): Promise<Supplier[]> {
     const result = await query(
@@ -52,14 +64,53 @@ export class PostgresSupplierAdapter implements ISupplierRepository {
 
   async create(supplier: CreateSupplierDTO, tenantId: string): Promise<Supplier> {
     const id = uuid();
+
+    // AP auto-create: a supplier without an explicit AP posting account gets a
+    // dedicated sub-account under the Accounts Payable parent (21100).
+    // Mirrors MockSupplierAdapter.create (controlCategory='PAYABLE') and the
+    // PostgresCustomerAdapter AR auto-create. Without this, account_head_id stays
+    // NULL and purchase posting fails the voucher_lines_account_id_fkey
+    // constraint (empty-string account id).
+    let accountHeadId: string | null = null;
+    if (this.coaAdapter) {
+      const accounts = await this.coaAdapter.getAccountsByTenantId(tenantId);
+      const parentAccount = accounts.find(a => a.accountCode === '21100');
+      if (!parentAccount) {
+        throw new Error('Accounts Payable parent account (21100) not found');
+      }
+      // Next sub-account code under 211xx not already used
+      const existingCodes = accounts
+        .filter(a => a.accountCode.startsWith('211') && a.level === 4)
+        .map(a => parseInt(a.accountCode, 10))
+        .filter(n => !isNaN(n));
+      const nextCode = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 21101;
+
+      const accountDto: CreateAccountHeadDTO = {
+        accountCode: String(nextCode),
+        accountName: supplier.name,
+        parentId: parentAccount.id,
+        level: 4,
+        accountType: 'LIABILITY',
+        controlCategory: 'PAYABLE',
+        legacyMainHeadNo: 8000,
+        accountEffect: 'Balance Sheet',
+        address: supplier.address,
+        ownerName: supplier.contactPerson,
+        phone: supplier.phone,
+        stn: supplier.taxRegistrationNumber,
+      };
+      const createdAccount = await this.coaAdapter.createAccount(tenantId, accountDto);
+      accountHeadId = createdAccount.id;
+    }
+
     const result = await query(
       `INSERT INTO suppliers (id, tenant_id, name, contact_person, phone, email, address, city,
-         tax_registration_number, payment_terms, credit_limit, is_active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,true)
+         account_head_id, tax_registration_number, payment_terms, credit_limit, is_active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,true)
        RETURNING *`,
       [id, tenantId, supplier.name, supplier.contactPerson || null, supplier.phone || null,
        supplier.email || null, supplier.address || null, supplier.city || null,
-       supplier.taxRegistrationNumber || null, supplier.paymentTerms || null,
+       accountHeadId, supplier.taxRegistrationNumber || null, supplier.paymentTerms || null,
        supplier.creditLimit || 0]
     );
     return this.mapRow(result.rows[0]);

@@ -96,7 +96,11 @@ if (coaAdapter instanceof PostgresCOAAdapter) {
   pgCustomerAdapter.setCoaAdapter(coaAdapter);
 }
 const customerAdapter = usePg ? pgCustomerAdapter : new MockCustomerAdapter(coaAdapter);
-const supplierAdapter = usePg ? new PostgresSupplierAdapter() : new MockSupplierAdapter(coaAdapter);
+const pgSupplierAdapter = new PostgresSupplierAdapter();
+if (coaAdapter instanceof PostgresCOAAdapter) {
+  pgSupplierAdapter.setCoaAdapter(coaAdapter);
+}
+const supplierAdapter = usePg ? pgSupplierAdapter : new MockSupplierAdapter(coaAdapter);
 const settingsAdapter = usePg ? new PostgresSettingsAdapter() : new MockSettingsAdapter();
 
 // ─── Initialize Domain Services ────────────────────────────────
