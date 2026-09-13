@@ -135,6 +135,22 @@ async function apiRequest<T>(
       return undefined as T;
     }
 
+    // Detect Vercel SPA HTML fallback on successful status
+    const successContentType = res.headers.get('content-type') || '';
+    if (successContentType.includes('text/html')) {
+      if (DEMO_MODE) {
+        let parsedBody: any = undefined;
+        if (options.body && typeof options.body === 'string') {
+          try { parsedBody = JSON.parse(options.body); } catch { /* ignore */ }
+        }
+        const demoResult = handleDemoRequest(`${API_BASE}${path}`, method, parsedBody);
+        if (demoResult !== null && demoResult !== undefined) {
+          return demoResult as T;
+        }
+      }
+      throw { status: 200, message: 'Server unavailable — received HTML instead of JSON. The backend API may not be deployed.' } as ApiError;
+    }
+
     return res.json();
   } catch (err) {
     // If this is already an ApiError we threw above, re-throw

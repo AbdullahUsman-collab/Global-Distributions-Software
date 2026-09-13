@@ -17,6 +17,9 @@
  * - If DATABASE_URL is not set: uses mock adapters (development)
  */
 
+// Load .env BEFORE any other imports so process.env is populated
+import 'dotenv/config';
+
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'path';

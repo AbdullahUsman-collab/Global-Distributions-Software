@@ -235,10 +235,17 @@ export async function apiGetTenants(): Promise<Array<{ id: string; slug: string;
   try {
     const res = await fetch(`${API_BASE}/tenants`, { credentials: 'include' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Detect Vercel SPA HTML fallback — backend is not deployed
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error('BACKEND_NOT_DEPLOYED');
+    }
+
     const data = await res.json();
     if (Array.isArray(data) && data.length > 0) return data;
     throw new Error('Empty tenant list');
-  } catch {
+  } catch (err) {
     if (DEMO_MODE) {
       return DEMO_TENANT_LIST.map(t => ({
         id: t.id,
@@ -248,7 +255,13 @@ export async function apiGetTenants(): Promise<Array<{ id: string; slug: string;
         primaryColor: t.primaryColor,
       }));
     }
-    throw new Error('Server unavailable — cannot load tenants. Please ensure the backend API is running.');
+    if (err instanceof Error && err.message === 'BACKEND_NOT_DEPLOYED') {
+      throw new Error('Unable to connect to the ERP server. The backend API is not available. Please contact your administrator.');
+    }
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Unable to connect to the ERP server. Please check your network connection and ensure the backend is running.');
+    }
+    throw new Error('Unable to load brands. Please try again.');
   }
 }
 
@@ -268,11 +281,21 @@ export async function apiGetTenantBySlug(slug: string): Promise<{ id: string; sl
       return null;
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Detect Vercel SPA HTML fallback
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error('BACKEND_NOT_DEPLOYED');
+    }
+
     return await res.json();
-  } catch {
+  } catch (err) {
     if (DEMO_MODE) {
       const fallback = DEMO_TENANT_LIST.find(t => t.slug === slug);
       return fallback || null;
+    }
+    if (err instanceof Error && err.message === 'BACKEND_NOT_DEPLOYED') {
+      return null;
     }
     return null;
   }
