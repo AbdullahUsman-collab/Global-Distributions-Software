@@ -1258,9 +1258,14 @@ export function createProtectedRoutes(
         
         // Also update the tenants table brand_name so it's reflected in the UI
         // (Header reads tenant.brandName from the tenants table, not tenant_settings)
-        await pool.query(
+        const brandName = dto.profile?.businessName 
+          || (settings?.profile?.businessName as string) 
+          || '';
+        // NOTE: `pool` is not in scope here — must go through getPool().
+        // A bare `pool.query(...)` threw ReferenceError at runtime, 500-ing every save.
+        await getPool().query(
           `UPDATE tenants SET brand_name = $1 WHERE id = $2`,
-          [dto.profile?.businessName || settings.profile?.businessName || '', tenantId]
+          [brandName, tenantId]
         );
         
         res.json(settings);

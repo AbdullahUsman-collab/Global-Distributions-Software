@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit 2>&1 | findstr /V \"src/server\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.server.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
