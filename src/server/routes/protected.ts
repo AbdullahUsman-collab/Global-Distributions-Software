@@ -11,6 +11,7 @@
 import { Router, Request, Response } from 'express';
 import { requirePermissionMiddleware } from '../middleware/auth.js';
 import { mutationRateLimiter } from '../middleware/rateLimit.js';
+import { seedDefaultCOA } from '../lib/seedCOA.js';
 import { SalesService } from '../../domain/services/SalesService.js';
 import { PurchaseService } from '../../domain/services/PurchaseService.js';
 import { CustomerReceiptService } from '../../domain/services/CustomerReceiptService.js';
@@ -2207,7 +2208,11 @@ export function createProtectedRoutes(
             primaryColor: primaryColor || '#3b82f6',
             accentColor: accentColor || '#1e40af',
           });
-          res.status(201).json(brand);
+
+          // Seed default Chart of Accounts for the new tenant
+          const accountsSeeded = await seedDefaultCOA(brand.id);
+
+          res.status(201).json({ ...brand, accountsSeeded });
         } catch (error) {
           console.error('Create brand error:', error);
           res.status(500).json({ error: 'Failed to create brand' });

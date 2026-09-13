@@ -55,6 +55,7 @@ export async function runMigrations(): Promise<string[]> {
       { version: '005', name: 'further_tax_percent', file: '005_further_tax_percent.sql' },
       { version: '006', name: 'system_bootstrap', file: '006_system_bootstrap.sql' },
       { version: '007', name: 'seed_test123_brand', file: '007_seed_test123_brand.sql' },
+      { version: '008', name: 'cleanup_demo_tenants', file: '008_cleanup_demo_tenants.sql' },
     ];
 
     for (const migration of migrations) {
@@ -111,6 +112,7 @@ export async function getMigrationStatus(): Promise<{ version: string; name: str
       { version: '005', name: 'further_tax_percent' },
       { version: '006', name: 'system_bootstrap' },
       { version: '007', name: 'seed_test123_brand' },
+      { version: '008', name: 'cleanup_demo_tenants' },
     ];
 
     return migrations.map(m => ({

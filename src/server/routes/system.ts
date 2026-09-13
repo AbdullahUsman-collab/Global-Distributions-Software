@@ -19,6 +19,7 @@ import { ISessionRepository } from '../../domain/repositories/ISessionRepository
 import { loginRateLimiter } from '../middleware/rateLimit.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { getPool } from '../db/pool.js';
+import { seedDefaultCOA } from '../lib/seedCOA.js';
 
 const SYSTEM_TENANT_ID = 'system-000';
 const SYSTEM_ADMIN_USER_ID = 'user-system-admin-000';
@@ -275,9 +276,13 @@ export function createSystemRoutes(
         isActive: true,
       });
 
+      // Seed default Chart of Accounts for the new tenant
+      const accountsSeeded = await seedDefaultCOA(brand.id);
+
       res.status(201).json({
         success: true,
         brand,
+        accountsSeeded,
         message: 'First brand created. System is now bootstrapped.',
       });
     } catch (error) {
