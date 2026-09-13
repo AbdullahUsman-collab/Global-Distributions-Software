@@ -1,11 +1,10 @@
 /**
  * Vercel Serverless Function Entry Point
  * Wraps the Express app for Vercel deployment.
- *
- * This file exports the Express app as a Vercel serverless function.
- * Vercel detects the Express app and converts it to a serverless function.
  */
 
 import app from '../src/server/index';
 
+// Export the Express app as a Vercel serverless function.
+// DB initialization is triggered at module import time by src/server/index.ts.
 export default app;

@@ -268,8 +268,7 @@ app.get(/^(?!\/api\/).*/, (req, res) => {
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-async function start() {
-  // Initialize PostgreSQL pool if DATABASE_URL is set
+async function initDatabase() {
   if (usePg) {
     try {
       const { loadConfig } = await import('./db/env');
@@ -281,7 +280,6 @@ async function start() {
         console.error('CRITICAL: PostgreSQL connection failed. Falling back to mock adapters.');
       } else {
         console.log('  ✓ PostgreSQL connected');
-        // Run pending migrations
         try {
           const { runMigrations } = await import('./db/migrate');
           const applied = await runMigrations();
@@ -296,6 +294,10 @@ async function start() {
       console.error('CRITICAL: PostgreSQL initialization failed:', err);
     }
   }
+}
+
+async function start() {
+  await initDatabase();
 
   app.listen(PORT, () => {
     const env = process.env.NODE_ENV || 'development';
@@ -355,6 +357,12 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-start();
+// Initialize database (both Vercel serverless and local)
+const dbReady = initDatabase();
+
+// Only start the HTTP server when running directly (not as a Vercel serverless function).
+if (!process.env.VERCEL) {
+  start();
+}
 
 export default app;
