@@ -1,8 +1,9 @@
-import express from 'express';
+/**
+ * Vercel Serverless Function Entry Point
+ * Wraps Express app for Vercel deployment.
+ * Vercel auto-detects this as an Express app and deploys it as a serverless function.
+ */
 
-const app = express();
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, status: 'minimal express works' });
-});
+import app from '../src/server/index';
 
 export default app;
