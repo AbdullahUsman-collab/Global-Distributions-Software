@@ -136,6 +136,53 @@ DELETE FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale');
   });
 
   /**
+   * POST /api/system/delete-tenant — TEMPORARY endpoint.
+   * Deletes a tenant and all its child data.
+   * Refuses to delete system-000.
+   */
+  router.post('/delete-tenant', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = req.body;
+      if (!tenantId) {
+        res.status(400).json({ error: 'tenantId is required' });
+        return;
+      }
+      if (tenantId === 'system-000') {
+        res.status(403).json({ error: 'REFUSING to delete system-000' });
+        return;
+      }
+
+      const pool = getPool();
+      const client = await pool.connect();
+      try {
+        const tables = [
+          'sessions', 'user_brand_access', 'ledger_entries', 'voucher_lines',
+          'vouchers', 'stock_movements', 'stock_levels', 'warehouse_locations',
+          'warehouses', 'customers', 'suppliers', 'products', 'accounts',
+          'tenant_settings', 'user_credentials', 'users'
+        ];
+
+        await client.query('BEGIN');
+        for (const table of tables) {
+          await client.query(`DELETE FROM ${table} WHERE tenant_id = $1`, [tenantId]);
+        }
+        await client.query('DELETE FROM tenants WHERE id = $1', [tenantId]);
+        await client.query('COMMIT');
+
+        const remaining = await client.query('SELECT id, slug, brand_name FROM tenants ORDER BY id');
+        res.json({ success: true, deleted: tenantId, remainingTenants: remaining.rows });
+      } catch (e: any) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ error: e.message });
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
    * GET /api/system/constraints — TEMPORARY diagnostic endpoint.
    * Returns database constraints for Step 86 verification.
    */
