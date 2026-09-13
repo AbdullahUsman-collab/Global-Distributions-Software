@@ -6,7 +6,7 @@
  * Returns only public User model.
  */
 
-import { User, CreateUserPayload, UpdateUserPayload } from '../types/auth';
+import { User, CreateUserPayload, UpdateUserPayload } from '../types/auth.js';
 
 /**
  * Repository interface for user persistence operations.

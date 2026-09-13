@@ -7,7 +7,7 @@
  * RULE: Deactivation does not delete — access rows are soft-disabled.
  */
 
-import { UserBrandAccess, CreateUserBrandAccessPayload, UpdateUserBrandAccessPayload } from '../types/user-brand-access';
+import { UserBrandAccess, CreateUserBrandAccessPayload, UpdateUserBrandAccessPayload } from '../types/user-brand-access.js';
 
 export interface IUserBrandAccessRepository {
   /**

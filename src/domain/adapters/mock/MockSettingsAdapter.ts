@@ -15,8 +15,8 @@ import {
   AdvanceTaxConfig,
   TaxAccountMapping,
   TenantFinancialRules,
-} from '../../types/settings';
-import { ISettingsRepository } from '../../repositories/ISettingsRepository';
+} from '../../types/settings.js';
+import { ISettingsRepository } from '../../repositories/ISettingsRepository.js';
 
 /* ─── Defaults ─────────────────────────────────────────────── */
 

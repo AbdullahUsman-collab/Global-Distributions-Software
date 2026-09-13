@@ -7,8 +7,8 @@
  */
 
 import { randomBytes } from 'crypto';
-import { Product, Warehouse, WarehouseLocation, StockLevel, StockMovement, ItemBatch, ItemSerial, CreateProductDTO, UpdateProductDTO } from '../../../domain/types/inventory';
-import { IInventoryRepository } from '../../../domain/repositories/IInventoryRepository';
+import { Product, Warehouse, WarehouseLocation, StockLevel, StockMovement, ItemBatch, ItemSerial, CreateProductDTO, UpdateProductDTO } from '../../../domain/types/inventory.js';
+import { IInventoryRepository } from '../../../domain/repositories/IInventoryRepository.js';
 import { query, getClient } from '../pool.js';
 
 function uuid(): string { return randomBytes(16).toString('hex'); }

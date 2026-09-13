@@ -22,8 +22,8 @@ import {
   UpdateProductDTO,
   calculateAVCO,
   calculateCostRate,
-} from '../../types/inventory';
-import { IInventoryRepository } from '../../repositories/IInventoryRepository';
+} from '../../types/inventory.js';
+import { IInventoryRepository } from '../../repositories/IInventoryRepository.js';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 

@@ -12,12 +12,12 @@
  *   - audit/12_RETURNS_REVERSALS.md (SRV/PRV accounting)
  */
 
-import { VoucherHeader, VoucherLine, VoucherType } from '../types/voucher';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { ICustomerRepository } from '../repositories/ICustomerRepository';
-import { ISupplierRepository } from '../repositories/ISupplierRepository';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
-import { ICOARepository } from '../repositories/ICOARepository';
+import { VoucherHeader, VoucherLine, VoucherType } from '../types/voucher.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { ICustomerRepository } from '../repositories/ICustomerRepository.js';
+import { ISupplierRepository } from '../repositories/ISupplierRepository.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
 
 /* ─── Types ────────────────────────────────────────────────── */
 

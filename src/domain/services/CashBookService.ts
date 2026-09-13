@@ -13,12 +13,12 @@
  *   Closing Balance = Opening + Σ(debits in range) - Σ(credits in range)
  */
 
-import { VoucherHeader, VoucherType, LedgerEntry, CreateVoucherDTO } from '../types/voucher';
-import { AccountHead } from '../types/coa';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { ICOARepository } from '../repositories/ICOARepository';
-import { SystemRoleName } from '../types/rbac';
-import { requirePermission, Permissions } from './AuthorizationService';
+import { VoucherHeader, VoucherType, LedgerEntry, CreateVoucherDTO } from '../types/voucher.js';
+import { AccountHead } from '../types/coa.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
+import { SystemRoleName } from '../types/rbac.js';
+import { requirePermission, Permissions } from './AuthorizationService.js';
 
 /* ─── Constants ────────────────────────────────────────────── */
 

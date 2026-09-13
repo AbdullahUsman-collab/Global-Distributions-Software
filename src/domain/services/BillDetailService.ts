@@ -9,14 +9,14 @@
  *   - audit/43_STEP24_FULL_TRANSACTION_INTEGRATION_AND_DRILLDOWN_REPORT.md
  */
 
-import { VoucherHeader, VoucherLine, LedgerEntry, VoucherType } from '../types/voucher';
-import { Product, StockLevel, StockMovement } from '../types/inventory';
-import { AccountHead } from '../types/coa';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { ICustomerRepository } from '../repositories/ICustomerRepository';
-import { ISupplierRepository } from '../repositories/ISupplierRepository';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
-import { ICOARepository } from '../repositories/ICOARepository';
+import { VoucherHeader, VoucherLine, LedgerEntry, VoucherType } from '../types/voucher.js';
+import { Product, StockLevel, StockMovement } from '../types/inventory.js';
+import { AccountHead } from '../types/coa.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { ICustomerRepository } from '../repositories/ICustomerRepository.js';
+import { ISupplierRepository } from '../repositories/ISupplierRepository.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
 
 /* ─── Types ────────────────────────────────────────────────── */
 

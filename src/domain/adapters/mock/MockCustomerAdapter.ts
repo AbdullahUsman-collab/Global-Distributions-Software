@@ -8,10 +8,10 @@
  * Source: audit/05_CUSTOMER_ACCOUNTING.md, audit/MASTER_REVERSE_ENGINEERED_SPEC.md
  */
 
-import { Customer, CreateCustomerDTO, UpdateCustomerDTO } from '../../types/customer';
-import { ICustomerRepository } from '../../repositories/ICustomerRepository';
-import { ICOARepository } from '../../repositories/ICOARepository';
-import { CreateAccountHeadDTO } from '../../types/coa';
+import { Customer, CreateCustomerDTO, UpdateCustomerDTO } from '../../types/customer.js';
+import { ICustomerRepository } from '../../repositories/ICustomerRepository.js';
+import { ICOARepository } from '../../repositories/ICOARepository.js';
+import { CreateAccountHeadDTO } from '../../types/coa.js';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 

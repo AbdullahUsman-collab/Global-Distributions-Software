@@ -8,8 +8,8 @@
  * RULE: Password hashing and verification belong in IAuthService.
  */
 
-import { IUserCredentialsRepository } from '../../../domain/repositories/IUserCredentialsRepository';
-import { UserCredentials } from '../../../domain/types/auth';
+import { IUserCredentialsRepository } from '../../../domain/repositories/IUserCredentialsRepository.js';
+import { UserCredentials } from '../../../domain/types/auth.js';
 import { query } from '../pool.js';
 
 /**

@@ -11,8 +11,8 @@ import {
   TenantPublicConfig,
   CreateTenantPayload,
   UpdateTenantPayload,
-} from '../../types/tenant';
-import { ITenantRepository } from '../../repositories/ITenantRepository';
+} from '../../types/tenant.js';
+import { ITenantRepository } from '../../repositories/ITenantRepository.js';
 
 /**
  * Fictional demo tenants for development.

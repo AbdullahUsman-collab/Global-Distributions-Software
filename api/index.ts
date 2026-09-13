@@ -10,7 +10,7 @@
  *   3. Express handles the request with fully initialized pool
  */
 
-import app, { dbReady } from '../src/server/index';
+import app, { dbReady } from '../src/server/index.js';
 
 export default async function handler(req: any, res: any) {
   await dbReady;

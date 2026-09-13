@@ -10,7 +10,7 @@
  *       Owner access is expressed via ADMIN access rows for each authorized brand.
  */
 
-import { SystemRoleName } from './rbac';
+import { SystemRoleName } from './rbac.js';
 
 /**
  * User brand access entity.

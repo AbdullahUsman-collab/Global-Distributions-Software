@@ -11,8 +11,8 @@ import {
   CreateAccountHeadDTO,
   UpdateAccountHeadDTO,
   deriveNormalBalance,
-} from '../../types/coa';
-import { ICOARepository } from '../../repositories/ICOARepository';
+} from '../../types/coa.js';
+import { ICOARepository } from '../../repositories/ICOARepository.js';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 

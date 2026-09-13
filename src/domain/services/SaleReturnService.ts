@@ -19,14 +19,14 @@
  *   Stock INCREASED by returned quantity (RETURN movement, reverse of ISSUE)
  */
 
-import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher';
-import { StockMovement, calculateBillLineTax, BillLineTaxInput } from '../types/inventory';
-import { Customer } from '../types/customer';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
-import { ICustomerRepository } from '../repositories/ICustomerRepository';
-import { SystemRoleName } from '../types/rbac';
-import { requirePermission, Permissions } from './AuthorizationService';
+import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher.js';
+import { StockMovement, calculateBillLineTax, BillLineTaxInput } from '../types/inventory.js';
+import { Customer } from '../types/customer.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
+import { ICustomerRepository } from '../repositories/ICustomerRepository.js';
+import { SystemRoleName } from '../types/rbac.js';
+import { requirePermission, Permissions } from './AuthorizationService.js';
 
 /* ─── Constants ────────────────────────────────────────────── */
 

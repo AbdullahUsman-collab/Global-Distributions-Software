@@ -5,8 +5,8 @@
  * Manages session lifecycle for development and testing.
  */
 
-import { UserSession } from '../../types/auth';
-import { ISessionRepository } from '../../repositories/ISessionRepository';
+import { UserSession } from '../../types/auth.js';
+import { ISessionRepository } from '../../repositories/ISessionRepository.js';
 
 /**
  * Session duration in milliseconds (30 minutes).

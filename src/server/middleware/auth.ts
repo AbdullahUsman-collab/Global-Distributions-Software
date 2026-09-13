@@ -13,11 +13,11 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { ISessionRepository } from '../../domain/repositories/ISessionRepository';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
-import { UserSession, User } from '../../domain/types/auth';
-import { hasPermission } from '../../domain/services/AuthorizationService';
+import { ISessionRepository } from '../../domain/repositories/ISessionRepository.js';
+import { IUserRepository } from '../../domain/repositories/IUserRepository.js';
+import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository.js';
+import { UserSession, User } from '../../domain/types/auth.js';
+import { hasPermission } from '../../domain/services/AuthorizationService.js';
 
 declare global {
   namespace Express {

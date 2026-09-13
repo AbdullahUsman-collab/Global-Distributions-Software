@@ -6,8 +6,8 @@
  * Each record mirrors users.tenant_id + users.role for the current demo model.
  */
 
-import { UserBrandAccess, CreateUserBrandAccessPayload, UpdateUserBrandAccessPayload } from '../../types/user-brand-access';
-import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository';
+import { UserBrandAccess, CreateUserBrandAccessPayload, UpdateUserBrandAccessPayload } from '../../types/user-brand-access.js';
+import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository.js';
 
 const VALID_ROLES = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
 

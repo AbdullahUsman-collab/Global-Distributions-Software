@@ -18,10 +18,10 @@
  *   Cost_rate = 203.39 - 184.90 × 0.072 = 203.39 - 13.3128 = 190.0772
  */
 
-import { GstType } from './settings';
+import { GstType } from './settings.js';
 
 /* ─── Re-exports ───────────────────────────────────────────── */
-export type { GstType } from './settings';
+export type { GstType } from './settings.js';
 
 /* ─── Enums ────────────────────────────────────────────────── */
 

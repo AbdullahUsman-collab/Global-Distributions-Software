@@ -16,14 +16,14 @@
  * Receipt works against the customer's running AR balance.
  */
 
-import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher';
-import { Customer } from '../types/customer';
-import { AccountHead } from '../types/coa';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { ICustomerRepository } from '../repositories/ICustomerRepository';
-import { ICOARepository } from '../repositories/ICOARepository';
-import { SystemRoleName } from '../types/rbac';
-import { requirePermission, Permissions } from './AuthorizationService';
+import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher.js';
+import { Customer } from '../types/customer.js';
+import { AccountHead } from '../types/coa.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { ICustomerRepository } from '../repositories/ICustomerRepository.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
+import { SystemRoleName } from '../types/rbac.js';
+import { requirePermission, Permissions } from './AuthorizationService.js';
 
 /* ─── Constants ────────────────────────────────────────────── */
 

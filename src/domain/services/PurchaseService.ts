@@ -22,15 +22,15 @@
  *   Unit cost = Purchase_Rate (the incoming cost for AVCO calculation)
  */
 
-import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher';
-import { StockMovement, calculateBillLineTax, BillLineTaxInput } from '../types/inventory';
-import { Supplier } from '../types/supplier';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
-import { ISupplierRepository } from '../repositories/ISupplierRepository';
-import { ICOARepository } from '../repositories/ICOARepository';
-import { SystemRoleName } from '../types/rbac';
-import { requirePermission, Permissions } from './AuthorizationService';
+import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher.js';
+import { StockMovement, calculateBillLineTax, BillLineTaxInput } from '../types/inventory.js';
+import { Supplier } from '../types/supplier.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
+import { ISupplierRepository } from '../repositories/ISupplierRepository.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
+import { SystemRoleName } from '../types/rbac.js';
+import { requirePermission, Permissions } from './AuthorizationService.js';
 
 /* ─── Constants ────────────────────────────────────────────── */
 

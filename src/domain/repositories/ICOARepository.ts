@@ -6,7 +6,7 @@
  * RULE: All queries are scoped by tenantId.
  */
 
-import { AccountHead, CreateAccountHeadDTO, UpdateAccountHeadDTO } from '../types/coa';
+import { AccountHead, CreateAccountHeadDTO, UpdateAccountHeadDTO } from '../types/coa.js';
 
 /**
  * Repository interface for Chart of Accounts persistence operations.

@@ -13,11 +13,11 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { IAuthService } from '../../domain/services/IAuthService';
-import { ITenantRepository } from '../../domain/repositories/ITenantRepository';
-import { getSessionCookieName } from '../middleware/auth';
-import { loginRateLimiter } from '../middleware/rateLimit';
-import { validateLoginCredentials } from '../lib/validation';
+import { IAuthService } from '../../domain/services/IAuthService.js';
+import { ITenantRepository } from '../../domain/repositories/ITenantRepository.js';
+import { getSessionCookieName } from '../middleware/auth.js';
+import { loginRateLimiter } from '../middleware/rateLimit.js';
+import { validateLoginCredentials } from '../lib/validation.js';
 
 const SESSION_COOKIE_NAME = getSessionCookieName();
 

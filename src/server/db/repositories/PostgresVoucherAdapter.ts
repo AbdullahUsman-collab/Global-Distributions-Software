@@ -7,8 +7,8 @@
  */
 
 import { randomBytes } from 'crypto';
-import { VoucherHeader, VoucherLine, VoucherStatus, VoucherType, LedgerEntry, CreateVoucherDTO, UpdateVoucherDTO } from '../../../domain/types/voucher';
-import { IVoucherRepository } from '../../../domain/repositories/IVoucherRepository';
+import { VoucherHeader, VoucherLine, VoucherStatus, VoucherType, LedgerEntry, CreateVoucherDTO, UpdateVoucherDTO } from '../../../domain/types/voucher.js';
+import { IVoucherRepository } from '../../../domain/repositories/IVoucherRepository.js';
 import { query, getClient } from '../pool.js';
 
 function uuid(): string {

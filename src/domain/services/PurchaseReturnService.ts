@@ -19,14 +19,14 @@
  *   Stock DECREASED by returned quantity (RETURN movement, reverse of GRN)
  */
 
-import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher';
-import { StockMovement, calculateBillLineTax, BillLineTaxInput } from '../types/inventory';
-import { Supplier } from '../types/supplier';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
-import { ISupplierRepository } from '../repositories/ISupplierRepository';
-import { SystemRoleName } from '../types/rbac';
-import { requirePermission, Permissions } from './AuthorizationService';
+import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher.js';
+import { StockMovement, calculateBillLineTax, BillLineTaxInput } from '../types/inventory.js';
+import { Supplier } from '../types/supplier.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
+import { ISupplierRepository } from '../repositories/ISupplierRepository.js';
+import { SystemRoleName } from '../types/rbac.js';
+import { requirePermission, Permissions } from './AuthorizationService.js';
 
 /* ─── Constants ────────────────────────────────────────────── */
 

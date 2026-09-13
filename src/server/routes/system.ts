@@ -11,14 +11,14 @@
 
 import { Router, Request, Response } from 'express';
 import { randomBytes, createHash } from 'crypto';
-import { ITenantRepository } from '../../domain/repositories/ITenantRepository';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { IUserCredentialsRepository } from '../../domain/repositories/IUserCredentialsRepository';
-import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
-import { ISessionRepository } from '../../domain/repositories/ISessionRepository';
-import { loginRateLimiter } from '../middleware/rateLimit';
-import { hashPassword, verifyPassword } from '../lib/password';
-import { getPool } from '../db/pool';
+import { ITenantRepository } from '../../domain/repositories/ITenantRepository.js';
+import { IUserRepository } from '../../domain/repositories/IUserRepository.js';
+import { IUserCredentialsRepository } from '../../domain/repositories/IUserCredentialsRepository.js';
+import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository.js';
+import { ISessionRepository } from '../../domain/repositories/ISessionRepository.js';
+import { loginRateLimiter } from '../middleware/rateLimit.js';
+import { hashPassword, verifyPassword } from '../lib/password.js';
+import { getPool } from '../db/pool.js';
 
 const SYSTEM_TENANT_ID = 'system-000';
 const SYSTEM_ADMIN_USER_ID = 'user-system-admin-000';

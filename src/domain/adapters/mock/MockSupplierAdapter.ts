@@ -6,10 +6,10 @@
  * Mirrors MockCustomerAdapter pattern for proper COA integration.
  */
 
-import { ISupplierRepository } from '../../repositories/ISupplierRepository';
-import { Supplier, CreateSupplierDTO, UpdateSupplierDTO } from '../../types/supplier';
-import { ICOARepository } from '../../repositories/ICOARepository';
-import { CreateAccountHeadDTO } from '../../types/coa';
+import { ISupplierRepository } from '../../repositories/ISupplierRepository.js';
+import { Supplier, CreateSupplierDTO, UpdateSupplierDTO } from '../../types/supplier.js';
+import { ICOARepository } from '../../repositories/ICOARepository.js';
+import { CreateAccountHeadDTO } from '../../types/coa.js';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 

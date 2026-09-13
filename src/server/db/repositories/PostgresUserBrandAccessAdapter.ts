@@ -8,8 +8,8 @@
  */
 
 import { randomBytes } from 'crypto';
-import { UserBrandAccess, CreateUserBrandAccessPayload, UpdateUserBrandAccessPayload } from '../../../domain/types/user-brand-access';
-import { IUserBrandAccessRepository } from '../../../domain/repositories/IUserBrandAccessRepository';
+import { UserBrandAccess, CreateUserBrandAccessPayload, UpdateUserBrandAccessPayload } from '../../../domain/types/user-brand-access.js';
+import { IUserBrandAccessRepository } from '../../../domain/repositories/IUserBrandAccessRepository.js';
 import { query } from '../pool.js';
 
 function uuid(): string { return randomBytes(16).toString('hex'); }

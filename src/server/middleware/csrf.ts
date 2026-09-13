@@ -8,7 +8,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { generateCsrfToken } from '../lib/crypto';
+import { generateCsrfToken } from '../lib/crypto.js';
 
 const CSRF_HEADER_NAME = 'x-csrf-token';
 const CSRF_TOKEN_KEY = '_csrf';

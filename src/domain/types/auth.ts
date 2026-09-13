@@ -7,7 +7,7 @@
  * RULE: No third-party auth providers (Auth0, Clerk, Firebase, Supabase).
  */
 
-import { SystemRoleName } from './rbac';
+import { SystemRoleName } from './rbac.js';
 
 /**
  * Public user entity exposed to UI and application services.

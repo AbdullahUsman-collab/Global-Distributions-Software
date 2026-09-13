@@ -16,7 +16,7 @@ import {
   ItemSerial,
   CreateProductDTO,
   UpdateProductDTO,
-} from '../types/inventory';
+} from '../types/inventory.js';
 
 export interface IInventoryRepository {
 

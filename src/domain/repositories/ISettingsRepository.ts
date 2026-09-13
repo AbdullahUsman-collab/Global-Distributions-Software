@@ -6,7 +6,7 @@
  * RULE: Each tenant has its own isolated settings.
  */
 
-import { TenantSettings } from '../types/settings';
+import { TenantSettings } from '../types/settings.js';
 
 /**
  * Repository interface for tenant settings persistence.

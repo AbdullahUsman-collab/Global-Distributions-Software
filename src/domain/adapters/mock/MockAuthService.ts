@@ -23,15 +23,15 @@ import {
   User,
   ChangePasswordPayload,
   ChangePasswordResult,
-} from '../../types/auth';
-import { IAuthService } from '../../services/IAuthService';
-import { ITenantRepository } from '../../repositories/ITenantRepository';
-import { IUserRepository } from '../../repositories/IUserRepository';
-import { IUserCredentialsRepository } from '../../repositories/IUserCredentialsRepository';
-import { ISessionRepository } from '../../repositories/ISessionRepository';
-import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository';
-import { DEMO_PLAIN_PASSWORDS, registerTestPassword } from './MockUserCredentialsAdapter';
-import { TenantPublicConfig } from '../../types/tenant';
+} from '../../types/auth.js';
+import { IAuthService } from '../../services/IAuthService.js';
+import { ITenantRepository } from '../../repositories/ITenantRepository.js';
+import { IUserRepository } from '../../repositories/IUserRepository.js';
+import { IUserCredentialsRepository } from '../../repositories/IUserCredentialsRepository.js';
+import { ISessionRepository } from '../../repositories/ISessionRepository.js';
+import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository.js';
+import { DEMO_PLAIN_PASSWORDS, registerTestPassword } from './MockUserCredentialsAdapter.js';
+import { TenantPublicConfig } from '../../types/tenant.js';
 
 /**
  * Mock implementation of IAuthService.

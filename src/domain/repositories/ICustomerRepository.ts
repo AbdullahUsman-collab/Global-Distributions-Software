@@ -8,7 +8,7 @@
  * Source of Truth: audit/05_CUSTOMER_ACCOUNTING.md
  */
 
-import { Customer, CreateCustomerDTO, UpdateCustomerDTO } from '../types/customer';
+import { Customer, CreateCustomerDTO, UpdateCustomerDTO } from '../types/customer.js';
 
 export interface ICustomerRepository {
   /**

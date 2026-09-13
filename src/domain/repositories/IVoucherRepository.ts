@@ -14,7 +14,7 @@ import {
   LedgerEntry,
   CreateVoucherDTO,
   UpdateVoucherDTO,
-} from '../types/voucher';
+} from '../types/voucher.js';
 
 export interface IVoucherRepository {
 

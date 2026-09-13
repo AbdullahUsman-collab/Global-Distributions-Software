@@ -1,16 +1,16 @@
 /**
  * Test helpers — mock repositories for domain service tests.
  */
-import type { ICOARepository } from './repositories/ICOARepository';
-import type { IVoucherRepository } from './repositories/IVoucherRepository';
-import type { IInventoryRepository } from './repositories/IInventoryRepository';
-import type { ICustomerRepository } from './repositories/ICustomerRepository';
-import type { ISupplierRepository } from './repositories/ISupplierRepository';
-import type { AccountHead } from './types/coa';
-import type { VoucherHeader, VoucherLine, LedgerEntry, CreateVoucherDTO } from './types/voucher';
-import type { Product, StockLevel, StockMovement } from './types/inventory';
-import type { Customer } from './types/customer';
-import type { Supplier } from './types/supplier';
+import type { ICOARepository } from './repositories/ICOARepository.js';
+import type { IVoucherRepository } from './repositories/IVoucherRepository.js';
+import type { IInventoryRepository } from './repositories/IInventoryRepository.js';
+import type { ICustomerRepository } from './repositories/ICustomerRepository.js';
+import type { ISupplierRepository } from './repositories/ISupplierRepository.js';
+import type { AccountHead } from './types/coa.js';
+import type { VoucherHeader, VoucherLine, LedgerEntry, CreateVoucherDTO } from './types/voucher.js';
+import type { Product, StockLevel, StockMovement } from './types/inventory.js';
+import type { Customer } from './types/customer.js';
+import type { Supplier } from './types/supplier.js';
 
 /* ─── Shared Seed Data ─────────────────────────────────────── */
 

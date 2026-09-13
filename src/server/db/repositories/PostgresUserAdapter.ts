@@ -11,8 +11,8 @@
  * getUsersByTenant() lists users through active brand access records.
  */
 
-import { User, CreateUserPayload, UpdateUserPayload } from '../../../domain/types/auth';
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
+import { User, CreateUserPayload, UpdateUserPayload } from '../../../domain/types/auth.js';
+import { IUserRepository } from '../../../domain/repositories/IUserRepository.js';
 import { query } from '../pool.js';
 
 /**

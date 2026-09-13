@@ -10,8 +10,8 @@
  *   - audit/37_COMPLETE_LEGACY_REMAINING_PARITY_DISCOVERY.md
  */
 
-import { Product, StockMovement, StockBWAFilter, StockBWARow, StockBWAReport } from '../types/inventory';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
+import { Product, StockMovement, StockBWAFilter, StockBWARow, StockBWAReport } from '../types/inventory.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 

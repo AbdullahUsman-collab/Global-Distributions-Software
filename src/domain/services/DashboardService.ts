@@ -10,18 +10,18 @@
  *   - audit/42_STEP23_DASHBOARD_ENHANCEMENT_IMPLEMENTATION_REPORT.md
  */
 
-import { VoucherHeader, LedgerEntry, VoucherType } from '../types/voucher';
-import { StockLevel } from '../types/inventory';
-import { AgingBuckets } from './AgingReportService';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
-import { ICOARepository } from '../repositories/ICOARepository';
-import { ICustomerRepository } from '../repositories/ICustomerRepository';
-import { ISupplierRepository } from '../repositories/ISupplierRepository';
-import { BillsListService, BillRecord } from './BillsListService';
-import { AgingReportService } from './AgingReportService';
-import { CashBookService } from './CashBookService';
-import { FinancialReportService } from './FinancialReportService';
+import { VoucherHeader, LedgerEntry, VoucherType } from '../types/voucher.js';
+import { StockLevel } from '../types/inventory.js';
+import { AgingBuckets } from './AgingReportService.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
+import { ICustomerRepository } from '../repositories/ICustomerRepository.js';
+import { ISupplierRepository } from '../repositories/ISupplierRepository.js';
+import { BillsListService, BillRecord } from './BillsListService.js';
+import { AgingReportService } from './AgingReportService.js';
+import { CashBookService } from './CashBookService.js';
+import { FinancialReportService } from './FinancialReportService.js';
 
 /* ─── Types ────────────────────────────────────────────────── */
 

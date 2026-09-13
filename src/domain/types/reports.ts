@@ -8,7 +8,7 @@
  *   - audit/16_CALCULATIONS.md
  */
 
-import { AccountLevel } from './coa';
+import { AccountLevel } from './coa.js';
 
 /* ─── Filter DTO ──────────────────────────────────────────── */
 

@@ -16,8 +16,8 @@ import {
   User,
   ChangePasswordPayload,
   ChangePasswordResult,
-} from '../types/auth';
-import { TenantPublicConfig } from '../types/tenant';
+} from '../types/auth.js';
+import { TenantPublicConfig } from '../types/tenant.js';
 
 /**
  * Service interface for authentication business logic.

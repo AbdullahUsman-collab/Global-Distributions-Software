@@ -6,9 +6,9 @@
  * RULE: All queries are scoped by tenantId.
  */
 
-import { AccountHead, CreateAccountHeadDTO, UpdateAccountHeadDTO } from '../../../domain/types/coa';
-import { ICOARepository } from '../../../domain/repositories/ICOARepository';
-import { deriveNormalBalance } from '../../../domain/types/coa';
+import { AccountHead, CreateAccountHeadDTO, UpdateAccountHeadDTO } from '../../../domain/types/coa.js';
+import { ICOARepository } from '../../../domain/repositories/ICOARepository.js';
+import { deriveNormalBalance } from '../../../domain/types/coa.js';
 import { query } from '../pool.js';
 
 /**

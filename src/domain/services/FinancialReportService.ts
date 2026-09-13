@@ -11,10 +11,10 @@
  *   - audit/17_FINANCIAL_PERIODS.md
  */
 
-import { AccountHead } from '../types/coa';
-import { LedgerEntry } from '../types/voucher';
-import { ICOARepository } from '../repositories/ICOARepository';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
+import { AccountHead } from '../types/coa.js';
+import { LedgerEntry } from '../types/voucher.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
 import {
   ReportFilterDTO,
   TrialBalanceRowDTO,
@@ -23,7 +23,7 @@ import {
   ProfitAndLossReportDTO,
   BalanceSheetRowDTO,
   BalanceSheetReportDTO,
-} from '../types/reports';
+} from '../types/reports.js';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 

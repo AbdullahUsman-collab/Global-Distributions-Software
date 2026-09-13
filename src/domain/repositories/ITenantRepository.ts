@@ -6,7 +6,7 @@
  * Real implementation will connect to database.
  */
 
-import { Tenant, TenantPublicConfig, CreateTenantPayload, UpdateTenantPayload } from '../types/tenant';
+import { Tenant, TenantPublicConfig, CreateTenantPayload, UpdateTenantPayload } from '../types/tenant.js';
 
 /**
  * Repository interface for tenant persistence operations.

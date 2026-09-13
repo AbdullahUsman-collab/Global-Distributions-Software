@@ -7,7 +7,7 @@
  * RULE: User model NEVER exposes passwordHash - isolated via IUserCredentialsRepository.
  */
 
-import { Supplier, CreateSupplierDTO, UpdateSupplierDTO } from '../types/supplier';
+import { Supplier, CreateSupplierDTO, UpdateSupplierDTO } from '../types/supplier.js';
 
 /**
  * Repository interface for supplier persistence.

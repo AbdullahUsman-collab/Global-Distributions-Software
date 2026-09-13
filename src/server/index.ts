@@ -24,57 +24,57 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
-import { createAuthMiddleware } from './middleware/auth';
-import { csrfProtection } from './middleware/csrf';
-import { apiRateLimiter } from './middleware/rateLimit';
-import { createAuthRoutes, createTenantRoutes } from './routes/auth';
-import { createProtectedRoutes } from './routes/protected';
-import { createSystemRoutes } from './routes/system';
+import { createAuthMiddleware } from './middleware/auth.js';
+import { csrfProtection } from './middleware/csrf.js';
+import { apiRateLimiter } from './middleware/rateLimit.js';
+import { createAuthRoutes, createTenantRoutes } from './routes/auth.js';
+import { createProtectedRoutes } from './routes/protected.js';
+import { createSystemRoutes } from './routes/system.js';
 
 // Domain adapters — mock
-import { MockTenantAdapter } from '../domain/adapters/mock/MockTenantAdapter';
-import { MockUserAdapter } from '../domain/adapters/mock/MockUserAdapter';
-import { MockUserCredentialsAdapter } from '../domain/adapters/mock/MockUserCredentialsAdapter';
-import { MockSessionAdapter } from '../domain/adapters/mock/MockSessionAdapter';
-import { MockAuthService } from '../domain/adapters/mock/MockAuthService';
-import { MockCOAAdapter } from '../domain/adapters/mock/MockCOAAdapter';
-import { MockVoucherAdapter } from '../domain/adapters/mock/MockVoucherAdapter';
-import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapter';
-import { MockCustomerAdapter } from '../domain/adapters/mock/MockCustomerAdapter';
-import { MockSupplierAdapter } from '../domain/adapters/mock/MockSupplierAdapter';
-import { MockSettingsAdapter } from '../domain/adapters/mock/MockSettingsAdapter';
-import { MockUserBrandAccessAdapter } from '../domain/adapters/mock/MockUserBrandAccessAdapter';
+import { MockTenantAdapter } from '../domain/adapters/mock/MockTenantAdapter.js';
+import { MockUserAdapter } from '../domain/adapters/mock/MockUserAdapter.js';
+import { MockUserCredentialsAdapter } from '../domain/adapters/mock/MockUserCredentialsAdapter.js';
+import { MockSessionAdapter } from '../domain/adapters/mock/MockSessionAdapter.js';
+import { MockAuthService } from '../domain/adapters/mock/MockAuthService.js';
+import { MockCOAAdapter } from '../domain/adapters/mock/MockCOAAdapter.js';
+import { MockVoucherAdapter } from '../domain/adapters/mock/MockVoucherAdapter.js';
+import { MockInventoryAdapter } from '../domain/adapters/mock/MockInventoryAdapter.js';
+import { MockCustomerAdapter } from '../domain/adapters/mock/MockCustomerAdapter.js';
+import { MockSupplierAdapter } from '../domain/adapters/mock/MockSupplierAdapter.js';
+import { MockSettingsAdapter } from '../domain/adapters/mock/MockSettingsAdapter.js';
+import { MockUserBrandAccessAdapter } from '../domain/adapters/mock/MockUserBrandAccessAdapter.js';
 
 // Domain adapters — PostgreSQL
-import { PostgresTenantAdapter } from './db/repositories/PostgresTenantAdapter';
-import { PostgresUserAdapter } from './db/repositories/PostgresUserAdapter';
-import { PostgresUserCredentialsAdapter } from './db/repositories/PostgresUserCredentialsAdapter';
-import { PostgresSessionAdapter } from './db/repositories/PostgresSessionAdapter';
-import { PostgresCOAAdapter } from './db/repositories/PostgresCOAAdapter';
-import { PostgresVoucherAdapter } from './db/repositories/PostgresVoucherAdapter';
-import { PostgresInventoryAdapter } from './db/repositories/PostgresInventoryAdapter';
-import { PostgresCustomerAdapter } from './db/repositories/PostgresCustomerAdapter';
-import { PostgresSupplierAdapter } from './db/repositories/PostgresSupplierAdapter';
-import { PostgresSettingsAdapter } from './db/repositories/PostgresSettingsAdapter';
-import { PostgresUserBrandAccessAdapter } from './db/repositories/PostgresUserBrandAccessAdapter';
+import { PostgresTenantAdapter } from './db/repositories/PostgresTenantAdapter.js';
+import { PostgresUserAdapter } from './db/repositories/PostgresUserAdapter.js';
+import { PostgresUserCredentialsAdapter } from './db/repositories/PostgresUserCredentialsAdapter.js';
+import { PostgresSessionAdapter } from './db/repositories/PostgresSessionAdapter.js';
+import { PostgresCOAAdapter } from './db/repositories/PostgresCOAAdapter.js';
+import { PostgresVoucherAdapter } from './db/repositories/PostgresVoucherAdapter.js';
+import { PostgresInventoryAdapter } from './db/repositories/PostgresInventoryAdapter.js';
+import { PostgresCustomerAdapter } from './db/repositories/PostgresCustomerAdapter.js';
+import { PostgresSupplierAdapter } from './db/repositories/PostgresSupplierAdapter.js';
+import { PostgresSettingsAdapter } from './db/repositories/PostgresSettingsAdapter.js';
+import { PostgresUserBrandAccessAdapter } from './db/repositories/PostgresUserBrandAccessAdapter.js';
 
 // Database
-import { initPool, closePool } from './db/pool';
+import { initPool, closePool } from './db/pool.js';
 
 // Domain services
-import { SalesService } from '../domain/services/SalesService';
-import { PurchaseService } from '../domain/services/PurchaseService';
-import { CustomerReceiptService } from '../domain/services/CustomerReceiptService';
-import { CashBookService } from '../domain/services/CashBookService';
-import { SaleReturnService } from '../domain/services/SaleReturnService';
-import { PurchaseReturnService } from '../domain/services/PurchaseReturnService';
-import { BillDetailService } from '../domain/services/BillDetailService';
-import { BillsListService } from '../domain/services/BillsListService';
-import { PartyBalanceService } from '../domain/services/PartyBalanceService';
-import { AgingReportService } from '../domain/services/AgingReportService';
-import { DashboardService } from '../domain/services/DashboardService';
-import { FinancialReportService } from '../domain/services/FinancialReportService';
-import { StockReportService } from '../domain/services/StockReportService';
+import { SalesService } from '../domain/services/SalesService.js';
+import { PurchaseService } from '../domain/services/PurchaseService.js';
+import { CustomerReceiptService } from '../domain/services/CustomerReceiptService.js';
+import { CashBookService } from '../domain/services/CashBookService.js';
+import { SaleReturnService } from '../domain/services/SaleReturnService.js';
+import { PurchaseReturnService } from '../domain/services/PurchaseReturnService.js';
+import { BillDetailService } from '../domain/services/BillDetailService.js';
+import { BillsListService } from '../domain/services/BillsListService.js';
+import { PartyBalanceService } from '../domain/services/PartyBalanceService.js';
+import { AgingReportService } from '../domain/services/AgingReportService.js';
+import { DashboardService } from '../domain/services/DashboardService.js';
+import { FinancialReportService } from '../domain/services/FinancialReportService.js';
+import { StockReportService } from '../domain/services/StockReportService.js';
 
 // ─── Adapter Factory ────────────────────────────────────────────
 
@@ -271,17 +271,17 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 async function initDatabase() {
   if (usePg) {
     try {
-      const { loadConfig } = await import('./db/env');
+      const { loadConfig } = await import('./db/env.js');
       const config = loadConfig();
       initPool(config.database);
-      const { testConnection } = await import('./db/pool');
+      const { testConnection } = await import('./db/pool.js');
       const connected = await testConnection();
       if (!connected) {
         console.error('CRITICAL: PostgreSQL connection failed. Falling back to mock adapters.');
       } else {
         console.log('  ✓ PostgreSQL connected');
         try {
-          const { runMigrations } = await import('./db/migrate');
+          const { runMigrations } = await import('./db/migrate.js');
           const applied = await runMigrations();
           if (applied.length > 0) {
             console.log(`  ✓ Applied ${applied.length} migration(s)`);

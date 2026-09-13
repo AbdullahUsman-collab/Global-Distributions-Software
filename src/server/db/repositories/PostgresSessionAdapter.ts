@@ -9,8 +9,8 @@
  */
 
 import { createHash, randomBytes } from 'crypto';
-import { ISessionRepository } from '../../../domain/repositories/ISessionRepository';
-import { UserSession } from '../../../domain/types/auth';
+import { ISessionRepository } from '../../../domain/repositories/ISessionRepository.js';
+import { UserSession } from '../../../domain/types/auth.js';
 import { query } from '../pool.js';
 
 const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes

@@ -6,8 +6,8 @@
  * Returns only public User model.
  */
 
-import { User, CreateUserPayload, UpdateUserPayload } from '../../types/auth';
-import { IUserRepository } from '../../repositories/IUserRepository';
+import { User, CreateUserPayload, UpdateUserPayload } from '../../types/auth.js';
+import { IUserRepository } from '../../repositories/IUserRepository.js';
 
 /**
  * Mock user data for development.

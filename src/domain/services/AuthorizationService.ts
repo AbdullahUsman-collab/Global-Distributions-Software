@@ -10,10 +10,10 @@
  * would independently verify authorization server-side.
  */
 
-import { SystemRoleName, Permission, Permissions, SYSTEM_ROLES } from '../types/rbac';
+import { SystemRoleName, Permission, Permissions, SYSTEM_ROLES } from '../types/rbac.js';
 
-export { Permissions } from '../types/rbac';
-export type { Permission } from '../types/rbac';
+export { Permissions } from '../types/rbac.js';
+export type { Permission } from '../types/rbac.js';
 
 /**
  * Result of an authorization check.

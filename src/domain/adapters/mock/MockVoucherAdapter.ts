@@ -17,8 +17,8 @@ import {
   CreateVoucherDTO,
   UpdateVoucherDTO,
   isBalanced,
-} from '../../types/voucher';
-import { IVoucherRepository } from '../../repositories/IVoucherRepository';
+} from '../../types/voucher.js';
+import { IVoucherRepository } from '../../repositories/IVoucherRepository.js';
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 

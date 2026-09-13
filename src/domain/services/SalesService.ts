@@ -20,15 +20,15 @@
  *   - COGS account verified: 51101 (Material Purchases)
  */
 
-import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher';
-import { Product, StockMovement, calculateBillLineTax, BillLineTaxInput, calculateCOGS, calculateGrossProfit } from '../types/inventory';
-import { Customer } from '../types/customer';
-import { IVoucherRepository } from '../repositories/IVoucherRepository';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
-import { ICustomerRepository } from '../repositories/ICustomerRepository';
-import { ICOARepository } from '../repositories/ICOARepository';
-import { SystemRoleName } from '../types/rbac';
-import { requirePermission, Permissions } from './AuthorizationService';
+import { VoucherHeader, CreateVoucherDTO, VoucherType } from '../types/voucher.js';
+import { Product, StockMovement, calculateBillLineTax, BillLineTaxInput, calculateCOGS, calculateGrossProfit } from '../types/inventory.js';
+import { Customer } from '../types/customer.js';
+import { IVoucherRepository } from '../repositories/IVoucherRepository.js';
+import { IInventoryRepository } from '../repositories/IInventoryRepository.js';
+import { ICustomerRepository } from '../repositories/ICustomerRepository.js';
+import { ICOARepository } from '../repositories/ICOARepository.js';
+import { SystemRoleName } from '../types/rbac.js';
+import { requirePermission, Permissions } from './AuthorizationService.js';
 
 /* ─── Constants ────────────────────────────────────────────── */
 

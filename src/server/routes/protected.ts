@@ -9,32 +9,32 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { requirePermissionMiddleware } from '../middleware/auth';
-import { mutationRateLimiter } from '../middleware/rateLimit';
-import { SalesService } from '../../domain/services/SalesService';
-import { PurchaseService } from '../../domain/services/PurchaseService';
-import { CustomerReceiptService } from '../../domain/services/CustomerReceiptService';
-import { CashBookService } from '../../domain/services/CashBookService';
-import { SaleReturnService } from '../../domain/services/SaleReturnService';
-import { PurchaseReturnService } from '../../domain/services/PurchaseReturnService';
-import { BillDetailService } from '../../domain/services/BillDetailService';
-import { BillsListService } from '../../domain/services/BillsListService';
-import { PartyBalanceService } from '../../domain/services/PartyBalanceService';
-import { AgingReportService } from '../../domain/services/AgingReportService';
-import { DashboardService } from '../../domain/services/DashboardService';
-import { ICOARepository } from '../../domain/repositories/ICOARepository';
-import { IVoucherRepository } from '../../domain/repositories/IVoucherRepository';
-import { IInventoryRepository } from '../../domain/repositories/IInventoryRepository';
-import { ICustomerRepository } from '../../domain/repositories/ICustomerRepository';
-import { ISupplierRepository } from '../../domain/repositories/ISupplierRepository';
-import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository';
-import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { ITenantRepository } from '../../domain/repositories/ITenantRepository';
-import { FinancialReportService } from '../../domain/services/FinancialReportService';
-import { StockReportService } from '../../domain/services/StockReportService';
-import { SystemRoleName } from '../../domain/types/rbac';
-import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO, validId, validDate, requiredString, positiveNumber, nonEmptyArray, validEnum, combineValidations } from '../lib/validation';
+import { requirePermissionMiddleware } from '../middleware/auth.js';
+import { mutationRateLimiter } from '../middleware/rateLimit.js';
+import { SalesService } from '../../domain/services/SalesService.js';
+import { PurchaseService } from '../../domain/services/PurchaseService.js';
+import { CustomerReceiptService } from '../../domain/services/CustomerReceiptService.js';
+import { CashBookService } from '../../domain/services/CashBookService.js';
+import { SaleReturnService } from '../../domain/services/SaleReturnService.js';
+import { PurchaseReturnService } from '../../domain/services/PurchaseReturnService.js';
+import { BillDetailService } from '../../domain/services/BillDetailService.js';
+import { BillsListService } from '../../domain/services/BillsListService.js';
+import { PartyBalanceService } from '../../domain/services/PartyBalanceService.js';
+import { AgingReportService } from '../../domain/services/AgingReportService.js';
+import { DashboardService } from '../../domain/services/DashboardService.js';
+import { ICOARepository } from '../../domain/repositories/ICOARepository.js';
+import { IVoucherRepository } from '../../domain/repositories/IVoucherRepository.js';
+import { IInventoryRepository } from '../../domain/repositories/IInventoryRepository.js';
+import { ICustomerRepository } from '../../domain/repositories/ICustomerRepository.js';
+import { ISupplierRepository } from '../../domain/repositories/ISupplierRepository.js';
+import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository.js';
+import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository.js';
+import { IUserRepository } from '../../domain/repositories/IUserRepository.js';
+import { ITenantRepository } from '../../domain/repositories/ITenantRepository.js';
+import { FinancialReportService } from '../../domain/services/FinancialReportService.js';
+import { StockReportService } from '../../domain/services/StockReportService.js';
+import { SystemRoleName } from '../../domain/types/rbac.js';
+import { validateSaleBillDTO, validateSaleReturnDTO, validateSaleReturnLines, validatePurchaseBillDTO, validateCustomerReceiptDTO, validateCashBookDTO, validId, validDate, requiredString, positiveNumber, nonEmptyArray, validEnum, combineValidations } from '../lib/validation.js';
 
 const VALID_ROLES: readonly SystemRoleName[] = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
 

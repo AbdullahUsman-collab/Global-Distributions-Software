@@ -5,7 +5,7 @@
  * Manages session lifecycle: creation, retrieval, and deletion.
  */
 
-import { UserSession } from '../types/auth';
+import { UserSession } from '../types/auth.js';
 
 /**
  * Repository interface for session persistence operations.

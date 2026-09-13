@@ -9,7 +9,7 @@
  * Password hashing and verification belong in IAuthService.
  */
 
-import { UserCredentials } from '../types/auth';
+import { UserCredentials } from '../types/auth.js';
 
 /**
  * Isolated repository interface for credential persistence.

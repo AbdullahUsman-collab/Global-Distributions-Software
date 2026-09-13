@@ -7,8 +7,8 @@
  */
 
 import { randomBytes } from 'crypto';
-import { Tenant, TenantPublicConfig, CreateTenantPayload, UpdateTenantPayload } from '../../../domain/types/tenant';
-import { ITenantRepository } from '../../../domain/repositories/ITenantRepository';
+import { Tenant, TenantPublicConfig, CreateTenantPayload, UpdateTenantPayload } from '../../../domain/types/tenant.js';
+import { ITenantRepository } from '../../../domain/repositories/ITenantRepository.js';
 import { query } from '../pool.js';
 
 function uuid(): string { return randomBytes(16).toString('hex'); }

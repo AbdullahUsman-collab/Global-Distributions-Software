@@ -7,8 +7,8 @@
  * RULE: Each tenant has its own isolated settings.
  */
 
-import { TenantSettings } from '../../../domain/types/settings';
-import { ISettingsRepository } from '../../../domain/repositories/ISettingsRepository';
+import { TenantSettings } from '../../../domain/types/settings.js';
+import { ISettingsRepository } from '../../../domain/repositories/ISettingsRepository.js';
 import { query } from '../pool.js';
 
 /**

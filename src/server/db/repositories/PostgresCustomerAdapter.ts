@@ -7,8 +7,8 @@
  */
 
 import { randomBytes } from 'crypto';
-import { Customer, CreateCustomerDTO, UpdateCustomerDTO } from '../../../domain/types/customer';
-import { ICustomerRepository } from '../../../domain/repositories/ICustomerRepository';
+import { Customer, CreateCustomerDTO, UpdateCustomerDTO } from '../../../domain/types/customer.js';
+import { ICustomerRepository } from '../../../domain/repositories/ICustomerRepository.js';
 import { query } from '../pool.js';
 
 function uuid(): string { return randomBytes(16).toString('hex'); }
