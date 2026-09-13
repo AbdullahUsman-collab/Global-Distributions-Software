@@ -9,6 +9,8 @@
 import { randomBytes } from 'crypto';
 import { Customer, CreateCustomerDTO, UpdateCustomerDTO } from '../../../domain/types/customer.js';
 import { ICustomerRepository } from '../../../domain/repositories/ICustomerRepository.js';
+import { CreateAccountHeadDTO } from '../../../domain/types/coa.js';
+import { PostgresCOAAdapter } from './PostgresCOAAdapter.js';
 import { query } from '../pool.js';
 
 function uuid(): string { return randomBytes(16).toString('hex'); }
@@ -17,6 +19,16 @@ function uuid(): string { return randomBytes(16).toString('hex'); }
  * PostgreSQL implementation of ICustomerRepository.
  */
 export class PostgresCustomerAdapter implements ICustomerRepository {
+
+  private coaAdapter: PostgresCOAAdapter | null = null;
+
+  /**
+   * Inject the COA adapter (optional so existing constructor call sites keep working).
+   * Required for the AR auto-create behavior on customer creation.
+   */
+  setCoaAdapter(coaAdapter: PostgresCOAAdapter): void {
+    this.coaAdapter = coaAdapter;
+  }
 
   async getCustomersByTenantId(tenantId: string, filters?: { isActive?: boolean }): Promise<Customer[]> {
     let sql = `SELECT id, tenant_id, account_head_id, name, address, owner_name, phone, stn, ntn, cnic, is_active, created_at, updated_at
@@ -53,11 +65,55 @@ export class PostgresCustomerAdapter implements ICustomerRepository {
 
   async createCustomer(tenantId: string, dto: CreateCustomerDTO): Promise<Customer> {
     const id = uuid();
+
+    // AR auto-create: a customer without an explicit AR posting account gets a
+    // dedicated sub-account under the Accounts Receivable parent (11200).
+    // Mirrors MockCustomerAdapter.createCustomer — CreateCustomerDTO contract:
+    // "accountHeadId: Reference to existing AR posting AccountHead, or null to auto-create".
+    // Without this, account_head_id stays NULL and sale posting fails the
+    // voucher_lines_account_id_fkey constraint (empty-string account id).
+    let accountHeadId = dto.accountHeadId || '';
+    if (!accountHeadId) {
+      if (!this.coaAdapter) {
+        throw new Error('COA adapter not injected — cannot auto-create customer AR account');
+      }
+      const accounts = await this.coaAdapter.getAccountsByTenantId(tenantId);
+      const parentAccount = accounts.find(a => a.accountCode === '11200');
+      if (!parentAccount) {
+        throw new Error('Accounts Receivable parent account (11200) not found');
+      }
+      // Next sub-account code under 112xx not already used
+      const existingCodes = accounts
+        .filter(a => a.accountCode.startsWith('112') && a.level === 4)
+        .map(a => parseInt(a.accountCode, 10))
+        .filter(n => !isNaN(n));
+      const nextCode = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 11201;
+
+      const accountDto: CreateAccountHeadDTO = {
+        accountCode: String(nextCode),
+        accountName: dto.name,
+        parentId: parentAccount.id,
+        level: 4,
+        accountType: 'ASSET',
+        controlCategory: 'RECEIVABLE',
+        legacyMainHeadNo: 500,
+        accountEffect: 'Balance Sheet',
+        address: dto.address,
+        ownerName: dto.ownerName,
+        phone: dto.phone,
+        stn: dto.stn,
+        ntn: dto.ntn,
+        cnic: dto.cnic,
+      };
+      const createdAccount = await this.coaAdapter.createAccount(tenantId, accountDto);
+      accountHeadId = createdAccount.id;
+    }
+
     const result = await query(
       `INSERT INTO customers (id, tenant_id, account_head_id, name, address, owner_name, phone, stn, ntn, cnic, is_active)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [id, tenantId, dto.accountHeadId || null, dto.name, dto.address || '', dto.ownerName || '',
+      [id, tenantId, accountHeadId || null, dto.name, dto.address || '', dto.ownerName || '',
        dto.phone || '', dto.stn || '', dto.ntn || '', dto.cnic || '', dto.isActive ?? true]
     );
     return this.mapRow(result.rows[0]);

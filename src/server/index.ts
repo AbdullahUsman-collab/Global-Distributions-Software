@@ -91,7 +91,11 @@ const authService = new MockAuthService(tenantAdapter, userAdapter, credentialsA
 const coaAdapter = usePg ? new PostgresCOAAdapter() : new MockCOAAdapter();
 const voucherAdapter = usePg ? new PostgresVoucherAdapter() : new MockVoucherAdapter();
 const inventoryAdapter = usePg ? new PostgresInventoryAdapter() : new MockInventoryAdapter();
-const customerAdapter = usePg ? new PostgresCustomerAdapter() : new MockCustomerAdapter(coaAdapter);
+const pgCustomerAdapter = new PostgresCustomerAdapter();
+if (coaAdapter instanceof PostgresCOAAdapter) {
+  pgCustomerAdapter.setCoaAdapter(coaAdapter);
+}
+const customerAdapter = usePg ? pgCustomerAdapter : new MockCustomerAdapter(coaAdapter);
 const supplierAdapter = usePg ? new PostgresSupplierAdapter() : new MockSupplierAdapter(coaAdapter);
 const settingsAdapter = usePg ? new PostgresSettingsAdapter() : new MockSettingsAdapter();
 
