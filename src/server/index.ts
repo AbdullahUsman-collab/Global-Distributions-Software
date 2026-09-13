@@ -252,6 +252,7 @@ app.use('/api',
       userAdapter,
       brandAccessAdapter,
       tenantAdapter,
+      credentialsAdapter,
     )
 );
 

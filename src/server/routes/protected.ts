@@ -32,6 +32,8 @@ import { ISupplierRepository } from '../../domain/repositories/ISupplierReposito
 import { ISettingsRepository } from '../../domain/repositories/ISettingsRepository.js';
 import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrandAccessRepository.js';
 import { IUserRepository } from '../../domain/repositories/IUserRepository.js';
+import { IUserCredentialsRepository } from '../../domain/repositories/IUserCredentialsRepository.js';
+import { hashPassword } from '../lib/password.js';
 import { ITenantRepository } from '../../domain/repositories/ITenantRepository.js';
 import { FinancialReportService } from '../../domain/services/FinancialReportService.js';
 import { StockReportService } from '../../domain/services/StockReportService.js';
@@ -80,6 +82,7 @@ export function createProtectedRoutes(
   userRepo: IUserRepository,
   brandAccessRepo?: IUserBrandAccessRepository,
   tenantRepo?: ITenantRepository,
+  credentialsRepo?: IUserCredentialsRepository,
 ): Router {
   const router = Router();
 
@@ -2174,6 +2177,15 @@ export function createProtectedRoutes(
           password,
           role: role || 'VIEWER',
         });
+
+        // Provision credentials — login (bcrypt mode) verifies against
+        // user_credentials.password_hash. Without this row the user can never
+        // authenticate ("Invalid credentials" forever).
+        if (credentialsRepo) {
+          const passwordHash = await hashPassword(password);
+          await credentialsRepo.storeCredentials(user.id, tenantId, passwordHash, 'bcrypt');
+        }
+
         res.status(201).json(user);
       } catch (error) {
         console.error('Create user error:', error);

@@ -49,10 +49,10 @@ export const BillDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Only bill voucher types (SV/PV/SRV/PRV) carry product line items.
-  // Other vouchers (e.g. CR customer receipts: DEBIT Cash / CREDIT AR) have no
-  // product/SKU/qty/rate — render the lines table without those columns.
-  const isBillType = detail ? ['SV', 'PV', 'SRV', 'PRV'].includes(detail.voucher.voucherType) : true;
+  // Line Items shows only actual product lines. The accounting engine also posts
+  // GL aggregate lines (inventory debit, input tax, COGS pairs) without product
+  // metadata — those belong in Accounting Entries below, not as dash-rows here.
+  const productLines = detail ? detail.lines.filter(bl => bl.line.productId) : [];
 
   useEffect(() => {
     if (!voucherId) {
@@ -102,7 +102,7 @@ export const BillDetailPage: React.FC = () => {
   const handleExportCsv = () => {
     if (!detail) return;
     const headers = ['#', 'Product', 'SKU', 'Qty', 'Rate', 'Amount', 'Tax', 'Total'];
-    const rows = detail.lines.map((bl, i) => [
+    const rows = productLines.map((bl, i) => [
       i + 1,
       bl.productName || '',
       bl.productSku || '',
@@ -233,7 +233,7 @@ export const BillDetailPage: React.FC = () => {
           </div>
 
           {/* Line Items */}
-          {detail.lines.length > 0 && (
+          {productLines.length > 0 && (
             <div style={styles.card}>
               <h2 style={styles.sectionTitle}>Line Items</h2>
               <div className="table-wrap" style={styles.tableWrap}>
@@ -241,31 +241,27 @@ export const BillDetailPage: React.FC = () => {
                   <thead>
                     <tr>
                       <th style={styles.th}>#</th>
-                      {isBillType && <th style={styles.th}>Product</th>}
-                      {isBillType && <th style={styles.th}>SKU</th>}
-                      {isBillType && <th style={{ ...styles.th, textAlign: 'right' }}>Qty</th>}
-                      {isBillType && <th style={{ ...styles.th, textAlign: 'right' }}>Rate</th>}
+                      <th style={styles.th}>Product</th>
+                      <th style={styles.th}>SKU</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Qty</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Rate</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Tax</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {detail.lines.map((bl, i) => (
+                    {productLines.map((bl, i) => (
                       <tr key={bl.line.id} style={styles.tr}>
                         <td style={styles.td}>{i + 1}</td>
-                        {isBillType && <td style={styles.td}>{bl.productName || '—'}</td>}
-                        {isBillType && <td style={styles.td}>{bl.productSku || '—'}</td>}
-                        {isBillType && (
-                          <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                            {bl.quantity > 0 ? bl.quantity.toLocaleString() : '—'}
-                          </td>
-                        )}
-                        {isBillType && (
-                          <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                            {bl.rate > 0 ? fmt(bl.rate) : '—'}
-                          </td>
-                        )}
+                        <td style={styles.td}>{bl.productName || '—'}</td>
+                        <td style={styles.td}>{bl.productSku || '—'}</td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.quantity > 0 ? bl.quantity.toLocaleString() : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.rate > 0 ? fmt(bl.rate) : '—'}
+                        </td>
                         <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
                           {fmt(bl.amount)}
                         </td>
