@@ -74,6 +74,104 @@ export function createSystemRoutes(
   });
 
   /**
+   * GET /api/system/constraints — TEMPORARY diagnostic endpoint.
+   * Returns database constraints for Step 86 verification.
+   */
+  router.get('/constraints', async (_req: Request, res: Response) => {
+    try {
+      const pool = getPool();
+      const client = await pool.connect();
+      try {
+        // Check UNIQUE constraints on accounts table
+        const acctConstraints = await client.query(`
+          SELECT indexname, indexdef
+          FROM pg_indexes
+          WHERE tablename = 'accounts'
+          AND indexdef LIKE '%UNIQUE%'
+        `);
+
+        // Check for duplicate (tenant_id, account_code) pairs
+        const dupeCheck = await client.query(`
+          SELECT tenant_id, account_code, count(*)::int AS cnt
+          FROM accounts
+          GROUP BY tenant_id, account_code
+          HAVING count(*) > 1
+        `);
+
+        // Check migration status
+        const migrations = await client.query(
+          'SELECT version, name, applied_at FROM schema_migrations ORDER BY version'
+        );
+
+        res.json({
+          accountConstraints: acctConstraints.rows,
+          duplicateAccountCodes: dupeCheck.rows,
+          migrations: migrations.rows,
+        });
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * GET /api/system/tenant-inventory — TEMPORARY diagnostic endpoint.
+   * Returns per-tenant data counts for Step 86 verification.
+   * Will be removed after verification.
+   */
+  router.get('/tenant-inventory', async (_req: Request, res: Response) => {
+    try {
+      const pool = getPool();
+      const client = await pool.connect();
+      try {
+        const tables = [
+          'users', 'user_brand_access', 'accounts', 'products',
+          'customers', 'suppliers', 'vouchers', 'voucher_lines',
+          'ledger_entries', 'warehouses', 'warehouse_locations',
+          'stock_levels', 'stock_movements', 'tenant_settings',
+          'user_credentials', 'sessions'
+        ];
+
+        const tenantsResult = await client.query(
+          'SELECT id, slug, "brandName", "isActive" FROM tenants ORDER BY id'
+        );
+
+        const inventory: any[] = [];
+        for (const t of tenantsResult.rows) {
+          const counts: Record<string, string> = { id: t.id, slug: t.slug, name: t.brandName, active: String(t.isActive) };
+          for (const table of tables) {
+            try {
+              const r = await client.query(`SELECT count(*)::int AS c FROM ${table} WHERE tenant_id = $1`, [t.id]);
+              counts[table] = String(r.rows[0].c);
+            } catch {
+              counts[table] = 'error';
+            }
+          }
+          inventory.push(counts);
+        }
+
+        const globalCounts: Record<string, string> = {};
+        for (const table of tables) {
+          try {
+            const r = await client.query(`SELECT count(*)::int AS c FROM ${table}`);
+            globalCounts[`total_${table}`] = String(r.rows[0].c);
+          } catch {
+            globalCounts[`total_${table}`] = 'error';
+          }
+        }
+
+        res.json({ tenants: inventory, global: globalCounts, tableCount: tables.length });
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
    * GET /api/system/health
    * Diagnostic health endpoint.
    * Reports: API alive, database pool status, PostgreSQL connectivity, tenant count.
