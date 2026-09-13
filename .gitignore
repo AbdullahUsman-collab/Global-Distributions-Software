@@ -32,3 +32,6 @@ test-api.mts
 test-bills.mts
 legacy_verify*.cjs
 seed_minimal.mjs
+
+# Compiled server output in src/ (from tsc attempts)
+src/**/*.js
