@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "vite build",
+    "build:vercel": "esbuild src/server/index.ts --bundle --platform=node --format=esm --outfile=api/dist/server.js --external:bcrypt --external:pg && vite build",
     "typecheck": "tsc --noEmit 2>&1 | findstr /V \"src/server\"",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -1,9 +1,10 @@
 /**
  * Vercel Serverless Function Entry Point
- * Wraps Express app for Vercel deployment.
- * Vercel auto-detects this as an Express app and deploys it as a serverless function.
+ * Imports the pre-bundled Express server.
+ * The server is bundled by esbuild (src/server/index.ts → api/dist/server.js)
+ * with bcrypt/pg as externals so @vercel/node can resolve them from node_modules.
  */
 
-import app from '../src/server/index';
+import app from './dist/server';
 
 export default app;
