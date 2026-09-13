@@ -18,6 +18,7 @@ import { IUserBrandAccessRepository } from '../../domain/repositories/IUserBrand
 import { ISessionRepository } from '../../domain/repositories/ISessionRepository';
 import { loginRateLimiter } from '../middleware/rateLimit';
 import { hashPassword, verifyPassword } from '../lib/password';
+import { getPool } from '../db/pool';
 
 const SYSTEM_TENANT_ID = 'system-000';
 const SYSTEM_ADMIN_USER_ID = 'user-system-admin-000';
@@ -69,6 +70,47 @@ export function createSystemRoutes(
       console.error('System status error:', error);
       res.status(500).json({ error: 'Failed to check system status' });
     }
+  });
+
+  /**
+   * GET /api/system/health
+   * Diagnostic health endpoint.
+   * Reports: API alive, database pool status, PostgreSQL connectivity, tenant count.
+   * NEVER exposes credentials, connection strings, or sensitive config.
+   */
+  router.get('/health', async (_req: Request, res: Response) => {
+    const result: Record<string, string> = {};
+    result.status = 'ok';
+    result.api = 'ok';
+    result.timestamp = new Date().toISOString();
+    result.vercel = process.env.VERCEL ? 'true' : 'false';
+    result.nodeEnv = process.env.NODE_ENV || 'development';
+
+    // Check database pool
+    try {
+      const pool = getPool();
+      result.database = 'pool_initialized';
+
+      // Test actual connection
+      const client = await pool.connect();
+      try {
+        const dbResult = await client.query('SELECT 1 AS alive');
+        result.postgres = dbResult.rows[0].alive === 1 ? 'connected' : 'unexpected';
+
+        // Count tenants (proves real data access)
+        const tenantResult = await client.query('SELECT count(*)::int AS count FROM tenants');
+        result.tenantCount = String(tenantResult.rows[0].count);
+        result.tenantsTable = 'accessible';
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      result.database = 'error';
+      result.databaseError = error?.message || 'unknown';
+    }
+
+    const isHealthy = result.database === 'pool_initialized' && result.postgres === 'connected';
+    res.status(isHealthy ? 200 : 503).json(result);
   });
 
   /**

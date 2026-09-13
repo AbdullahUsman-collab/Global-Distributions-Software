@@ -1,20 +1,30 @@
 /**
  * Vercel Serverless Entry Point
  *
- * Re-exports the Express app from src/server/index.ts.
- * Vercel invokes this as a serverless function for all /api/* routes.
+ * Re-exports the Express app from src/server/index.ts with proper
+ * database initialization lifecycle management.
  *
- * IMPORTANT: This file must import the real server to get:
- * - Database connection and migrations
- * - All API routes (auth, protected, system)
- * - Middleware (CORS, CSRF, rate limiting, auth)
- * - Domain services and adapters
+ * CRITICAL: Vercel invokes this as a serverless function for all /api/* routes.
+ * The database pool MUST be initialized before any request is processed.
+ *
+ * Architecture:
+ *   1. Module loads → src/server/index.ts creates Express app + fires initDatabase()
+ *   2. Vercel handler awaits dbReady before passing request to Express
+ *   3. Express handles the request with fully initialized pool
  */
 
-// Import the main server module which creates and configures the Express app.
-// Side effects: creates adapters, services, sets up middleware and routes,
-// and initializes the database connection pool.
-import app from '../src/server/index';
+import app, { dbReady } from '../src/server/index';
 
-// Re-export the Express app as the default export for Vercel.
-export default app;
+/**
+ * Vercel serverless handler.
+ * Awaits database initialization, then delegates to Express.
+ * This prevents the race condition where requests arrive before the pool is ready.
+ */
+export default async function handler(req: any, res: any) {
+  // Wait for database initialization to complete.
+  // If initialization failed, the pool is null and Express routes
+  // will handle the error appropriately.
+  await dbReady;
+
+  return app(req, res);
+}

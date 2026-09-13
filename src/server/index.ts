@@ -358,7 +358,8 @@ process.on('SIGINT', async () => {
 });
 
 // Initialize database (both Vercel serverless and local)
-const dbReady = initDatabase();
+// This promise resolves when the database pool is ready (or immediately if no DATABASE_URL).
+export const dbReady: Promise<void> = initDatabase();
 
 // Only start the HTTP server when running directly (not as a Vercel serverless function).
 if (!process.env.VERCEL) {
