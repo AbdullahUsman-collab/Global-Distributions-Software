@@ -74,6 +74,68 @@ export function createSystemRoutes(
   });
 
   /**
+   * POST /api/system/run-migration-008 — TEMPORARY endpoint.
+   * Applies migration 008 (demo tenant cleanup) to the live database.
+   * Will be removed after verification.
+   */
+  router.post('/run-migration-008', async (_req: Request, res: Response) => {
+    try {
+      const pool = getPool();
+      const client = await pool.connect();
+      try {
+        // Check if already applied
+        const check = await client.query(
+          "SELECT version FROM schema_migrations WHERE version = '008'"
+        );
+        if (check.rows.length > 0) {
+          res.json({ status: 'already_applied', message: 'Migration 008 already applied' });
+          return;
+        }
+
+        const sql = `
+DELETE FROM sessions WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM user_brand_access WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM ledger_entries WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM voucher_lines WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM vouchers WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM stock_movements WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM stock_levels WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM warehouse_locations WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM warehouses WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM customers WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM suppliers WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM products WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM accounts WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM tenant_settings WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM user_credentials WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM users WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale'));
+DELETE FROM tenants WHERE slug IN ('demo-distribution', 'demo-wholesale');
+        `;
+
+        await client.query('BEGIN');
+        try {
+          await client.query(sql);
+          await client.query(
+            "INSERT INTO schema_migrations (version, name) VALUES ('008', 'cleanup_demo_tenants') ON CONFLICT (version) DO NOTHING"
+          );
+          await client.query('COMMIT');
+
+          // Verify
+          const remaining = await client.query('SELECT id, slug, brand_name FROM tenants ORDER BY id');
+          res.json({ status: 'applied', remainingTenants: remaining.rows });
+        } catch (e: any) {
+          await client.query('ROLLBACK');
+          res.status(500).json({ error: e.message });
+        }
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
    * GET /api/system/constraints — TEMPORARY diagnostic endpoint.
    * Returns database constraints for Step 86 verification.
    */
