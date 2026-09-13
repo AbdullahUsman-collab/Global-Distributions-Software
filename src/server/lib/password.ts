@@ -8,7 +8,7 @@
  * RULE: No password values are logged.
  */
 
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const SALT_ROUNDS = 12;
 
