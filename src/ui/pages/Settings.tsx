@@ -47,7 +47,7 @@ const MONTHS = [
 /* ─── Main Settings Component ──────────────────────────────── */
 
 export const Settings: React.FC = () => {
-  const { tenant } = useAuth();
+  const { tenant, refreshAuth } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [loading, setLoading] = useState(true);
@@ -100,6 +100,8 @@ export const Settings: React.FC = () => {
       });
       setSettings(updated);
       setSaveMessage('Settings saved successfully.');
+      // Refresh tenant data so main page reflects the updated Brand/Trade Name
+      await refreshAuth();
       setTimeout(() => setSaveMessage(null), 3000);
     } catch {
       setErrorMessage('Failed to save settings. Please try again.');
