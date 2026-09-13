@@ -184,7 +184,7 @@ export function createAuthRoutes(
 
       const result = await authService.switchTenant(sessionId, tenantId);
 
-      if (!result.success) {
+      if (!result.success && 'error' in result) {
         res.status(403).json({ error: result.error });
         return;
       }
