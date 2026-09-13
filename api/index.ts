@@ -1,10 +1,32 @@
 /**
  * Vercel Serverless Function Entry Point
- * Imports the pre-bundled Express server.
- * The server is bundled by esbuild (src/server/index.ts → api/dist/server.js)
- * with bcrypt/pg as externals so @vercel/node can resolve them from node_modules.
  */
 
-import app from './dist/server';
+let app: any = null;
+let initError: string | null = null;
 
-export default app;
+async function getApp() {
+  if (app) return app;
+  try {
+    const mod = await import('./dist/server');
+    app = mod.default;
+    return app;
+  } catch (err: any) {
+    initError = err?.message || String(err);
+    console.error('Failed to initialize Express app:', err);
+    return null;
+  }
+}
+
+export default async function handler(req: any, res: any) {
+  const expressApp = await getApp();
+  if (!expressApp) {
+    res.setHeader('Content-Type', 'application/json');
+    res.status(500).json({
+      error: 'Server initialization failed',
+      message: initError,
+    });
+    return;
+  }
+  return expressApp(req, res);
+}
