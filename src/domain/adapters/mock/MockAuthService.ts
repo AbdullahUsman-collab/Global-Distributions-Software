@@ -7,8 +7,11 @@
  *
  * RULE: Free-text username is supported (email NOT required).
  *
- * RULE: Uses simple string comparison for client-side mock.
- * Server-side uses real bcrypt (src/server/lib/password.ts).
+ * RULE: When useBcrypt=true (production/DATABASE_URL), uses bcrypt.compare()
+ * against user_credentials.password_hash. No plaintext comparison.
+ *
+ * RULE: When useBcrypt=false (mock/dev), uses DEMO_PLAIN_PASSWORDS for
+ * convenience. For development/Vercel demo only.
  *
  * RULE (46C-3): Authorization source is user_brand_access, not users.role.
  * The role returned in AuthResult and used for session creation comes from
@@ -32,10 +35,12 @@ import { ISessionRepository } from '../../repositories/ISessionRepository.js';
 import { IUserBrandAccessRepository } from '../../repositories/IUserBrandAccessRepository.js';
 import { DEMO_PLAIN_PASSWORDS, registerTestPassword } from './MockUserCredentialsAdapter.js';
 import { TenantPublicConfig } from '../../types/tenant.js';
+import { verifyPassword, hashPassword } from '../../../server/lib/password.js';
 
 /**
- * Mock implementation of IAuthService.
- * DEVELOPMENT ONLY - Do not use in production.
+ * Auth service implementation.
+ * When useBcrypt=true (production), uses bcrypt against stored password hashes.
+ * When useBcrypt=false (mock/dev), uses plaintext comparison against DEMO_PLAIN_PASSWORDS.
  */
 export class MockAuthService implements IAuthService {
   constructor(
@@ -43,7 +48,8 @@ export class MockAuthService implements IAuthService {
     private userRepository: IUserRepository,
     private credentialsRepository: IUserCredentialsRepository,
     private sessionRepository: ISessionRepository,
-    private brandAccessRepository: IUserBrandAccessRepository
+    private brandAccessRepository: IUserBrandAccessRepository,
+    private useBcrypt: boolean = false
   ) {}
 
   /**
@@ -86,10 +92,16 @@ export class MockAuthService implements IAuthService {
       return { success: false, error: 'Invalid credentials' };
     }
 
-    // 5. Verify password using plain-text comparison (mock mode)
-    // Server-side uses real bcrypt; client-side uses this for dev/preview.
-    const plainPassword = DEMO_PLAIN_PASSWORDS[user.id];
-    const isPasswordValid = plainPassword === password;
+    // 5. Verify password
+    let isPasswordValid = false;
+    if (this.useBcrypt) {
+      // Production: use bcrypt against stored password hash
+      isPasswordValid = await verifyPassword(password, userCredentials.passwordHash);
+    } else {
+      // Mock/dev: plaintext comparison against DEMO_PLAIN_PASSWORDS
+      const plainPassword = DEMO_PLAIN_PASSWORDS[user.id];
+      isPasswordValid = plainPassword === password;
+    }
     if (!isPasswordValid) {
       return { success: false, error: 'Invalid credentials' };
     }
@@ -269,9 +281,9 @@ export class MockAuthService implements IAuthService {
    *
    * Flow:
    * 1. Verify user exists and is active
-   * 2. Verify current password (mock: plain-text comparison)
+   * 2. Verify current password (bcrypt or plaintext depending on mode)
    * 3. Validate new password
-   * 4. Update mock plain-text password for demo mode
+   * 4. Update password (hash+store in production, plaintext map in mock)
    * 5. Return success — session preserved
    */
   async changePassword(
@@ -289,10 +301,23 @@ export class MockAuthService implements IAuthService {
       return { success: false, error: 'Account is deactivated' };
     }
 
-    // 2. Verify current password (mock mode: plain-text comparison)
-    const storedPlain = DEMO_PLAIN_PASSWORDS[userId];
-    if (storedPlain === undefined || storedPlain !== currentPassword) {
-      return { success: false, error: 'Current password is incorrect' };
+    // 2. Verify current password
+    if (this.useBcrypt) {
+      // Production: use bcrypt against stored hash
+      const userCredentials = await this.credentialsRepository.getCredentialsByUserId(userId);
+      if (!userCredentials) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+      const isValid = await verifyPassword(currentPassword, userCredentials.passwordHash);
+      if (!isValid) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+    } else {
+      // Mock/dev: plaintext comparison
+      const storedPlain = DEMO_PLAIN_PASSWORDS[userId];
+      if (storedPlain === undefined || storedPlain !== currentPassword) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
     }
 
     // 3. Validate new password
@@ -309,8 +334,15 @@ export class MockAuthService implements IAuthService {
       return { success: false, error: 'New password must be different from current password' };
     }
 
-    // 4. Update mock plain-text password for demo mode compatibility
-    registerTestPassword(userId, newPassword);
+    // 4. Update password
+    if (this.useBcrypt) {
+      // Production: hash and store via credentials repository
+      const newHash = await hashPassword(newPassword);
+      await this.credentialsRepository.updateCredentials(userId, newHash, 'bcrypt');
+    } else {
+      // Mock/dev: update plaintext map
+      registerTestPassword(userId, newPassword);
+    }
 
     // 5. Session preserved — no invalidation
     return { success: true };

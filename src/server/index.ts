@@ -86,7 +86,7 @@ const userAdapter = usePg ? new PostgresUserAdapter() : new MockUserAdapter();
 const credentialsAdapter = usePg ? new PostgresUserCredentialsAdapter() : new MockUserCredentialsAdapter();
 const sessionAdapter = usePg ? new PostgresSessionAdapter() : new MockSessionAdapter();
 const brandAccessAdapter = usePg ? new PostgresUserBrandAccessAdapter() : new MockUserBrandAccessAdapter();
-const authService = new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter, brandAccessAdapter);
+const authService = new MockAuthService(tenantAdapter, userAdapter, credentialsAdapter, sessionAdapter, brandAccessAdapter, usePg);
 
 const coaAdapter = usePg ? new PostgresCOAAdapter() : new MockCOAAdapter();
 const voucherAdapter = usePg ? new PostgresVoucherAdapter() : new MockVoucherAdapter();
