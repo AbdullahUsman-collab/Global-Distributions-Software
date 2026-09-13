@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "vite build",
+    "build:vercel": "esbuild src/server/index.ts --bundle --platform=node --format=esm --outfile=api/index.js && vite build",
     "typecheck": "tsc --noEmit 2>&1 | findstr /V \"src/server\"",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -28,6 +29,7 @@
     "@vitest/coverage-v8": "^4.1.11",
     "concurrently": "^9.2.4",
     "dotenv": "^17.4.2",
+    "esbuild": "^0.28.2",
     "supertest": "^7.2.2",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
