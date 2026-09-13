@@ -43,7 +43,7 @@ let csrfToken: string | null = null;
  * The server accepts any non-empty string (dev mode).
  * Production should use session-stored tokens.
  */
-function getCsrfToken(): string {
+export function getCsrfToken(): string {
   if (!csrfToken) {
     csrfToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map(b => b.toString(16).padStart(2, '0'))

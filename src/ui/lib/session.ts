@@ -30,6 +30,27 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
  */
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
+// ─── CSRF Token ─────────────────────────────────────────────
+
+/**
+ * Generate a CSRF token for state-changing requests.
+ * Must be included on all POST/PUT/PATCH/DELETE requests.
+ */
+function getCsrfToken(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+let csrfToken: string | null = null;
+
+function ensureCsrfToken(): string {
+  if (!csrfToken) {
+    csrfToken = getCsrfToken();
+  }
+  return csrfToken;
+}
+
 /**
  * Login via server API.
  * Server sets HTTP-only cookie on success.
@@ -44,7 +65,10 @@ export async function apiLogin(
   try {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': ensureCsrfToken(),
+      },
       credentials: 'include',
       body: JSON.stringify({ username, password, tenantId }),
     });
@@ -122,6 +146,7 @@ export async function apiLogout(): Promise<void> {
   try {
     await fetch(`${API_BASE}/auth/logout`, {
       method: 'POST',
+      headers: { 'X-CSRF-Token': ensureCsrfToken() },
       credentials: 'include',
     });
   } finally {
@@ -303,7 +328,10 @@ export async function apiBootstrapLogin(
   try {
     const res = await fetch(`${API_BASE}/system/bootstrap`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': ensureCsrfToken(),
+      },
       credentials: 'include',
       body: JSON.stringify({ username, password, newPassword }),
     });
@@ -335,7 +363,10 @@ export async function apiCompleteBootstrap(
   try {
     const res = await fetch(`${API_BASE}/system/complete-bootstrap`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': ensureCsrfToken(),
+      },
       credentials: 'include',
       body: JSON.stringify({ brandName, slug, primaryColor, accentColor }),
     });
