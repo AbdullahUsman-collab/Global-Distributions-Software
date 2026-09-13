@@ -1,30 +1,44 @@
 /**
  * Vercel Serverless Entry Point
  *
- * Re-exports the Express app from src/server/index.ts with proper
- * database initialization lifecycle management.
- *
- * CRITICAL: Vercel invokes this as a serverless function for all /api/* routes.
- * The database pool MUST be initialized before any request is processed.
- *
- * Architecture:
- *   1. Module loads → src/server/index.ts creates Express app + fires initDatabase()
- *   2. Vercel handler awaits dbReady before passing request to Express
- *   3. Express handles the request with fully initialized pool
+ * Dynamic-import approach: loads src/server/index lazily so any
+ * import-time crash is caught and reported instead of silently
+ * producing FUNCTION_INVOCATION_FAILED.
  */
 
-import app, { dbReady } from '../src/server/index';
+import type { IncomingMessage, ServerResponse } from 'http';
 
-/**
- * Vercel serverless handler.
- * Awaits database initialization, then delegates to Express.
- * This prevents the race condition where requests arrive before the pool is ready.
- */
-export default async function handler(req: any, res: any) {
-  // Wait for database initialization to complete.
-  // If initialization failed, the pool is null and Express routes
-  // will handle the error appropriately.
-  await dbReady;
+let appPromise: Promise<any> | null = null;
 
-  return app(req, res);
+function getApp(): Promise<any> {
+  if (!appPromise) {
+    appPromise = import('../src/server/index').then((mod) => {
+      const app = mod.default;
+      const dbReady = mod.dbReady as Promise<void>;
+      return { app, dbReady };
+    });
+  }
+  return appPromise;
+}
+
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  res.setHeader('X-Powered-By', 'distribution-erp');
+
+  try {
+    const { app, dbReady } = await getApp();
+    await dbReady;
+    return app(req, res);
+  } catch (error: any) {
+    console.error('Vercel handler error:', error);
+    const statusCode = 500;
+    res.statusCode = statusCode;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Server initialization failed',
+      detail: process.env.NODE_ENV === 'production'
+        ? 'Internal server error — check function logs'
+        : error?.message || String(error),
+    }));
+  }
 }
