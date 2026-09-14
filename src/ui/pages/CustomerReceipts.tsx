@@ -73,6 +73,7 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cashAccounts, setCashAccounts] = useState<AccountHead[]>([]);
   const [accounts, setAccounts] = useState<AccountHead[]>([]);
+  const [lineCache, setLineCache] = useState<Map<string, VoucherLine[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
@@ -91,6 +92,20 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       setCustomers((customerData as any[]).filter((c: any) => c.isActive));
       setCashAccounts((coaData as any[]).filter((a: any) => a.isPosting && CASH_BANK_CODES.has(a.accountCode) && a.isActive));
       setAccounts(coaData as AccountHead[]);
+
+      // Pre-fetch voucher lines for all receipts so the list shows Customer/Amount
+      // without requiring a click to expand each row.
+      const lineEntries = await Promise.all(
+        sorted.map(async (r) => {
+          try {
+            const lines = await getVoucherLines(r.id);
+            return [r.id, lines] as const;
+          } catch {
+            return [r.id, [] as VoucherLine[]] as const;
+          }
+        })
+      );
+      setLineCache(new Map(lineEntries));
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -100,23 +115,23 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Build customer map for display (voucher lines carry account CODES, not ids —
-  // bridge customer.accountHeadId → account.accountCode)
+  // Build customer map for display (voucher lines carry account IDs, not codes —
+  // key directly by account.id so creditLine.accountId lookup works)
   const customerMap = useMemo(() => {
     const map = new Map<string, Customer>();
     for (const c of customers) {
       if (!c.accountHeadId) continue;
       const arAccount = accounts.find(a => a.id === c.accountHeadId);
-      if (arAccount) map.set(arAccount.accountCode, c);
+      if (arAccount) map.set(arAccount.id, c);
     }
     return map;
   }, [customers, accounts]);
 
-  // Build cash account map for display (voucher lines carry account CODES, not ids)
+  // Build cash account map for display (voucher lines carry account IDs, not codes)
   const cashAccountMap = useMemo(() => {
     const map = new Map<string, AccountHead>();
     for (const a of cashAccounts) {
-      map.set(a.accountCode, a);
+      map.set(a.id, a);
     }
     return map;
   }, [cashAccounts]);
@@ -183,6 +198,7 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           receipts={receipts}
           customerMap={customerMap}
           cashAccountMap={cashAccountMap}
+          lineCache={lineCache}
           tenantId={tenantId}
           onPost={handlePost}
           onDelete={handleDelete}
@@ -200,30 +216,16 @@ const ReceiptList: React.FC<{
   receipts: VoucherHeader[];
   customerMap: Map<string, Customer>;
   cashAccountMap: Map<string, AccountHead>;
+  lineCache: Map<string, VoucherLine[]>;
   tenantId: string;
   onPost: (id: string) => void;
   onDelete: (id: string) => void;
-}> = ({ receipts, customerMap, cashAccountMap, tenantId, onPost, onDelete }) => {
+}> = ({ receipts, customerMap, cashAccountMap, lineCache, tenantId, onPost, onDelete }) => {
   const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [lineCache, setLineCache] = useState<Map<string, VoucherLine[]>>(new Map());
 
-  const toggleExpand = async (voucherId: string) => {
-    if (expandedId === voucherId) {
-      setExpandedId(null);
-      return;
-    }
-    setExpandedId(voucherId);
-
-    // Load lines if not cached
-    if (!lineCache.has(voucherId)) {
-      try {
-        const lines = await getVoucherLines(voucherId);
-        setLineCache(prev => new Map(prev).set(voucherId, lines));
-      } catch (err) {
-        console.error('Failed to load voucher lines:', err);
-      }
-    }
+  const toggleExpand = (voucherId: string) => {
+    setExpandedId(expandedId === voucherId ? null : voucherId);
   };
 
   return (
