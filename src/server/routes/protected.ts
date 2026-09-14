@@ -2486,6 +2486,11 @@ export function createProtectedRoutes(
             res.status(400).json({ error: `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}` });
             return;
           }
+          const user = await userRepo.findById(userId);
+          if (!user) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+          }
           const existing = await brandAccessRepo.getByUserAndTenant(userId, tenantId);
           if (existing) {
             res.status(409).json({ error: 'User already has access to this brand' });
