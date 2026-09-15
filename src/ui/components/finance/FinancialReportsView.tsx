@@ -90,6 +90,8 @@ export const FinancialReportsView: React.FC<{ tenantId: string }> = ({ tenantId 
           <button
             key={t.key}
             onClick={() => setReportTab(t.key)}
+            className={`fin-tab ${reportTab === t.key ? 'fin-tab-active' : ''}`}
+            aria-pressed={reportTab === t.key}
             style={{ ...styles.subTab, ...(reportTab === t.key ? styles.subTabActive : {}) }}
           >
             {t.label}
@@ -130,26 +132,26 @@ const TrialBalanceReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
           {report && (
             <>
               <div style={styles.statChip}>
-                <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>
+                <span style={{ ...styles.statDot, backgroundColor: 'var(--tone-asset-bg)', color: 'var(--fin-debit)' }}>
                   {report.rows.length}
                 </span>
                 <span style={styles.statLabel}>Accounts</span>
               </div>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Dr Total: <strong style={{ color: '#1d4ed8' }}>{fmt(report.totalClosingDebit)}</strong>
+                  Dr Total: <strong style={{ color: 'var(--fin-debit)' }}>{fmt(report.totalClosingDebit)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Cr Total: <strong style={{ color: '#be185d' }}>{fmt(report.totalClosingCredit)}</strong>
+                  Cr Total: <strong style={{ color: 'var(--fin-credit)' }}>{fmt(report.totalClosingCredit)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
                 <span style={{
                   ...styles.statDot,
-                  backgroundColor: report.isBalanced ? '#dcfce7' : '#fee2e2',
-                  color: report.isBalanced ? '#166534' : '#dc2626',
+                  backgroundColor: report.isBalanced ? 'var(--st-posted-bg)' : 'var(--danger-soft)',
+                  color: report.isBalanced ? 'var(--st-posted-fg)' : 'var(--danger-fg)',
                 }}>
                   {report.isBalanced ? 'Balanced' : 'Unbalanced'}
                 </span>
@@ -157,7 +159,7 @@ const TrialBalanceReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
             </>
           )}
         </div>
-        <button onClick={generate} style={styles.primaryBtn} disabled={loading}>
+        <button onClick={generate} className="fin-btn-primary" style={styles.primaryBtn} disabled={loading}>
           {loading ? 'Generating...' : 'Generate Trial Balance'}
         </button>
       </div>
@@ -188,40 +190,40 @@ const TrialBalanceReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
                 <span style={{ ...styles.col, flex: '1', paddingLeft: (row.level - 1) * 16 }}>
                   {row.accountName}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 12, color: '#64748b' }}>
+                <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 12, color: 'var(--text-muted)' }}>
                   {row.accountType}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.openingDebit > 0 ? '#1d4ed8' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.openingDebit > 0 ? 'var(--fin-debit)' : 'var(--fin-num-muted)' }}>
                   {row.openingDebit > 0 ? fmt(row.openingDebit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.openingCredit > 0 ? '#be185d' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.openingCredit > 0 ? 'var(--fin-credit)' : 'var(--fin-num-muted)' }}>
                   {row.openingCredit > 0 ? fmt(row.openingCredit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.periodDebit > 0 ? '#1d4ed8' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.periodDebit > 0 ? 'var(--fin-debit)' : 'var(--fin-num-muted)' }}>
                   {row.periodDebit > 0 ? fmt(row.periodDebit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.periodCredit > 0 ? '#be185d' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: row.periodCredit > 0 ? 'var(--fin-credit)' : 'var(--fin-num-muted)' }}>
                   {row.periodCredit > 0 ? fmt(row.periodCredit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: row.closingDebit > 0 ? '#1d4ed8' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: row.closingDebit > 0 ? 'var(--fin-debit)' : 'var(--fin-num-muted)' }}>
                   {row.closingDebit > 0 ? fmt(row.closingDebit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: row.closingCredit > 0 ? '#be185d' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: row.closingCredit > 0 ? 'var(--fin-credit)' : 'var(--fin-num-muted)' }}>
                   {row.closingCredit > 0 ? fmt(row.closingCredit) : ''}
                 </span>
               </div>
             ))}
             {/* Totals */}
-            <div style={{ ...styles.linesFooter, minWidth: 860, borderTop: '2px solid #e2e8f0' }}>
-              <span style={{ flex: '0 0 80px', fontWeight: 600, color: '#475569' }}>Total</span>
+            <div style={{ ...styles.linesFooter, minWidth: 860, borderTop: '2px solid var(--border)' }}>
+              <span style={{ flex: '0 0 80px', fontWeight: 600, color: 'var(--text-secondary)' }}>Total</span>
               <span style={{ flex: '1' }}></span>
               <span style={{ flex: '0 0 60px' }}></span>
-              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8' }}>{fmt(report.totalOpeningDebit)}</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#be185d' }}>{fmt(report.totalOpeningCredit)}</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8' }}>{fmt(report.totalPeriodDebit)}</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#be185d' }}>{fmt(report.totalPeriodCredit)}</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8' }}>{fmt(report.totalClosingDebit)}</span>
-              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#be185d' }}>{fmt(report.totalClosingCredit)}</span>
+              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-debit)' }}>{fmt(report.totalOpeningDebit)}</span>
+              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-credit)' }}>{fmt(report.totalOpeningCredit)}</span>
+              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-debit)' }}>{fmt(report.totalPeriodDebit)}</span>
+              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-credit)' }}>{fmt(report.totalPeriodCredit)}</span>
+              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-debit)' }}>{fmt(report.totalClosingDebit)}</span>
+              <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-credit)' }}>{fmt(report.totalClosingCredit)}</span>
             </div>
           </>
         )}
@@ -256,33 +258,33 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
             <>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Revenue: <strong style={{ color: '#15803d' }}>{fmt(report.totalRevenue)}</strong>
+                  Revenue: <strong style={{ color: 'var(--fin-revenue)' }}>{fmt(report.totalRevenue)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  COGS: <strong style={{ color: '#b45309' }}>{fmt(report.totalCOGS)}</strong>
+                  COGS: <strong style={{ color: 'var(--fin-cogs)' }}>{fmt(report.totalCOGS)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Gross Profit: <strong style={{ color: report.grossProfit >= 0 ? '#15803d' : '#dc2626' }}>{fmt(report.grossProfit)}</strong>
+                  Gross Profit: <strong style={{ color: report.grossProfit >= 0 ? 'var(--fin-revenue)' : 'var(--fin-expense)' }}>{fmt(report.grossProfit)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Expenses: <strong style={{ color: '#dc2626' }}>{fmt(report.totalExpenses)}</strong>
+                  Expenses: <strong style={{ color: 'var(--fin-expense)' }}>{fmt(report.totalExpenses)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
-                <span style={{ ...styles.statDot, backgroundColor: report.netProfit >= 0 ? '#dcfce7' : '#fee2e2', color: report.netProfit >= 0 ? '#166534' : '#dc2626' }}>
+                <span style={{ ...styles.statDot, backgroundColor: report.netProfit >= 0 ? 'var(--st-posted-bg)' : 'var(--danger-soft)', color: report.netProfit >= 0 ? 'var(--st-posted-fg)' : 'var(--danger-fg)' }}>
                   Net: {fmt(report.netProfit)}
                 </span>
               </div>
             </>
           )}
         </div>
-        <button onClick={generate} style={styles.primaryBtn} disabled={loading}>
+        <button onClick={generate} className="fin-btn-primary" style={styles.primaryBtn} disabled={loading}>
           {loading ? 'Generating...' : 'Generate P&L'}
         </button>
       </div>
@@ -293,7 +295,7 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
         ) : (
           <>
             {/* Revenue */}
-            <SectionHeader title="Revenue" color="#15803d" />
+            <SectionHeader title="Revenue" color="var(--fin-revenue)" />
             {report.revenueRows.length === 0 ? (
               <div style={{ ...styles.empty, padding: 20 }}>No revenue entries.</div>
             ) : (
@@ -301,10 +303,10 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
                 <PnLRow key={row.accountId} row={row} indent={0} />
               ))
             )}
-            <SubTotalRow label="Total Revenue" amount={report.totalRevenue} color="#15803d" />
+            <SubTotalRow label="Total Revenue" amount={report.totalRevenue} color="var(--fin-revenue)" />
 
             {/* COGS */}
-            <SectionHeader title="Cost of Goods Sold" color="#b45309" />
+            <SectionHeader title="Cost of Goods Sold" color="var(--fin-cogs)" />
             {report.cogsRows.length === 0 ? (
               <div style={{ ...styles.empty, padding: 20 }}>No COGS entries.</div>
             ) : (
@@ -312,18 +314,18 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
                 <PnLRow key={row.accountId} row={row} indent={0} />
               ))
             )}
-            <SubTotalRow label="Total COGS" amount={report.totalCOGS} color="#b45309" />
+            <SubTotalRow label="Total COGS" amount={report.totalCOGS} color="var(--fin-cogs)" />
 
             {/* Gross Profit */}
             <div style={{ ...styles.grossProfitRow }}>
-              <span style={{ fontWeight: 700, color: '#1e293b', fontSize: 14 }}>Gross Profit</span>
-              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', fontSize: 14, color: report.grossProfit >= 0 ? '#15803d' : '#dc2626' }}>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>Gross Profit</span>
+              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', fontSize: 14, color: report.grossProfit >= 0 ? 'var(--fin-revenue)' : 'var(--fin-expense)' }}>
                 {fmt(report.grossProfit)}
               </span>
             </div>
 
             {/* Expenses */}
-            <SectionHeader title="Operating Expenses" color="#dc2626" />
+            <SectionHeader title="Operating Expenses" color="var(--fin-expense)" />
             {report.expenseRows.length === 0 ? (
               <div style={{ ...styles.empty, padding: 20 }}>No expense entries.</div>
             ) : (
@@ -331,12 +333,12 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
                 <PnLRow key={row.accountId} row={row} indent={0} />
               ))
             )}
-            <SubTotalRow label="Total Expenses" amount={report.totalExpenses} color="#dc2626" />
+            <SubTotalRow label="Total Expenses" amount={report.totalExpenses} color="var(--fin-expense)" />
 
             {/* Net Profit */}
-            <div style={{ ...styles.netProfitRow, backgroundColor: report.netProfit >= 0 ? '#f0fdf4' : '#fef2f2', borderColor: report.netProfit >= 0 ? '#bbf7d0' : '#fecaca' }}>
-              <span style={{ fontWeight: 700, color: '#1e293b', fontSize: 15 }}>Net Profit / (Loss)</span>
-              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', fontSize: 15, color: report.netProfit >= 0 ? '#15803d' : '#dc2626' }}>
+            <div style={{ ...styles.netProfitRow, backgroundColor: report.netProfit >= 0 ? 'var(--tint-ok)' : 'var(--tint-bad)', borderColor: report.netProfit >= 0 ? 'var(--tint-ok-border)' : 'var(--tint-bad-border)' }}>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 15 }}>Net Profit / (Loss)</span>
+              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', fontSize: 15, color: report.netProfit >= 0 ? 'var(--fin-revenue)' : 'var(--fin-expense)' }}>
                 {fmt(report.netProfit)}
               </span>
             </div>
@@ -350,14 +352,14 @@ const ProfitAndLossReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) 
 /* ─── P&L Sub-Components ──────────────────────────────────── */
 
 const SectionHeader: React.FC<{ title: string; color: string }> = ({ title, color }) => (
-  <div style={{ padding: '10px 16px', backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontSize: 13, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+  <div style={{ padding: '10px 16px', backgroundColor: 'var(--surface-2)', borderBottom: '2px solid var(--border)', fontSize: 13, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
     {title}
   </div>
 );
 
 const PnLRow: React.FC<{ row: ProfitAndLossRowDTO; indent: number }> = ({ row, indent }) => (
-  <div style={{ ...styles.voucherRow, paddingLeft: 16 + indent * 20 }}>
-    <span style={{ flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: '#64748b' }}>
+  <div className="fin-hover" style={{ ...styles.voucherRow, paddingLeft: 16 + indent * 20 }}>
+    <span style={{ flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: 'var(--text-muted)' }}>
       {row.accountCode}
     </span>
     <span style={{ flex: '1', fontSize: 13 }}>{row.accountName}</span>
@@ -368,8 +370,8 @@ const PnLRow: React.FC<{ row: ProfitAndLossRowDTO; indent: number }> = ({ row, i
 );
 
 const SubTotalRow: React.FC<{ label: string; amount: number; color: string }> = ({ label, amount, color }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 13, fontWeight: 600 }}>
-    <span style={{ color: '#475569' }}>{label}</span>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--surface-2)', fontSize: 13, fontWeight: 600 }}>
+    <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
     <span style={{ fontFamily: 'ui-monospace, monospace', color }}>{fmt(amount)}</span>
   </div>
 );
@@ -400,28 +402,28 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
             <>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Assets: <strong style={{ color: '#1d4ed8' }}>{fmt(report.totalAssets)}</strong>
+                  Assets: <strong style={{ color: 'var(--fin-asset)' }}>{fmt(report.totalAssets)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Liabilities: <strong style={{ color: '#be185d' }}>{fmt(report.totalLiabilities)}</strong>
+                  Liabilities: <strong style={{ color: 'var(--fin-liability)' }}>{fmt(report.totalLiabilities)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
                 <span style={styles.statLabel}>
-                  Equity: <strong style={{ color: '#7c3aed' }}>{fmt(report.totalEquity)}</strong>
+                  Equity: <strong style={{ color: 'var(--fin-equity)' }}>{fmt(report.totalEquity)}</strong>
                 </span>
               </div>
               <div style={styles.statChip}>
-                <span style={{ ...styles.statDot, backgroundColor: report.isBalanced ? '#dcfce7' : '#fee2e2', color: report.isBalanced ? '#166534' : '#dc2626' }}>
+                <span style={{ ...styles.statDot, backgroundColor: report.isBalanced ? 'var(--st-posted-bg)' : 'var(--danger-soft)', color: report.isBalanced ? 'var(--st-posted-fg)' : 'var(--danger-fg)' }}>
                   {report.isBalanced ? 'Balanced' : 'Unbalanced'}
                 </span>
               </div>
             </>
           )}
         </div>
-        <button onClick={generate} style={styles.primaryBtn} disabled={loading}>
+        <button onClick={generate} className="fin-btn-primary" style={styles.primaryBtn} disabled={loading}>
           {loading ? 'Generating...' : 'Generate Balance Sheet'}
         </button>
       </div>
@@ -432,7 +434,7 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
         ) : (
           <>
             {/* Assets */}
-            <SectionHeader title="Assets" color="#1d4ed8" />
+            <SectionHeader title="Assets" color="var(--fin-asset)" />
             {report.assetRows.length === 0 ? (
               <div style={{ ...styles.empty, padding: 20 }}>No asset entries.</div>
             ) : (
@@ -440,10 +442,10 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
                 <BSRow key={row.accountId} row={row} indent={0} />
               ))
             )}
-            <SubTotalRow label="Total Assets" amount={report.totalAssets} color="#1d4ed8" />
+            <SubTotalRow label="Total Assets" amount={report.totalAssets} color="var(--fin-asset)" />
 
             {/* Liabilities */}
-            <SectionHeader title="Liabilities" color="#be185d" />
+            <SectionHeader title="Liabilities" color="var(--fin-liability)" />
             {report.liabilityRows.length === 0 ? (
               <div style={{ ...styles.empty, padding: 20 }}>No liability entries.</div>
             ) : (
@@ -451,10 +453,10 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
                 <BSRow key={row.accountId} row={row} indent={0} />
               ))
             )}
-            <SubTotalRow label="Total Liabilities" amount={report.totalLiabilities} color="#be185d" />
+            <SubTotalRow label="Total Liabilities" amount={report.totalLiabilities} color="var(--fin-liability)" />
 
             {/* Equity */}
-            <SectionHeader title="Equity" color="#7c3aed" />
+            <SectionHeader title="Equity" color="var(--fin-equity)" />
             {report.equityRows.length === 0 ? (
               <div style={{ ...styles.empty, padding: 20 }}>No equity entries.</div>
             ) : (
@@ -462,16 +464,16 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
                 <BSRow key={row.accountId} row={row} indent={0} />
               ))
             )}
-            <SubTotalRow label="Total Equity" amount={report.totalEquity} color="#7c3aed" />
+            <SubTotalRow label="Total Equity" amount={report.totalEquity} color="var(--fin-equity)" />
 
             {/* Summary */}
-            <div style={{ ...styles.netProfitRow, backgroundColor: report.isBalanced ? '#f0fdf4' : '#fef2f2', borderColor: report.isBalanced ? '#bbf7d0' : '#fecaca' }}>
-              <span style={{ fontWeight: 700, color: '#1e293b', fontSize: 14 }}>Liabilities + Equity</span>
-              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', fontSize: 14, color: '#1e293b' }}>
+            <div style={{ ...styles.netProfitRow, backgroundColor: report.isBalanced ? 'var(--tint-ok)' : 'var(--tint-bad)', borderColor: report.isBalanced ? 'var(--tint-ok-border)' : 'var(--tint-bad-border)' }}>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>Liabilities + Equity</span>
+              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', fontSize: 14, color: 'var(--text-primary)' }}>
                 {fmt(report.totalLiabilities + report.totalEquity)}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', fontSize: 12, color: '#64748b' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', fontSize: 12, color: 'var(--text-muted)' }}>
               {report.isBalanced
                 ? '✓ Balance Sheet is balanced (Assets = Liabilities + Equity)'
                 : '✕ Balance Sheet is NOT balanced — please review ledger entries'}
@@ -486,8 +488,8 @@ const BalanceSheetReport: React.FC<{ filter: ReportFilterDTO }> = ({ filter }) =
 /* ─── Balance Sheet Sub-Components ────────────────────────── */
 
 const BSRow: React.FC<{ row: BalanceSheetRowDTO; indent: number }> = ({ row, indent }) => (
-  <div style={{ ...styles.voucherRow, paddingLeft: 16 + indent * 20 }}>
-    <span style={{ flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: '#64748b' }}>
+  <div className="fin-hover" style={{ ...styles.voucherRow, paddingLeft: 16 + indent * 20 }}>
+    <span style={{ flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: 'var(--text-muted)' }}>
       {row.accountCode}
     </span>
     <span style={{ flex: '1', fontSize: 13 }}>{row.accountName}</span>
@@ -502,33 +504,33 @@ const BSRow: React.FC<{ row: BalanceSheetRowDTO; indent: number }> = ({ row, ind
 const styles: Record<string, React.CSSProperties> = {
   toolbar: { display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
   filterGroup: { display: 'flex', flexDirection: 'column', gap: 4 },
-  label: { fontSize: 12, fontWeight: 500, color: '#374151' },
-  input: { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, outline: 'none' },
-  checkboxLabel: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', cursor: 'pointer' },
-  checkbox: { width: 16, height: 16, accentColor: '#2563eb' },
+  label: { fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' },
+  input: { padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' },
+  checkboxLabel: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' },
+  checkbox: { width: 16, height: 16, accentColor: 'var(--accent)' },
 
-  subTabBar: { display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 16 },
-  subTab: { padding: '8px 16px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 13, fontWeight: 500, color: '#64748b', cursor: 'pointer', marginBottom: -2 },
-  subTabActive: { color: '#2563eb', borderBottomColor: '#2563eb' },
+  subTabBar: { display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', marginBottom: 16 },
+  subTab: { padding: '8px 16px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', cursor: 'pointer', marginBottom: -2 },
+  subTabActive: { color: 'var(--accent)', borderBottomColor: 'var(--accent)' },
 
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   statsBar: { display: 'flex', gap: 12, flexWrap: 'wrap' },
-  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569' },
+  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' },
   statDot: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '2px 8px', borderRadius: 6, fontWeight: 600, fontSize: 12 },
   statLabel: {},
 
-  primaryBtn: { padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  primaryBtn: { padding: '10px 20px', backgroundColor: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
 
-  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)' },
-  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  row: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14, transition: 'background 0.1s' },
+  card: { backgroundColor: 'var(--dash-card)', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' },
+  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid var(--border)', backgroundColor: 'var(--dash-table-head-bg)', fontSize: 12, fontWeight: 600, color: 'var(--dash-table-head-fg)', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  row: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid var(--dash-table-row-border)', fontSize: 14, transition: 'background 0.1s' },
   col: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
 
-  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14 },
-  linesFooter: { display: 'flex', padding: '8px 16px', borderTop: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 13 },
+  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid var(--dash-table-row-border)', fontSize: 14 },
+  linesFooter: { display: 'flex', padding: '8px 16px', borderTop: '2px solid var(--border)', backgroundColor: 'var(--surface-2)', fontSize: 13 },
 
-  empty: { padding: 40, textAlign: 'center' as const, color: '#94a3b8', fontSize: 14 },
+  empty: { padding: 40, textAlign: 'center' as const, color: 'var(--text-disabled)', fontSize: 14 },
 
-  grossProfitRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '2px solid #e2e8f0', backgroundColor: '#f0fdf4', borderBottom: '2px solid #e2e8f0' },
-  netProfitRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '2px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' },
+  grossProfitRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '2px solid var(--border)', backgroundColor: 'var(--tint-ok)', borderBottom: '2px solid var(--border)' },
+  netProfitRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '2px solid var(--border)', borderBottom: '1px solid var(--border)' },
 };

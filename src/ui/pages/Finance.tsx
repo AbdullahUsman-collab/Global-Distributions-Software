@@ -63,34 +63,34 @@ type UpdateAccountDTO = {
   address?: string; ownerName?: string; phone?: string; stn?: string; ntn?: string; cnic?: string;
 };
 
-const LEVEL_COLORS: Record<AccountLevel, string> = { 1: '#1e293b', 2: '#334155', 3: '#475569', 4: '#64748b' };
+const LEVEL_COLORS: Record<AccountLevel, string> = { 1: 'var(--text-primary)', 2: 'var(--text-secondary)', 3: 'var(--text-muted)', 4: 'var(--text-muted)' };
 const TYPE_BADGE_COLORS: Record<AccountType, { bg: string; fg: string }> = {
-  ASSET:     { bg: '#dbeafe', fg: '#1d4ed8' },
-  LIABILITY: { bg: '#fce7f3', fg: '#be185d' },
-  EQUITY:    { bg: '#f3e8ff', fg: '#7c3aed' },
-  REVENUE:   { bg: '#dcfce7', fg: '#15803d' },
-  COGS:      { bg: '#fef3c7', fg: '#b45309' },
-  EXPENSE:   { bg: '#fee2e2', fg: '#dc2626' },
+  ASSET:     { bg: 'var(--tone-asset-bg)', fg: 'var(--tone-asset-fg)' },
+  LIABILITY: { bg: 'var(--tone-liability-bg)', fg: 'var(--tone-liability-fg)' },
+  EQUITY:    { bg: 'var(--tone-equity-bg)', fg: 'var(--tone-equity-fg)' },
+  REVENUE:   { bg: 'var(--tone-revenue-bg)', fg: 'var(--tone-revenue-fg)' },
+  COGS:      { bg: 'var(--tone-cogs-bg)', fg: 'var(--tone-cogs-fg)' },
+  EXPENSE:   { bg: 'var(--tone-expense-bg)', fg: 'var(--tone-expense-fg)' },
 };
 
 const VOUCHER_TYPE_COLORS: Record<VoucherType, { bg: string; fg: string }> = {
-  JV:  { bg: '#e0e7ff', fg: '#4338ca' },
-  CV:  { bg: '#fef3c7', fg: '#b45309' },
-  CP:  { bg: '#fce7f3', fg: '#be185d' },
-  CR:  { bg: '#dcfce7', fg: '#15803d' },
-  PV:  { bg: '#e0e7ff', fg: '#4338ca' },
-  SV:  { bg: '#dbeafe', fg: '#1d4ed8' },
-  SRV: { bg: '#fee2e2', fg: '#991b1b' },
-  PRV: { bg: '#fef3c7', fg: '#b45309' },
-  CPV: { bg: '#fce7f3', fg: '#be185d' },
-  CRV: { bg: '#dcfce7', fg: '#15803d' },
-  BPV: { bg: '#fef3c7', fg: '#b45309' },
-  BRV: { bg: '#dbeafe', fg: '#1d4ed8' },
+  JV:  { bg: 'var(--vt-jv-bg)', fg: 'var(--vt-jv-fg)' },
+  CV:  { bg: 'var(--vt-cv-bg)', fg: 'var(--vt-cv-fg)' },
+  CP:  { bg: 'var(--vt-cp-bg)', fg: 'var(--vt-cp-fg)' },
+  CR:  { bg: 'var(--vt-cr-bg)', fg: 'var(--vt-cr-fg)' },
+  PV:  { bg: 'var(--vt-pv-bg)', fg: 'var(--vt-pv-fg)' },
+  SV:  { bg: 'var(--vt-sv-bg)', fg: 'var(--vt-sv-fg)' },
+  SRV: { bg: 'var(--vt-srv-bg)', fg: 'var(--vt-srv-fg)' },
+  PRV: { bg: 'var(--vt-prv-bg)', fg: 'var(--vt-prv-fg)' },
+  CPV: { bg: 'var(--vt-cpv-bg)', fg: 'var(--vt-cpv-fg)' },
+  CRV: { bg: 'var(--vt-crv-bg)', fg: 'var(--vt-crv-fg)' },
+  BPV: { bg: 'var(--vt-bpv-bg)', fg: 'var(--vt-bpv-fg)' },
+  BRV: { bg: 'var(--vt-brv-bg)', fg: 'var(--vt-brv-fg)' },
 };
 
 const VOUCHER_STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
-  DRAFT:  { bg: '#fef3c7', fg: '#92400e' },
-  POSTED: { bg: '#dcfce7', fg: '#166534' },
+  DRAFT:  { bg: 'var(--st-draft-bg)', fg: 'var(--st-draft-fg)' },
+  POSTED: { bg: 'var(--st-posted-bg)', fg: 'var(--st-posted-fg)' },
 };
 
 const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -111,7 +111,7 @@ export const Finance: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <Link to="/dashboard" style={styles.backBtn}>← Dashboard</Link>
+          <Link to="/dashboard" className="fin-link" style={styles.backBtn}>← Dashboard</Link>
           <h1 style={styles.title}>Finance</h1>
           <p style={styles.subtitle}>{tenant.brandName}</p>
         </div>
@@ -123,7 +123,9 @@ export const Finance: React.FC = () => {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
+            className={`fin-tab ${tab === t.key ? 'fin-tab-active' : ''}`}
             style={{ ...styles.tab, ...(tab === t.key ? styles.tabActive : {}) }}
+            aria-pressed={tab === t.key}
           >
             {t.label}
           </button>
@@ -272,19 +274,19 @@ const COATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             </div>
           ))}
         </div>
-        <button onClick={() => { setCreateParent(null); setShowCreate(true); }} style={styles.primaryBtn}>
+        <button onClick={() => { setCreateParent(null); setShowCreate(true); }} className="fin-btn-primary" style={styles.primaryBtn}>
           + New Account
         </button>
       </div>
 
       <div className="toolbar-responsive" style={styles.toolbar}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or code..." style={styles.searchInput} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or code..." className="fin-search" aria-label="Search accounts by name or code" style={styles.searchInput} />
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as AccountType | '')} style={styles.filterSelect}>
           <option value="">All Types</option>
           {ACCOUNT_TYPES.map(t => <option key={t} value={t}>{ACCOUNT_TYPE_LABELS[t]}</option>)}
         </select>
-        <button onClick={() => setExpanded(new Set(accounts.map(a => a.id)))} style={styles.toolBtn}>Expand All</button>
-        <button onClick={() => setExpanded(new Set())} style={styles.toolBtn}>Collapse All</button>
+        <button onClick={() => setExpanded(new Set(accounts.map(a => a.id)))} className="fin-btn-tool" style={styles.toolBtn}>Expand All</button>
+        <button onClick={() => setExpanded(new Set())} className="fin-btn-tool" style={styles.toolBtn}>Collapse All</button>
       </div>
 
       <div className="table-wrap" style={styles.card}>
@@ -442,7 +444,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
       <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
+            <span style={{ ...styles.statDot, backgroundColor: 'var(--neutral-soft)', color: 'var(--neutral-fg)' }}>{stats.total}</span>
             <span style={styles.statLabel}>Total</span>
           </div>
           <div style={styles.statChip}>
@@ -454,7 +456,7 @@ const VouchersTab: React.FC<{ tenantId: string; user: string }> = ({ tenantId, u
             <span style={styles.statLabel}>Posted</span>
           </div>
         </div>
-        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Journal Voucher</button>
+        <button onClick={() => setShowCreate(true)} className="fin-btn-primary" style={styles.primaryBtn}>+ New Journal Voucher</button>
       </div>
 
       <div className="toolbar-responsive" style={styles.toolbar}>
@@ -549,17 +551,17 @@ const VoucherRow: React.FC<{
     }
   }, [expanded, v.id, tenantId, lines.length]);
 
-  const typeBadge = VOUCHER_TYPE_COLORS[v.voucherType] ?? { bg: '#f1f5f9', fg: '#475569' };
-  const statusBadge = VOUCHER_STATUS_COLORS[v.status] ?? { bg: '#f1f5f9', fg: '#475569' };
+  const typeBadge = VOUCHER_TYPE_COLORS[v.voucherType] ?? { bg: 'var(--neutral-soft)', fg: 'var(--neutral-fg)' };
+  const statusBadge = VOUCHER_STATUS_COLORS[v.status] ?? { bg: 'var(--neutral-soft)', fg: 'var(--neutral-fg)' };
   const totalD = totalDebit(lines.length > 0 ? lines : []);
   const totalC = totalCredit(lines.length > 0 ? lines : []);
 
   return (
     <>
-      <div style={styles.voucherRow}>
+      <div className="fin-hover" style={styles.voucherRow}>
         <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace' }}>
           <button onClick={onToggleLines} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>
-          <button onClick={() => onNavigate(v.id)} style={{ ...styles.linkBtn, padding: 0, fontSize: 13 }}>{v.voucherNumber}</button>
+          <button onClick={() => onNavigate(v.id)} className="fin-link" style={{ ...styles.linkBtn, padding: 0, fontSize: 13 }}>{v.voucherNumber}</button>
         </span>
         <span style={{ ...styles.col, flex: '0 0 110px' }}>
           <span style={{ ...styles.typeBadge, backgroundColor: typeBadge.bg, color: typeBadge.fg }}>
@@ -583,12 +585,12 @@ const VoucherRow: React.FC<{
           {v.status === 'DRAFT' && (
             <>
               <button onClick={onEdit} style={styles.rowBtn} title="Edit Draft">✎</button>
-              <button onClick={onPost} style={{ ...styles.rowBtn, color: '#16a34a', borderColor: '#bbf7d0' }} title="Post Voucher (requires balanced)">✓</button>
-              <button onClick={onDelete} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca' }} title="Delete Draft">✕</button>
+              <button onClick={onPost} style={{ ...styles.rowBtn, color: 'var(--success)', borderColor: 'var(--tint-ok-border)' }} title="Post Voucher (requires balanced)">✓</button>
+              <button onClick={onDelete} style={{ ...styles.rowBtn, color: 'var(--danger)', borderColor: 'var(--tint-bad-border)' }} title="Delete Draft">✕</button>
             </>
           )}
           {v.status === 'POSTED' && (
-            <span style={{ fontSize: 11, color: '#166534', fontStyle: 'italic' }}>Posted</span>
+            <span style={{ fontSize: 11, color: 'var(--success-fg)', fontStyle: 'italic' }}>Posted</span>
           )}
         </span>
       </div>
@@ -612,23 +614,23 @@ const VoucherRow: React.FC<{
             const contraAcct = l.contraAccountId ? accountMap.get(l.contraAccountId) : null;
             return (
               <div key={l.id} style={styles.lineRow}>
-                <span style={{ ...styles.col, flex: '0 0 40px', fontSize: 12, color: '#94a3b8' }}>{i + 1}</span>
+                <span style={{ ...styles.col, flex: '0 0 40px', fontSize: 12, color: 'var(--text-disabled)' }}>{i + 1}</span>
                 <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{l.accountId}</span>
                 <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>
                   {l.description}
-                  {acct && <span style={{ color: '#94a3b8', marginLeft: 8 }}>({acct.accountName})</span>}
-                  {contraAcct && <span style={{ color: '#94a3b8', marginLeft: 4, fontSize: 11 }}>↔ {l.contraAccountId} {contraAcct.accountName}</span>}
+                  {acct && <span style={{ color: 'var(--text-disabled)', marginLeft: 8 }}>({acct.accountName})</span>}
+                  {contraAcct && <span style={{ color: 'var(--text-disabled)', marginLeft: 4, fontSize: 11 }}>↔ {l.contraAccountId} {contraAcct.accountName}</span>}
                 </span>
                 {v.voucherType === 'SV' || v.voucherType === 'SRV' || v.voucherType === 'PRV' ? (
                   <>
                     <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{l.quantity ?? ''}</span>
-                    <span style={{ ...styles.col, flex: '0 0 70px', fontSize: 12, color: '#94a3b8' }}>{l.branch ?? ''}</span>
+                    <span style={{ ...styles.col, flex: '0 0 70px', fontSize: 12, color: 'var(--text-disabled)' }}>{l.branch ?? ''}</span>
                   </>
                 ) : null}
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: l.debit > 0 ? '#1d4ed8' : '#94a3b8' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: l.debit > 0 ? 'var(--fin-debit)' : 'var(--fin-num-muted)' }}>
                   {l.debit > 0 ? fmt(l.debit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: l.credit > 0 ? '#be185d' : '#94a3b8' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: l.credit > 0 ? 'var(--fin-credit)' : 'var(--fin-num-muted)' }}>
                   {l.credit > 0 ? fmt(l.credit) : ''}
                 </span>
               </div>
@@ -636,9 +638,9 @@ const VoucherRow: React.FC<{
           })}
           <div style={styles.linesFooter}>
             <span style={{ flex: '0 0 120px' }}></span>
-            <span style={{ flex: '1', fontSize: 12, fontWeight: 600, color: '#475569' }}>Totals</span>
-            <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8' }}>{fmt(totalD)}</span>
-            <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#be185d' }}>{fmt(totalC)}</span>
+            <span style={{ flex: '1', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Totals</span>
+            <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-debit)' }}>{fmt(totalD)}</span>
+            <span style={{ flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--fin-credit)' }}>{fmt(totalC)}</span>
           </div>
         </div>
       )}
@@ -814,7 +816,7 @@ const VoucherModal: React.FC<{
                       type="number" min={0} step={0.01}
                       value={line.debit || ''}
                       onChange={e => updateLine(idx, 'debit', parseFloat(e.target.value) || 0)}
-                      style={{ ...styles.input, textAlign: 'right', color: line.debit > 0 ? '#1d4ed8' : undefined }}
+                      style={{ ...styles.input, textAlign: 'right', color: line.debit > 0 ? 'var(--fin-debit)' : undefined }}
                       placeholder="0.00"
                     />
                   </div>
@@ -823,16 +825,16 @@ const VoucherModal: React.FC<{
                       type="number" min={0} step={0.01}
                       value={line.credit || ''}
                       onChange={e => updateLine(idx, 'credit', parseFloat(e.target.value) || 0)}
-                      style={{ ...styles.input, textAlign: 'right', color: line.credit > 0 ? '#be185d' : undefined }}
+                      style={{ ...styles.input, textAlign: 'right', color: line.credit > 0 ? 'var(--fin-credit)' : undefined }}
                       placeholder="0.00"
                     />
                   </div>
-                  <button type="button" onClick={() => removeLine(idx)} style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca', flex: '0 0 32px' }}>✕</button>
+                  <button type="button" onClick={() => removeLine(idx)} style={{ ...styles.rowBtn, color: 'var(--danger)', borderColor: 'var(--tint-bad-border)', flex: '0 0 32px' }}>✕</button>
                 </div>
                 {/* Extended fields row: contraAccountId for all types; productId/quantity/branch for SV/SRV/PRV */}
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%', paddingLeft: 4 }}>
                   <div style={{ flex: '0 0 180px' }}>
-                    <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Contra Account</label>
+                    <label style={{ fontSize: 10, color: 'var(--text-disabled)', marginBottom: 2, display: 'block' }}>Contra Account</label>
                     <AccountSelect
                       accounts={postingAccounts}
                       value={line.contraAccountId || ''}
@@ -845,7 +847,7 @@ const VoucherModal: React.FC<{
                   {isProductType && (
                     <>
                       <div style={{ flex: '0 0 160px' }}>
-                        <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Product</label>
+                        <label style={{ fontSize: 10, color: 'var(--text-disabled)', marginBottom: 2, display: 'block' }}>Product</label>
                         <select value={line.productId || ''} onChange={e => {
                           const pid = e.target.value;
                           updateLine(idx, 'productId', pid);
@@ -859,7 +861,7 @@ const VoucherModal: React.FC<{
                         </select>
                       </div>
                       <div style={{ flex: '0 0 80px' }}>
-                        <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Qty</label>
+                        <label style={{ fontSize: 10, color: 'var(--text-disabled)', marginBottom: 2, display: 'block' }}>Qty</label>
                         <input type="number" min={0} step={1}
                           value={line.quantity || ''}
                           onChange={e => updateLine(idx, 'quantity', parseInt(e.target.value) || 0)}
@@ -868,7 +870,7 @@ const VoucherModal: React.FC<{
                         />
                       </div>
                       <div style={{ flex: '0 0 80px' }}>
-                        <label style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2, display: 'block' }}>Branch</label>
+                        <label style={{ fontSize: 10, color: 'var(--text-disabled)', marginBottom: 2, display: 'block' }}>Branch</label>
                         <input value={line.branch || ''}
                           onChange={e => updateLine(idx, 'branch', e.target.value)}
                           style={{ ...styles.input, fontSize: 12, padding: '4px 6px' }}
@@ -905,7 +907,7 @@ const VoucherModal: React.FC<{
                           updateLine(idx, 'debit', result.netAmount);
                           updateLine(idx, 'credit', 0);
                         }
-                      }} style={{ ...styles.toolBtn, fontSize: 10, padding: '3px 6px', color: '#2563eb' }} title="Calculate tax and fill amount">
+                      }} style={{ ...styles.toolBtn, fontSize: 10, padding: '3px 6px', color: 'var(--accent)' }} title="Calculate tax and fill amount">
                         Tax
                       </button>
                     </div>
@@ -913,7 +915,7 @@ const VoucherModal: React.FC<{
                 </div>
                 {/* Tax breakdown display */}
                 {taxResults[idx] && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11, color: '#64758b', paddingLeft: 4, paddingBottom: 4 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11, color: 'var(--text-muted)', paddingLeft: 4, paddingBottom: 4 }}>
                     <span>Amt: {fmt(taxResults[idx].amount)}</span>
                     <span>Disc: {fmt(taxResults[idx].discountAmount)}</span>
                     <span>Sub: {fmt(taxResults[idx].toAmount)}</span>
@@ -921,11 +923,11 @@ const VoucherModal: React.FC<{
                     <span>FED: {fmt(taxResults[idx].fedAmount)}</span>
                     <span>Adv: {fmt(taxResults[idx].advanceTaxAmount)}</span>
                     <span>F.Tax: {fmt(taxResults[idx].furtherTaxAmount)}</span>
-                    <span style={{ fontWeight: 600, color: '#1e293b' }}>Net: {fmt(taxResults[idx].netAmount)}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Net: {fmt(taxResults[idx].netAmount)}</span>
                     {isProductType && (
                       <>
-                        <span style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: 8 }}>COGS: {fmt(taxResults[idx].cogs)}</span>
-                        <span style={{ fontWeight: 600, color: taxResults[idx].grossProfit >= 0 ? '#15803d' : '#dc2626' }}>
+                        <span style={{ borderLeft: '1px solid var(--border)', paddingLeft: 8 }}>COGS: {fmt(taxResults[idx].cogs)}</span>
+                        <span style={{ fontWeight: 600, color: taxResults[idx].grossProfit >= 0 ? 'var(--fin-revenue)' : 'var(--fin-expense)' }}>
                           Profit: {fmt(taxResults[idx].grossProfit)}
                         </span>
                       </>
@@ -938,14 +940,14 @@ const VoucherModal: React.FC<{
             {lines.length > 0 && (
               <div style={styles.linesFooter}>
                 <span style={{ flex: '1' }}></span>
-                <span style={{ flex: '0 0 110px', textAlign: 'right', fontWeight: 600, color: '#1d4ed8' }}>{fmt(dTotal)}</span>
-                <span style={{ flex: '0 0 110px', textAlign: 'right', fontWeight: 600, color: '#be185d' }}>{fmt(cTotal)}</span>
+                <span style={{ flex: '0 0 110px', textAlign: 'right', fontWeight: 600, color: 'var(--fin-debit)' }}>{fmt(dTotal)}</span>
+                <span style={{ flex: '0 0 110px', textAlign: 'right', fontWeight: 600, color: 'var(--fin-credit)' }}>{fmt(cTotal)}</span>
                 <span style={{ flex: '0 0 32px' }}></span>
               </div>
             )}
 
             {lines.length > 0 && (
-              <div style={{ ...styles.infoNote, marginTop: 8, borderColor: balanced ? '#bbf7d0' : '#fecaca', backgroundColor: balanced ? '#f0fdf4' : '#fef2f2' }}>
+              <div style={{ ...styles.infoNote, marginTop: 8, borderColor: balanced ? 'var(--tint-ok-border)' : 'var(--tint-bad-border)', backgroundColor: balanced ? 'var(--tint-ok)' : 'var(--tint-bad)' }}>
                 {balanced
                   ? `Balanced — Debit: ${fmt(dTotal)} = Credit: ${fmt(cTotal)}`
                   : `Not Balanced — Debit: ${fmt(dTotal)} / Credit: ${fmt(cTotal)} / Diff: ${fmt(Math.abs(dTotal - cTotal))} (add ${dTotal < cTotal ? 'debit' : 'credit'} lines to balance)`
@@ -995,14 +997,14 @@ const AccountSelect: React.FC<{
           {filtered.map(a => (
             <div
               key={a.id}
-              style={{ ...styles.dropdownItem, backgroundColor: a.accountCode === value ? '#eff6ff' : undefined }}
+              style={{ ...styles.dropdownItem, backgroundColor: a.accountCode === value ? 'var(--accent-soft)' : undefined }}
               onClick={() => { onChange(a.accountCode); setOpen(false); onSearchChange(''); }}
             >
-              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, color: '#64748b', marginRight: 8 }}>{a.accountCode}</span>
+              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, color: 'var(--text-muted)', marginRight: 8 }}>{a.accountCode}</span>
               {a.accountName}
             </div>
           ))}
-          {filtered.length === 0 && <div style={{ ...styles.dropdownItem, color: '#94a3b8' }}>No accounts found</div>}
+          {filtered.length === 0 && <div style={{ ...styles.dropdownItem, color: 'var(--text-disabled)' }}>No accounts found</div>}
         </div>
       )}
     </div>
@@ -1108,10 +1110,10 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
               const csv = generateCsv(headers, rows);
               const filename = generateExportFilename('General-Ledger', accountFilter);
               downloadFile(csv, filename);
-            }} style={{ ...styles.primaryBtn, backgroundColor: '#ffffff', color: '#475569', border: '1px solid #e2e8f0' }}>
+            }} className="fin-btn-tool" style={{ ...styles.primaryBtn, backgroundColor: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
               Export CSV
             </button>
-            <button onClick={printWindow} style={{ ...styles.primaryBtn, backgroundColor: '#2563eb' }}>
+            <button onClick={printWindow} className="fin-btn-primary" style={{ ...styles.primaryBtn, backgroundColor: 'var(--accent)' }}>
               Print
             </button>
           </>
@@ -1123,19 +1125,18 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
           <div style={styles.statChip}>
             <span style={styles.statLabel}>Account: {selectedAccount.accountCode} — {selectedAccount.accountName}</span>
           </div>
-          <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{ledgerEntries.length}</span>
+          <div style={styles.statChip}>              <span style={{ ...styles.statDot, backgroundColor: 'var(--tone-asset-bg)', color: 'var(--fin-debit)' }}>{ledgerEntries.length}</span>
             <span style={styles.statLabel}>Entries</span>
           </div>
           <div style={styles.statChip}>
-            <span style={styles.statLabel}>Total Dr: <strong style={{ color: '#1d4ed8' }}>{fmt(stats.totalDebit)}</strong></span>
+            <span style={styles.statLabel}>Total Dr: <strong style={{ color: 'var(--fin-debit)' }}>{fmt(stats.totalDebit)}</strong></span>
           </div>
           <div style={styles.statChip}>
-            <span style={styles.statLabel}>Total Cr: <strong style={{ color: '#be185d' }}>{fmt(stats.totalCredit)}</strong></span>
+            <span style={styles.statLabel}>Total Cr: <strong style={{ color: 'var(--fin-credit)' }}>{fmt(stats.totalCredit)}</strong></span>
           </div>
           <div style={styles.statChip}>
             <span style={styles.statLabel}>
-              Balance: <strong style={{ color: stats.lastBalance >= 0 ? '#1d4ed8' : '#be185d' }}>
+              Balance: <strong style={{ color: stats.lastBalance >= 0 ? 'var(--fin-debit)' : 'var(--fin-credit)' }}>
                 {fmt(Math.abs(stats.lastBalance))} {stats.lastBalance >= 0 ? 'Dr' : 'Cr'}
               </strong>
             </span>
@@ -1162,24 +1163,24 @@ const LedgerTab: React.FC<{ tenantId: string; initialAccountId?: string }> = ({ 
               <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right' }}>Balance</span>
             </div>
             {ledgerEntries.map(e => (
-              <div key={e.id} style={styles.voucherRow}>
+              <div key={e.id} className="fin-hover" style={styles.voucherRow}>
                 <span style={{ ...styles.col, flex: '0 0 110px', fontSize: 13 }}>{e.entryDate}</span>
                 <span style={{ ...styles.col, flex: '0 0 60px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
-                  <button onClick={() => navigate('/bills/' + e.voucherId)} style={{ ...styles.linkBtn, padding: 0, fontSize: 13 }}>{e.voucherNumber}</button>
+                  <button onClick={() => navigate('/bills/' + e.voucherId)} className="fin-link" style={{ ...styles.linkBtn, padding: 0, fontSize: 13 }}>{e.voucherNumber}</button>
                 </span>
                 <span style={{ ...styles.col, flex: '0 0 50px' }}>
-                  <span style={{ ...styles.typeBadge, backgroundColor: (VOUCHER_TYPE_COLORS[e.voucherType] ?? { bg: '#f1f5f9', fg: '#475569' }).bg, color: (VOUCHER_TYPE_COLORS[e.voucherType] ?? { bg: '#f1f5f9', fg: '#475569' }).fg, fontSize: 10 }}>
+                  <span style={{ ...styles.typeBadge, backgroundColor: (VOUCHER_TYPE_COLORS[e.voucherType] ?? { bg: 'var(--neutral-soft)', fg: 'var(--neutral-fg)' }).bg, color: (VOUCHER_TYPE_COLORS[e.voucherType] ?? { bg: 'var(--neutral-soft)', fg: 'var(--neutral-fg)' }).fg, fontSize: 10 }}>
                     {e.voucherType}
                   </span>
                 </span>
                 <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{e.narration}</span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: e.debit > 0 ? '#1d4ed8' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: e.debit > 0 ? 'var(--fin-debit)' : 'var(--fin-num-muted)' }}>
                   {e.debit > 0 ? fmt(e.debit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: e.credit > 0 ? '#be185d' : '#cbd5e1' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: e.credit > 0 ? 'var(--fin-credit)' : 'var(--fin-num-muted)' }}>
                   {e.credit > 0 ? fmt(e.credit) : ''}
                 </span>
-                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: e.balance >= 0 ? '#1e293b' : '#be185d' }}>
+                <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: e.balance >= 0 ? 'var(--text-primary)' : 'var(--fin-credit)' }}>
                   {fmt(Math.abs(e.balance))} {e.balance >= 0 ? 'Dr' : 'Cr'}
                 </span>
               </div>
@@ -1210,12 +1211,12 @@ const AccountRow: React.FC<{
   const hasMetadata = !!(a.address || a.ownerName || a.phone || a.stn || a.ntn || a.cnic);
   return (
     <>
-    <div style={{ ...styles.row, opacity: a.isActive ? 1 : 0.5 }}>
+    <div className="fin-hover" style={{ ...styles.row, opacity: a.isActive ? 1 : 0.5 }}>
       <span style={{ ...styles.col, flex: '0 0 40px', paddingLeft: depth * 20 }}>
         {hasChildren ? (
-          <button onClick={onToggle} style={styles.expandBtn}>{expanded ? '▼' : '▶'}</button>
+          <button onClick={onToggle} className="fin-expand" style={styles.expandBtn} aria-expanded={expanded} aria-label={`${expanded ? 'Collapse' : 'Expand'} ${a.accountName}`}>{expanded ? '▼' : '▶'}</button>
         ) : hasMetadata ? (
-          <button onClick={onToggleMeta} style={{ ...styles.expandBtn, color: metaExpanded ? '#2563eb' : undefined }}>{metaExpanded ? '▼' : '▶'}</button>
+          <button onClick={onToggleMeta} className="fin-expand" style={{ ...styles.expandBtn, color: metaExpanded ? 'var(--accent)' : undefined }} aria-expanded={metaExpanded} aria-label={`${metaExpanded ? 'Hide' : 'Show'} metadata for ${a.accountName}`}>{metaExpanded ? '▼' : '▶'}</button>
         ) : (
           <span style={styles.leafDot}>•</span>
         )}
@@ -1230,11 +1231,11 @@ const AccountRow: React.FC<{
           {ACCOUNT_TYPE_LABELS[a.accountType]}
         </span>
       </span>
-      <span style={{ ...styles.col, flex: '0 0 70px', fontWeight: 500, color: a.normalBalance === 'DEBIT' ? '#1d4ed8' : '#be185d' }}>
+      <span style={{ ...styles.col, flex: '0 0 70px', fontWeight: 500, color: a.normalBalance === 'DEBIT' ? 'var(--fin-debit)' : 'var(--fin-credit)' }}>
         {a.normalBalance}
       </span>
       <span style={{ ...styles.col, flex: '0 0 70px' }}>
-        <span style={{ ...styles.statusDot, backgroundColor: a.isActive ? '#22c55e' : '#ef4444' }} />
+        <span style={{ ...styles.statusDot, backgroundColor: a.isActive ? 'var(--success)' : 'var(--danger)' }} title={a.isActive ? 'Active' : 'Inactive'} />
       </span>
       <span style={{ ...styles.col, flex: '0 0 80px', gap: 4 }}>
         <button onClick={onEdit} style={styles.rowBtn} title="Edit">✎</button>
@@ -1242,7 +1243,7 @@ const AccountRow: React.FC<{
       </span>
     </div>
     {metaExpanded && hasMetadata && (
-      <div style={{ padding: '6px 16px 6px ' + (depth * 20 + 56) + 'px', backgroundColor: '#f8fafc', borderBottom: '1px solid #f1f5f9', fontSize: 12, display: 'flex', gap: 12, flexWrap: 'wrap', color: '#64758b' }}>
+      <div style={{ padding: '6px 16px 6px ' + (depth * 20 + 56) + 'px', backgroundColor: 'var(--surface-2)', borderBottom: '1px solid var(--dash-table-row-border)', fontSize: 12, display: 'flex', gap: 12, flexWrap: 'wrap', color: 'var(--text-muted)' }}>
         {a.address && <span><strong>Address:</strong> {a.address}</span>}
         {a.ownerName && <span><strong>Owner:</strong> {a.ownerName}</span>}
         {a.phone && <span><strong>Phone:</strong> {a.phone}</span>}
@@ -1357,8 +1358,8 @@ const CreateAccountModal: React.FC<{
               </select>
             </div>
           </div>
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 8 }}>
-            <label style={{ ...styles.label, fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Account Metadata</label>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginBottom: 8 }}>
+            <label style={{ ...styles.label, fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Account Metadata</label>
           </div>
           <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
@@ -1475,14 +1476,14 @@ const EditAccountModal: React.FC<{
           <div style={styles.field}>
             <label style={styles.label}>Status</label>
             <div style={styles.toggleRow}>
-              <button onClick={() => setIsActive(!isActive)} style={{ ...styles.toggle, backgroundColor: isActive ? '#22c55e' : '#cbd5e1' }}>
+              <button onClick={() => setIsActive(!isActive)} style={{ ...styles.toggle, backgroundColor: isActive ? 'var(--success)' : 'var(--border-strong)' }}>
                 <span style={{ ...styles.toggleKnob, transform: isActive ? 'translateX(20px)' : 'translateX(2px)' }} />
               </button>
-              <span style={{ fontSize: 14, color: '#475569' }}>{isActive ? 'Active' : 'Inactive'}</span>
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{isActive ? 'Active' : 'Inactive'}</span>
             </div>
           </div>
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, marginBottom: 8, marginTop: 4 }}>
-            <label style={{ ...styles.label, fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Account Metadata</label>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginBottom: 8, marginTop: 4 }}>
+            <label style={{ ...styles.label, fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Account Metadata</label>
           </div>
           <div style={styles.field}>
             <label style={styles.label}>Address</label>
@@ -1534,70 +1535,70 @@ function deriveNormalBalanceLabel(type: AccountType): string {
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
-  title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#64748b' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
+  title: { fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: 'var(--text-muted)' },
 
-  tabBar: { display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 20 },
-  tab: { padding: '10px 20px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 14, fontWeight: 500, color: '#64748b', cursor: 'pointer', marginBottom: -2 },
-  tabActive: { color: '#2563eb', borderBottomColor: '#2563eb' },
+  tabBar: { display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', marginBottom: 20 },
+  tab: { padding: '10px 20px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', cursor: 'pointer', marginBottom: -2 },
+  tabActive: { color: 'var(--accent)', borderBottomColor: 'var(--accent)' },
 
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   statsBar: { display: 'flex', gap: 12, flexWrap: 'wrap' },
-  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569' },
+  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' },
   statDot: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, fontWeight: 600, fontSize: 12 },
   statLabel: {},
 
   toolbar: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
-  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  filterSelect: { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
-  toolBtn: { padding: '8px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, background: '#fff', cursor: 'pointer', color: '#475569' },
+  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' },
+  filterSelect: { padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' },
+  toolBtn: { padding: '8px 14px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, background: 'var(--surface)', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'background-color 0.15s ease, border-color 0.15s ease' },
 
-  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)' },
+  card: { backgroundColor: 'var(--dash-card)', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' },
 
-  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', minWidth: 800 },
-  row: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14, transition: 'background 0.1s', minWidth: 800 },
+  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid var(--border)', backgroundColor: 'var(--dash-table-head-bg)', fontSize: 12, fontWeight: 600, color: 'var(--dash-table-head-fg)', textTransform: 'uppercase', letterSpacing: '0.04em', minWidth: 800 },
+  row: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid var(--dash-table-row-border)', fontSize: 14, transition: 'background 0.1s', minWidth: 800 },
   col: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  codeCell: { fontFamily: 'ui-monospace, monospace', fontSize: 13, color: '#475569' },
+  codeCell: { fontFamily: 'ui-monospace, monospace', fontSize: 13, color: 'var(--text-secondary)' },
 
-  expandBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#64748b', padding: '2px 4px' },
-  leafDot: { color: '#cbd5e1', fontSize: 10 },
+  expandBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', padding: '2px 4px' },
+  leafDot: { color: 'var(--fin-num-muted)', fontSize: 10 },
   typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
   statusDot: { display: 'inline-block', width: 8, height: 8, borderRadius: '50%' },
-  rowBtn: { background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+  rowBtn: { background: 'none', border: '1px solid var(--border)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
 
-  primaryBtn: { padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  cancelBtn: { padding: '10px 20px', backgroundColor: '#fff', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
-  dangerBtn: { padding: '10px 20px', backgroundColor: '#fff', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer' },
+  primaryBtn: { padding: '10px 20px', backgroundColor: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  cancelBtn: { padding: '10px 20px', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
+  dangerBtn: { padding: '10px 20px', backgroundColor: 'var(--surface)', color: 'var(--danger)', border: '1px solid var(--tint-bad-border)', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer' },
 
-  empty: { padding: 40, textAlign: 'center' as const, color: '#94a3b8', fontSize: 14 },
+  empty: { padding: 40, textAlign: 'center' as const, color: 'var(--text-disabled)', fontSize: 14 },
 
-  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { backgroundColor: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgb(0 0 0 / 0.2)' },
-  modalTitle: { fontSize: 20, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
-  modalParent: { fontSize: 13, color: '#64748b', marginBottom: 20 },
+  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  modal: { backgroundColor: 'var(--surface-raised)', color: 'var(--text-primary)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'auto', boxShadow: 'var(--shadow-lg)' },
+  modalTitle: { fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
+  modalParent: { fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   formRow: { display: 'flex', gap: 16 },
   field: { display: 'flex', flexDirection: 'column', gap: 6, flex: 1 },
-  label: { fontSize: 13, fontWeight: 500, color: '#374151' },
-  input: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  select: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
-  infoNote: { fontSize: 13, color: '#64748b', backgroundColor: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' },
-  error: { padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: 13 },
+  label: { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' },
+  input: { padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' },
+  select: { padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' },
+  infoNote: { fontSize: 13, color: 'var(--text-muted)', backgroundColor: 'var(--surface-2)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)' },
+  error: { padding: '10px 14px', backgroundColor: 'var(--danger-soft)', border: '1px solid var(--tint-bad-border)', borderRadius: 8, color: 'var(--danger-fg)', fontSize: 13 },
   modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
 
   toggleRow: { display: 'flex', alignItems: 'center', gap: 12 },
   toggle: { width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', position: 'relative', padding: 0, transition: 'background-color 0.2s' },
-  toggleKnob: { position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#fff', boxShadow: '0 1px 3px rgb(0 0 0 / 0.2)', transition: 'transform 0.2s' },
+  toggleKnob: { position: 'absolute', top: 2, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#fff', boxShadow: '0 1px 3px rgb(0 0 0 / 0.2)', transition: 'transform 0.2s' }, // knob stays white for contrast on both states
 
-  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14, minWidth: 800 },
-  linesContainer: { backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' },
-  linesHeader: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #e2e8f0', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  lineRow: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #f1f5f9', fontSize: 14, alignItems: 'center' },
-  linesFooter: { display: 'flex', padding: '8px 16px 8px 32px', borderTop: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 13 },
+  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid var(--dash-table-row-border)', fontSize: 14, minWidth: 800 },
+  linesContainer: { backgroundColor: 'var(--surface-2)', borderBottom: '2px solid var(--border)' },
+  linesHeader: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  lineRow: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid var(--dash-table-row-border)', fontSize: 14, alignItems: 'center' },
+  linesFooter: { display: 'flex', padding: '8px 16px 8px 32px', borderTop: '2px solid var(--border)', backgroundColor: 'var(--surface-2)', fontSize: 13 },
 
   lineItemRow: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 },
-  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', zIndex: 10, maxHeight: 200, overflow: 'auto' },
-  dropdownItem: { padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f1f5f9' },
-  textarea: { padding: '10px 12px', fontSize: 14, border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none', backgroundColor: '#fff', color: '#1e293b', resize: 'vertical', fontFamily: 'inherit' },
+  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: 'var(--shadow-md)', zIndex: 10, maxHeight: 200, overflow: 'auto' },
+  dropdownItem: { padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid var(--dash-table-row-border)' },
+  textarea: { padding: '10px 12px', fontSize: 14, border: '1px solid var(--border)', borderRadius: 8, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)', resize: 'vertical', fontFamily: 'inherit' },
 };

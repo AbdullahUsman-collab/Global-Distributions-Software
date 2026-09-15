@@ -187,6 +187,218 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════ */
+/* 6. Finance module (Step 88B) — consumed by Finance.tsx +                */
+/*    FinancialReportsView.tsx via CSS variables. Light values are the     */
+/*    module's original hexes (visual identity unchanged); dark values     */
+/*    are intentionally designed for contrast.                             */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Amount / column semantics */
+  --fin-debit: #1d4ed8;
+  --fin-credit: #be185d;
+  --fin-num-muted: #cbd5e1;
+
+  /* Account-type & report-section accents */
+  --fin-asset: #1d4ed8;
+  --fin-liability: #be185d;
+  --fin-equity: #7c3aed;
+  --fin-revenue: #15803d;
+  --fin-cogs: #b45309;
+  --fin-expense: #dc2626;
+
+  /* Balanced / unbalanced note tints */
+  --tint-ok: #f0fdf4;
+  --tint-ok-border: #bbf7d0;
+  --tint-bad: #fef2f2;
+  --tint-bad-border: #fecaca;
+
+  /* Account type badge pairs (bg, fg) */
+  --tone-asset-bg: #dbeafe;    --tone-asset-fg: #1d4ed8;
+  --tone-liability-bg: #fce7f3; --tone-liability-fg: #be185d;
+  --tone-equity-bg: #f3e8ff;   --tone-equity-fg: #7c3aed;
+  --tone-revenue-bg: #dcfce7;  --tone-revenue-fg: #15803d;
+  --tone-cogs-bg: #fef3c7;     --tone-cogs-fg: #b45309;
+  --tone-expense-bg: #fee2e2;  --tone-expense-fg: #dc2626;
+
+  /* Voucher type badge pairs */
+  --vt-jv-bg: #e0e7ff;  --vt-jv-fg: #4338ca;
+  --vt-cv-bg: #fef3c7;  --vt-cv-fg: #b45309;
+  --vt-cp-bg: #fce7f3;  --vt-cp-fg: #be185d;
+  --vt-cr-bg: #dcfce7;  --vt-cr-fg: #15803d;
+  --vt-pv-bg: #e0e7ff;  --vt-pv-fg: #4338ca;
+  --vt-sv-bg: #dbeafe;  --vt-sv-fg: #1d4ed8;
+  --vt-srv-bg: #fee2e2; --vt-srv-fg: #991b1b;
+  --vt-prv-bg: #fef3c7; --vt-prv-fg: #b45309;
+  --vt-cpv-bg: #fce7f3; --vt-cpv-fg: #be185d;
+  --vt-crv-bg: #dcfce7; --vt-crv-fg: #15803d;
+  --vt-bpv-bg: #fef3c7; --vt-bpv-fg: #b45309;
+  --vt-brv-bg: #dbeafe; --vt-brv-fg: #1d4ed8;
+
+  /* Voucher status badge pairs */
+  --st-draft-bg: #fef3c7;  --st-draft-fg: #92400e;
+  --st-posted-bg: #dcfce7; --st-posted-fg: #166534;
+}
+
+[data-theme='dark'] {
+  --fin-debit: #60a5fa;
+  --fin-credit: #f9a8d4;
+  --fin-num-muted: #475569;
+
+  --fin-asset: #60a5fa;
+  --fin-liability: #f9a8d4;
+  --fin-equity: #c4b5fd;
+  --fin-revenue: #4ade80;
+  --fin-cogs: #fbbf24;
+  --fin-expense: #f87171;
+
+  --tint-ok: #06281c;
+  --tint-ok-border: #14532d;
+  --tint-bad: #450a0a;
+  --tint-bad-border: #7f1d1d;
+
+  --tone-asset-bg: #172b4a;    --tone-asset-fg: #93c5fd;
+  --tone-liability-bg: #500724; --tone-liability-fg: #f9a8d4;
+  --tone-equity-bg: #3b1d54;   --tone-equity-fg: #d8b4fe;
+  --tone-revenue-bg: #052e16;  --tone-revenue-fg: #4ade80;
+  --tone-cogs-bg: #451a03;     --tone-cogs-fg: #fbbf24;
+  --tone-expense-bg: #450a0a;  --tone-expense-fg: #fca5a5;
+
+  --vt-jv-bg: #252a5e;  --vt-jv-fg: #a5b4fc;
+  --vt-cv-bg: #451a03;  --vt-cv-fg: #fbbf24;
+  --vt-cp-bg: #500724;  --vt-cp-fg: #f9a8d4;
+  --vt-cr-bg: #052e16;  --vt-cr-fg: #4ade80;
+  --vt-pv-bg: #252a5e;  --vt-pv-fg: #a5b4fc;
+  --vt-sv-bg: #172b4a;  --vt-sv-fg: #93c5fd;
+  --vt-srv-bg: #450a0a; --vt-srv-fg: #fca5a5;
+  --vt-prv-bg: #451a03; --vt-prv-fg: #fbbf24;
+  --vt-cpv-bg: #500724; --vt-cpv-fg: #f9a8d4;
+  --vt-crv-bg: #052e16; --vt-crv-fg: #4ade80;
+  --vt-bpv-bg: #451a03; --vt-bpv-fg: #fbbf24;
+  --vt-brv-bg: #172b4a; --vt-brv-fg: #93c5fd;
+
+  --st-draft-bg: #451a03;  --st-draft-fg: #fbbf24;
+  --st-posted-bg: #052e16; --st-posted-fg: #4ade80;
+}
+
+/* ── Finance interactive polish (hover/focus/active on shared controls) ── */
+
+.fin-btn-primary {
+  transition: filter var(--motion-fast), transform var(--motion-fast);
+}
+.fin-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.fin-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.fin-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fin-btn-tool,
+.fin-btn-row,
+.fin-btn-ghost,
+.fin-btn-danger {
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
+}
+.fin-btn-tool:hover,
+.fin-btn-ghost:hover {
+  background-color: var(--dash-table-row-hover) !important;
+  border-color: var(--border-strong) !important;
+}
+.fin-btn-row:hover {
+  background-color: var(--accent-soft) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+.fin-btn-danger:hover {
+  background-color: var(--danger-soft) !important;
+  border-color: var(--danger) !important;
+}
+
+.fin-link {
+  transition: color var(--motion-fast);
+}
+.fin-link:hover {
+  color: var(--accent-strong) !important;
+  text-decoration: underline;
+}
+
+.fin-hover {
+  transition: background-color var(--motion-fast);
+}
+.fin-hover:hover {
+  background-color: var(--dash-table-row-hover);
+}
+
+.fin-dd-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+.fin-dd-item:hover,
+.fin-dd-item:focus-visible {
+  background-color: var(--accent-soft);
+}
+
+.fin-expand {
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+.fin-expand:hover {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Finance inputs/selects/textareas: token borders + theme-aware surfaces.
+   Inline styles set geometry; these add focus affordance only. */
+.finance-page input:focus-visible,
+.finance-page select:focus-visible,
+.finance-page textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+/* Finance tab underline treatment (shared by main tabs + report sub-tabs) */
+.fin-tab {
+  position: relative;
+  transition: color var(--motion-fast);
+}
+.fin-tab::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--motion);
+}
+.fin-tab:hover {
+  color: var(--text-primary) !important;
+}
+.fin-tab:hover::after,
+.fin-tab-active::after {
+  transform: scaleX(1);
+}
+.fin-tab-active {
+  color: var(--accent) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
 /* 5. Dashboard components (Step 88A) — classes prefixed "dash-"           */
 /*    Consumed only by src/ui/pages/Dashboard.tsx                          */
 /* ═══════════════════════════════════════════════════════════════════════ */
