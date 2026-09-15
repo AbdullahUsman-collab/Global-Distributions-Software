@@ -30,7 +30,7 @@ export type { GstType } from './settings.js';
  * Source: audit/23_DATA_MODEL.md (Voucher_Type SV/PV/SRV/PRV)
  * Mapped to inventory movement semantics.
  */
-export type StockMovementType = 'GRN' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT' | 'RETURN';
+export type StockMovementType = 'GRN' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT' | 'RETURN' | 'OPENING';
 
 /**
  * Stock movement status.
@@ -51,6 +51,7 @@ export const STOCK_MOVEMENT_TYPE_LABELS: Record<StockMovementType, string> = {
   TRANSFER:   'Stock Transfer',
   ADJUSTMENT: 'Stock Adjustment',
   RETURN:     'Stock Return',
+  OPENING:    'Opening Stock',
 };
 
 export const STOCK_MOVEMENT_STATUS_LABELS: Record<StockMovementStatus, string> = {
@@ -479,6 +480,7 @@ export interface StockBWARow {
   productCode: string;
   productName: string;
   unit: string;
+  openingStockQty: number;
   openingQty: number;
   grnQty: number;
   issueQty: number;
@@ -494,6 +496,7 @@ export interface StockBWAReport {
   startDate: string;
   endDate: string;
   rows: StockBWARow[];
+  totalOpeningStockQty: number;
   totalOpeningQty: number;
   totalGrnQty: number;
   totalIssueQty: number;

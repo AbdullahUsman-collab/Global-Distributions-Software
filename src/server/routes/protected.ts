@@ -2030,6 +2030,125 @@ export function createProtectedRoutes(
     }
   );
 
+  // ─── Opening Stock ───────────────────────────────────────────
+
+  /**
+   * POST /api/opening-stock
+   * Batch-set opening stock for multiple products.
+   * Each line creates an OPENING movement (DRAFT→POSTED) that sets stock_levels.
+   * Guard: rejects if an OPENING movement already exists for a product/warehouse.
+   *
+   * Body: { lines: [{ productId, warehouseId?, quantity, unitCost }] }
+   *
+   * NOTE: warehouseId is optional per line. If omitted, the tenant's first active
+   * warehouse is used (same implicit defaulting as POST /api/stock-movements).
+   */
+  router.post('/opening-stock',
+    mutationRateLimiter,
+    requirePermissionMiddleware('inventory.adjust'),
+    async (req: Request, res: Response) => {
+      try {
+        const tenantId = req.user!.tenantId;
+        const createdBy = req.user!.username;
+        const { lines } = req.body;
+
+        if (!Array.isArray(lines) || lines.length === 0) {
+          res.status(400).json({ error: 'lines must be a non-empty array' });
+          return;
+        }
+
+        // Resolve default warehouse for the tenant
+        const defaultWhId = await resolveImplicitWarehouseId(tenantId);
+        if (!defaultWhId) {
+          res.status(409).json({ error: 'No active warehouse configured. Stock operations require at least one warehouse.' });
+          return;
+        }
+
+        // Validate each line
+        const validationErrors: string[] = [];
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line.productId || typeof line.productId !== 'string') {
+            validationErrors.push(`Line ${i + 1}: productId is required`);
+          }
+          if (typeof line.quantity !== 'number' || line.quantity < 0) {
+            validationErrors.push(`Line ${i + 1}: quantity must be a non-negative number`);
+          }
+          if (line.unitCost !== undefined && (typeof line.unitCost !== 'number' || line.unitCost < 0)) {
+            validationErrors.push(`Line ${i + 1}: unitCost must be a non-negative number`);
+          }
+        }
+        if (validationErrors.length > 0) {
+          res.status(400).json({ error: 'Validation failed', details: validationErrors });
+          return;
+        }
+
+        // Guard: check for existing OPENING movements for any of these products
+        const productIds = lines.map((l: any) => l.productId);
+        const placeholders = productIds.map((_: any, i: number) => `$${i + 2}`).join(', ');
+        const existingOpenings = await getPool().query(
+          `SELECT product_id FROM stock_movements
+           WHERE tenant_id = $1 AND movement_type = 'OPENING' AND status IN ('DRAFT', 'POSTED')
+           AND product_id IN (${placeholders})`,
+          [tenantId, ...productIds]
+        );
+        if (existingOpenings.rows.length > 0) {
+          const conflictingIds = existingOpenings.rows.map((r: any) => r.product_id);
+          res.status(409).json({
+            error: 'Opening stock already exists for some products',
+            conflictingProductIds: conflictingIds,
+            message: 'Use Stock Adjustment to correct existing opening stock, or cancel the existing OPENING movements first.',
+          });
+          return;
+        }
+
+        // Process each line: create DRAFT → immediately POST
+        const created: any[] = [];
+        const errors: { index: number; productId: string; error: string }[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const whId = line.warehouseId || defaultWhId;
+
+          try {
+            const movement = await inventoryRepo.createStockMovement(tenantId, {
+              tenantId,
+              movementType: 'OPENING',
+              movementDate: new Date().toISOString().slice(0, 10),
+              toWarehouseId: whId,
+              productId: line.productId,
+              quantity: line.quantity,
+              unitCost: line.unitCost ?? 0,
+              totalCost: line.quantity * (line.unitCost ?? 0),
+              narration: `Opening stock for ${line.productId}`,
+              status: 'DRAFT',
+              createdBy,
+            });
+
+            const posted = await inventoryRepo.postStockMovement(tenantId, movement.id);
+            created.push(posted);
+          } catch (err: any) {
+            errors.push({
+              index: i,
+              productId: line.productId,
+              error: err.message || 'Unknown error',
+            });
+          }
+        }
+
+        res.status(201).json({
+          created: created.length,
+          failed: errors.length,
+          movements: created,
+          errors: errors.length > 0 ? errors : undefined,
+        });
+      } catch (error) {
+        console.error('Opening stock error:', error);
+        res.status(500).json({ error: 'Failed to set opening stock' });
+      }
+    }
+  );
+
   // ─── Customer AR Balance Route ───────────────────────────────
 
   /**

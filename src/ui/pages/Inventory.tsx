@@ -41,17 +41,18 @@ const TABS: { key: InventoryTab; label: string }[] = [
 /* ─── Constants ────────────────────────────────────────────── */
 
 const MOVEMENT_TYPE_COLORS: Record<StockMovementType, { bg: string; fg: string }> = {
-  GRN:        { bg: '#dcfce7', fg: '#15803d' },
-  ISSUE:      { bg: '#fee2e2', fg: '#dc2626' },
-  TRANSFER:   { bg: '#dbeafe', fg: '#1d4ed8' },
-  ADJUSTMENT: { bg: '#fef3c7', fg: '#b45309' },
-  RETURN:     { bg: '#f3e8ff', fg: '#7c3aed' },
+  GRN:        { bg: 'var(--imt-grn-bg)', fg: 'var(--imt-grn-fg)' },
+  ISSUE:      { bg: 'var(--imt-issue-bg)', fg: 'var(--imt-issue-fg)' },
+  TRANSFER:   { bg: 'var(--imt-transfer-bg)', fg: 'var(--imt-transfer-fg)' },
+  ADJUSTMENT: { bg: 'var(--imt-adjustment-bg)', fg: 'var(--imt-adjustment-fg)' },
+  RETURN:     { bg: 'var(--imt-return-bg)', fg: 'var(--imt-return-fg)' },
+  OPENING:    { bg: 'var(--imt-opening-bg)', fg: 'var(--imt-opening-fg)' },
 };
 
 const MOVEMENT_STATUS_COLORS: Record<StockMovementStatus, { bg: string; fg: string }> = {
-  DRAFT:     { bg: '#fef3c7', fg: '#92400e' },
-  POSTED:    { bg: '#dcfce7', fg: '#166534' },
-  CANCELLED: { bg: '#fee2e2', fg: '#991b1b' },
+  DRAFT:     { bg: 'var(--warning-soft)', fg: 'var(--warning-fg)' },
+  POSTED:    { bg: 'var(--success-soft)', fg: 'var(--success-fg)' },
+  CANCELLED: { bg: 'var(--danger-soft)', fg: 'var(--danger-fg)' },
 };
 
 const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -66,7 +67,7 @@ export const Inventory: React.FC = () => {
   const [tab, setTab] = useState<InventoryTab>('stock');
 
   return (
-    <div className="page-pad" style={styles.page}>
+    <div className="page-pad inv-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -82,6 +83,7 @@ export const Inventory: React.FC = () => {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
+            className={`inv-tab${tab === t.key ? ' inv-tab-active' : ''}`}
             style={{ ...styles.tab, ...(tab === t.key ? styles.tabActive : {}) }}
           >
             {t.label}
@@ -166,24 +168,24 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
+            <span style={{ ...styles.statDot, backgroundColor: 'var(--neutral-soft)', color: 'var(--neutral-fg)' }}>{stats.total}</span>
             <span style={styles.statLabel}>Total</span>
           </div>
           <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#dcfce7', color: '#166534' }}>{stats.active}</span>
+            <span style={{ ...styles.statDot, backgroundColor: 'var(--success-soft)', color: 'var(--success-fg)' }}>{stats.active}</span>
             <span style={styles.statLabel}>Active</span>
           </div>
           <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#fee2e2', color: '#991b1b' }}>{stats.inactive}</span>
+            <span style={{ ...styles.statDot, backgroundColor: 'var(--danger-soft)', color: 'var(--danger-fg)' }}>{stats.inactive}</span>
             <span style={styles.statLabel}>Inactive</span>
           </div>
         </div>
-        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Item</button>
+        <button onClick={() => setShowCreate(true)} className="inv-btn-primary" style={styles.primaryBtn}>+ New Item</button>
       </div>
 
       <div className="toolbar-responsive" style={styles.toolbar}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or SKU..." style={styles.searchInput} />
-        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={styles.filterSelect}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or SKU..." className="inv-input" style={styles.searchInput} />
+        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="inv-select" style={styles.filterSelect}>
           <option value="">All Categories</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -212,7 +214,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                 <span style={{ ...styles.col, flex: '0 0 90px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{p.sku}</span>
                 <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{p.name}</span>
                 <span style={{ ...styles.col, flex: '0 0 100px' }}>
-                  <span style={{ ...styles.typeBadge, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{p.category}</span>
+                  <span style={{ ...styles.typeBadge, backgroundColor: 'var(--inv-cat-bg)', color: 'var(--inv-cat-fg)' }}>{p.category}</span>
                 </span>
                 <span style={{ ...styles.col, flex: '0 0 60px', fontSize: 13 }}>{p.unit}</span>
                 <span style={{ ...styles.col, flex: '0 0 70px', fontSize: 13 }}>{p.pcsPerCarton}</span>
@@ -220,10 +222,10 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                 <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(p.purchaseRate)}</span>
                 <span style={{ ...styles.col, flex: '0 0 50px', fontSize: 13 }}>{p.gstPercent}%</span>
                 <span style={{ ...styles.col, flex: '0 0 50px' }}>
-                  <span style={{ ...styles.statusDot, backgroundColor: p.isActive ? '#22c55e' : '#ef4444' }} />
+                  <span style={{ ...styles.statusDot, backgroundColor: p.isActive ? 'var(--success)' : 'var(--danger)' }} />
                 </span>
                 <span style={{ ...styles.col, flex: '0 0 80px', gap: 4 }}>
-                  <button onClick={() => setEditProduct(p)} style={styles.rowBtn} title="Edit">✎</button>
+                  <button onClick={() => setEditProduct(p)} className="inv-row-btn" style={styles.rowBtn} title="Edit" aria-label={`Edit ${p.name}`}>✎</button>
                 </span>
               </div>
             ))}
@@ -282,6 +284,8 @@ const ProductModal: React.FC<{
 
   // Computed costRate for display
   const computedCostRate = (retailPrice || 0) - (purchaseRate || 0) * margin;
+  // NOTE (pre-existing): this formula matches the legacy ERP's margin-derived cost
+  // rate. Displayed read-only; not modified in this UI-only step.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -377,7 +381,7 @@ const ProductModal: React.FC<{
             </div>
             <div style={styles.field}>
               <label style={styles.label}>Cost Rate (auto)</label>
-              <input type="number" value={computedCostRate.toFixed(2)} style={{ ...styles.input, backgroundColor: '#f1f5f9', color: '#475569' }} readOnly />
+              <input type="number" value={computedCostRate.toFixed(2)} style={{ ...styles.input, backgroundColor: 'var(--surface-2)', color: 'var(--text-secondary)' }} readOnly />
             </div>
             <div style={styles.field}>
               <label style={styles.label}>Trade Disc %</label>
@@ -432,11 +436,11 @@ const ProductModal: React.FC<{
           </div>
           {error && <div style={styles.error}>{error}</div>}
           <div style={styles.modalActions}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
+            <button type="button" onClick={onClose} className="inv-btn-tool" style={styles.cancelBtn}>Cancel</button>
             {isEdit && onDeactivate && (
-              <button type="button" onClick={onDeactivate} style={{ ...styles.cancelBtn, color: '#dc2626', borderColor: '#fecaca' }}>Deactivate</button>
+              <button type="button" onClick={onDeactivate} style={{ ...styles.cancelBtn, color: 'var(--danger)', borderColor: 'var(--danger-soft)' }}>Deactivate</button>
             )}
-            <button type="submit" style={styles.primaryBtn} disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Update Item' : 'Create Item'}</button>
+            <button type="submit" className="inv-btn-primary" style={styles.primaryBtn} disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Update Item' : 'Create Item'}</button>
           </div>
         </form>
       </div>
@@ -558,15 +562,15 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       {/* Stats */}
       <div style={styles.statsBar}>
         <div style={styles.statChip}>
-          <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{stats.totalProducts}</span>
+          <span style={{ ...styles.statDot, backgroundColor: 'var(--info-soft)', color: 'var(--info-fg)' }}>{stats.totalProducts}</span>
           <span style={styles.statLabel}>Products</span>
         </div>
         <div style={styles.statChip}>
-          <span style={{ ...styles.statDot, backgroundColor: '#dcfce7', color: '#15803d' }}>{fmtInt(stats.totalQty)}</span>
+          <span style={{ ...styles.statDot, backgroundColor: 'var(--success-soft)', color: 'var(--success-fg)' }}>{fmtInt(stats.totalQty)}</span>
           <span style={styles.statLabel}>Total Qty</span>
         </div>
         <div style={styles.statChip}>
-          <span style={styles.statLabel}>Total Value: <strong style={{ color: '#1d4ed8' }}>PKR {fmt(stats.totalValue)}</strong></span>
+          <span style={styles.statLabel}>Total Value: <strong style={{ color: 'var(--accent-strong)' }}>PKR {fmt(stats.totalValue)}</strong></span>
         </div>
       </div>
 
@@ -614,13 +618,16 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                     <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
                       {agg.levels.length > 0 ? fmt(agg.levels[0].unitCost) : '—'}
                     </span>
-                    <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: '#1d4ed8' }}>
+                    <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: 'var(--accent-strong)' }}>
                       {fmt(agg.totalValue)}
                     </span>
                     <span style={{ ...styles.col, flex: '0 0 60px' }}>
                       <button
                         onClick={() => toggleExpand(productId)}
+                        className="inv-expand"
                         style={styles.expandBtn}
+                        aria-label={expandedProduct === productId ? 'Collapse details' : 'Expand details'}
+                        aria-expanded={expandedProduct === productId}
                       >
                         {expandedProduct === productId ? '▼' : '▶'}
                       </button>
@@ -651,20 +658,20 @@ const StockBalancesTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                         );
                       })}
                       {batches.length > 0 && (
-                        <div style={{ padding: '8px 16px', borderTop: '1px solid #e2e8f0' }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Batches:</span>
+                        <div style={{ padding: '8px 16px', borderTop: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Batches:</span>
                           {batches.map(b => (
-                            <span key={b.id} style={{ marginLeft: 8, fontSize: 12, color: '#475569' }}>
+                            <span key={b.id} style={{ marginLeft: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
                               {b.batchNumber} ({b.quantityOnHand})
                             </span>
                           ))}
                         </div>
                       )}
                       {serials.length > 0 && (
-                        <div style={{ padding: '8px 16px', borderTop: '1px solid #e2e8f0' }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Serials:</span>
+                        <div style={{ padding: '8px 16px', borderTop: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Serials:</span>
                           {serials.map(s => (
-                            <span key={s.id} style={{ marginLeft: 8, fontSize: 12, color: '#475569' }}>
+                            <span key={s.id} style={{ marginLeft: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
                               {s.serialNumber} ({s.status})
                             </span>
                           ))}
@@ -766,11 +773,11 @@ const StockBWATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             ))}
           </select>
         </div>
-        <button onClick={generate} style={styles.primaryBtn} disabled={loading || !startDate || !endDate || startDate > endDate}>
+        <button onClick={generate} className="inv-btn-primary" style={styles.primaryBtn} disabled={loading || !startDate || !endDate || startDate > endDate}>
           {loading ? 'Generating...' : 'Generate Report'}
         </button>
         {report && (
-          <button onClick={exportCsv} style={styles.cancelBtn}>Export CSV</button>
+          <button onClick={exportCsv} className="inv-btn-tool" style={styles.cancelBtn}>Export CSV</button>
         )}
       </div>
 
@@ -785,14 +792,14 @@ const StockBWATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             {/* Stats */}
             <div style={{ ...styles.treeHeader, minWidth: 1060 }}>
               <span style={styles.statChip}>
-                <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{report.rows.length}</span>
+                <span style={{ ...styles.statDot, backgroundColor: 'var(--info-soft)', color: 'var(--info-fg)' }}>{report.rows.length}</span>
                 <span style={styles.statLabel}>Products</span>
               </span>
               <span style={styles.statChip}>
-                <span style={styles.statLabel}>Opening: <strong style={{ color: '#1d4ed8' }}>{fmtInt(report.totalOpeningQty)}</strong></span>
+                <span style={styles.statLabel}>Opening: <strong style={{ color: 'var(--inv-open)' }}>{fmtInt(report.totalOpeningQty)}</strong></span>
               </span>
               <span style={styles.statChip}>
-                <span style={styles.statLabel}>Closing: <strong style={{ color: '#15803d' }}>{fmtInt(report.totalClosingQty)}</strong></span>
+                <span style={styles.statLabel}>Closing: <strong style={{ color: 'var(--inv-grn)' }}>{fmtInt(report.totalClosingQty)}</strong></span>
               </span>
             </div>
 
@@ -816,31 +823,31 @@ const StockBWATab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               <div key={r.productId} style={{ ...styles.voucherRow, minWidth: 1060 }}>
                 <span style={{ ...styles.col, flex: '0 0 80px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{r.productCode}</span>
                 <span style={{ ...styles.col, flex: '1' }}>{r.productName}</span>
-                <span style={{ ...styles.col, flex: '0 0 50px', fontSize: 12, color: '#64748b' }}>{r.unit}</span>
-                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.openingQty > 0 ? '#1d4ed8' : '#cbd5e1' }}>{r.openingQty > 0 ? fmtInt(r.openingQty) : ''}</span>
-                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.grnQty > 0 ? '#15803d' : '#cbd5e1' }}>{r.grnQty > 0 ? fmtInt(r.grnQty) : ''}</span>
-                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.issueQty > 0 ? '#dc2626' : '#cbd5e1' }}>{r.issueQty > 0 ? fmtInt(r.issueQty) : ''}</span>
-                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.returnQty > 0 ? '#7c3aed' : '#cbd5e1' }}>{r.returnQty > 0 ? fmtInt(r.returnQty) : ''}</span>
-                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.adjustmentQty !== 0 ? '#b45309' : '#cbd5e1' }}>{r.adjustmentQty !== 0 ? fmtInt(r.adjustmentQty) : ''}</span>
-                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.transferInQty > 0 ? '#2563eb' : '#cbd5e1' }}>{r.transferInQty > 0 ? fmtInt(r.transferInQty) : ''}</span>
-                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.transferOutQty > 0 ? '#9333ea' : '#cbd5e1' }}>{r.transferOutQty > 0 ? fmtInt(r.transferOutQty) : ''}</span>
-                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{fmtInt(r.closingQty)}</span>
+                <span style={{ ...styles.col, flex: '0 0 50px', fontSize: 12, color: 'var(--text-muted)' }}>{r.unit}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.openingQty > 0 ? 'var(--inv-open)' : 'var(--fin-num-muted)' }}>{r.openingQty > 0 ? fmtInt(r.openingQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.grnQty > 0 ? 'var(--inv-grn)' : 'var(--fin-num-muted)' }}>{r.grnQty > 0 ? fmtInt(r.grnQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.issueQty > 0 ? 'var(--inv-issue)' : 'var(--fin-num-muted)' }}>{r.issueQty > 0 ? fmtInt(r.issueQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.returnQty > 0 ? 'var(--inv-return)' : 'var(--fin-num-muted)' }}>{r.returnQty > 0 ? fmtInt(r.returnQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.adjustmentQty !== 0 ? 'var(--inv-adjust)' : 'var(--fin-num-muted)' }}>{r.adjustmentQty !== 0 ? fmtInt(r.adjustmentQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.transferInQty > 0 ? 'var(--inv-trf-in)' : 'var(--fin-num-muted)' }}>{r.transferInQty > 0 ? fmtInt(r.transferInQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, color: r.transferOutQty > 0 ? 'var(--inv-trf-out)' : 'var(--fin-num-muted)' }}>{r.transferOutQty > 0 ? fmtInt(r.transferOutQty) : ''}</span>
+                <span style={{ ...styles.col, flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 600, color: 'var(--inv-closing)' }}>{fmtInt(r.closingQty)}</span>
               </div>
             ))}
 
             {/* Totals */}
-            <div style={{ ...styles.linesFooter, minWidth: 1060, borderTop: '2px solid #e2e8f0' }}>
-              <span style={{ flex: '0 0 80px', fontWeight: 600, color: '#475569', fontSize: 13 }}>Total</span>
+            <div style={{ ...styles.linesFooter, minWidth: 1060, borderTop: '2px solid var(--border)' }}>
+              <span style={{ flex: '0 0 80px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 13 }}>Total</span>
               <span style={{ flex: '1' }}></span>
               <span style={{ flex: '0 0 50px' }}></span>
-              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#1d4ed8', fontSize: 13 }}>{fmtInt(report.totalOpeningQty)}</span>
-              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#15803d', fontSize: 13 }}>{fmtInt(report.totalGrnQty)}</span>
-              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#dc2626', fontSize: 13 }}>{fmtInt(report.totalIssueQty)}</span>
-              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#7c3aed', fontSize: 13 }}>{fmtInt(report.totalReturnQty)}</span>
-              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#b45309', fontSize: 13 }}>{fmtInt(report.totalAdjustmentQty)}</span>
-              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2563eb', fontSize: 13 }}>{fmtInt(report.totalTransferInQty)}</span>
-              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#9333ea', fontSize: 13 }}>{fmtInt(report.totalTransferOutQty)}</span>
-              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#1e293b', fontSize: 13 }}>{fmtInt(report.totalClosingQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--inv-open)', fontSize: 13 }}>{fmtInt(report.totalOpeningQty)}</span>
+              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--inv-grn)', fontSize: 13 }}>{fmtInt(report.totalGrnQty)}</span>
+              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--inv-issue)', fontSize: 13 }}>{fmtInt(report.totalIssueQty)}</span>
+              <span style={{ flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--inv-return)', fontSize: 13 }}>{fmtInt(report.totalReturnQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--inv-adjust)', fontSize: 13 }}>{fmtInt(report.totalAdjustmentQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--inv-trf-in)', fontSize: 13 }}>{fmtInt(report.totalTransferInQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: 'var(--inv-trf-out)', fontSize: 13 }}>{fmtInt(report.totalTransferOutQty)}</span>
+              <span style={{ flex: '0 0 70px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: 'var(--inv-closing)', fontSize: 13 }}>{fmtInt(report.totalClosingQty)}</span>
             </div>
           </>
         )}
@@ -935,7 +942,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       <div className="section-header-responsive" style={styles.sectionHeader}>
         <div style={styles.statsBar}>
           <div style={styles.statChip}>
-            <span style={{ ...styles.statDot, backgroundColor: '#f1f5f9', color: '#475569' }}>{stats.total}</span>
+            <span style={{ ...styles.statDot, backgroundColor: 'var(--neutral-soft)', color: 'var(--neutral-fg)' }}>{stats.total}</span>
             <span style={styles.statLabel}>Total</span>
           </div>
           <div style={styles.statChip}>
@@ -947,18 +954,18 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             <span style={styles.statLabel}>Posted</span>
           </div>
         </div>
-        <button onClick={() => setShowCreate(true)} style={styles.primaryBtn}>+ New Movement</button>
+        <button onClick={() => setShowCreate(true)} className="inv-btn-primary" style={styles.primaryBtn}>+ New Movement</button>
       </div>
 
       {/* Filters */}
       <div className="toolbar-responsive" style={styles.toolbar}>
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as StockMovementType | '')} style={styles.filterSelect}>
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as StockMovementType | '')} className="inv-select" style={styles.filterSelect}>
           <option value="">All Types</option>
           {(Object.keys(STOCK_MOVEMENT_TYPE_LABELS) as StockMovementType[]).map(t => (
             <option key={t} value={t}>{STOCK_MOVEMENT_TYPE_LABELS[t]}</option>
           ))}
         </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StockMovementStatus | '')} style={styles.filterSelect}>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StockMovementStatus | '')} className="inv-select" style={styles.filterSelect}>
           <option value="">All Statuses</option>
           <option value="DRAFT">Draft</option>
           <option value="POSTED">Posted</option>
@@ -993,8 +1000,8 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               const prod = productMap.get(m.productId);
               const fromWh = m.fromWarehouseId ? warehouseMap.get(m.fromWarehouseId) : null;
               const toWh = m.toWarehouseId ? warehouseMap.get(m.toWarehouseId) : null;
-              const typeColor = MOVEMENT_TYPE_COLORS[m.movementType] ?? { bg: '#f1f5f9', fg: '#475569' };
-              const statusColor = MOVEMENT_STATUS_COLORS[m.status] ?? { bg: '#f1f5f9', fg: '#475569' };
+              const typeColor = MOVEMENT_TYPE_COLORS[m.movementType] ?? { bg: 'var(--neutral-soft)', fg: 'var(--neutral-fg)' };
+              const statusColor = MOVEMENT_STATUS_COLORS[m.status] ?? { bg: 'var(--neutral-soft)', fg: 'var(--neutral-fg)' };
 
               return (
                 <div key={m.id} style={{ ...styles.voucherRow, minWidth: 1070 }}>
@@ -1004,9 +1011,7 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                       {m.movementType}
                     </span>
                   </span>
-                  <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{prod?.name ?? '—'}</span>
-                  <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 12, color: '#64748b' }}>{fromWh?.code ?? '—'}</span>
-                  <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 12, color: '#64748b' }}>{toWh?.code ?? '—'}</span>
+                  <span style={{ ...styles.col, flex: '1', fontSize: 13 }}>{prod?.name ?? '—'}</span>                          <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 12, color: 'var(--text-muted)' }}>{fromWh?.code ?? '—'}</span>                          <span style={{ ...styles.col, flex: '0 0 100px', fontSize: 12, color: 'var(--text-muted)' }}>{toWh?.code ?? '—'}</span>
                   <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmtInt(m.quantity)}</span>
                   <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(m.unitCost)}</span>
                   <span style={{ ...styles.col, flex: '0 0 100px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 500 }}>{fmt(m.totalCost)}</span>
@@ -1020,13 +1025,17 @@ const MovementsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                       <>
                         <button
                           onClick={() => handlePost(m.id)}
-                          style={{ ...styles.rowBtn, color: '#16a34a', borderColor: '#bbf7d0' }}
+                          className="inv-row-btn"
+                          style={{ ...styles.rowBtn, color: 'var(--success)', borderColor: 'var(--success-soft)' }}
                           title="Post"
+                          aria-label={`Post movement ${m.id}`}
                         >✓</button>
                         <button
                           onClick={() => handleCancel(m.id)}
-                          style={{ ...styles.rowBtn, color: '#dc2626', borderColor: '#fecaca' }}
+                          className="inv-row-btn inv-row-btn--danger"
+                          style={{ ...styles.rowBtn, color: 'var(--danger)', borderColor: 'var(--danger-soft)' }}
                           title="Cancel"
+                          aria-label={`Cancel movement ${m.id}`}
                         >✕</button>
                       </>
                     )}
@@ -1115,7 +1124,7 @@ const CreateMovementModal: React.FC<{
           <div className="responsive-form-row" style={styles.formRow}>
             <div style={styles.field}>
               <label style={styles.label}>Movement Type</label>
-              <select value={movementType} onChange={e => setMovementType(e.target.value as StockMovementType)} style={styles.select}>
+              <select value={movementType} onChange={e => setMovementType(e.target.value as StockMovementType)} className="inv-select" style={styles.select}>
                 {(Object.keys(STOCK_MOVEMENT_TYPE_LABELS) as StockMovementType[]).map(t => (
                   <option key={t} value={t}>{STOCK_MOVEMENT_TYPE_LABELS[t]}</option>
                 ))}
@@ -1129,7 +1138,7 @@ const CreateMovementModal: React.FC<{
 
           <div style={styles.field}>
             <label style={styles.label}>Product</label>
-            <select value={productId} onChange={e => handleProductChange(e.target.value)} style={styles.select}>
+            <select value={productId} onChange={e => handleProductChange(e.target.value)} className="inv-select" style={styles.select}>
               <option value="">Select product...</option>
               {products.filter(p => p.isActive).map(p => (
                 <option key={p.id} value={p.id}>{p.sku} — {p.name}</option>
@@ -1168,7 +1177,7 @@ const CreateMovementModal: React.FC<{
               <input
                 type="text"
                 value={`PKR ${fmt(totalCost)}`}
-                style={{ ...styles.input, backgroundColor: '#f8fafc' }}
+                style={{ ...styles.input, backgroundColor: 'var(--surface-2)', color: 'var(--text-secondary)' }}
                 readOnly
               />
             </div>
@@ -1187,8 +1196,8 @@ const CreateMovementModal: React.FC<{
           {error && <div style={styles.error}>{error}</div>}
 
           <div style={styles.modalActions}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>Cancel</button>
-            <button type="submit" style={styles.primaryBtn} disabled={saving}>
+            <button type="button" onClick={onClose} className="inv-btn-tool" style={styles.cancelBtn}>Cancel</button>
+            <button type="submit" className="inv-btn-primary" style={styles.primaryBtn} disabled={saving}>
               {saving ? 'Creating...' : 'Create Movement'}
             </button>
           </div>
@@ -1203,51 +1212,51 @@ const CreateMovementModal: React.FC<{
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
-  title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#64748b' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
+  title: { fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: 'var(--text-muted)' },
 
-  tabBar: { display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 20 },
-  tab: { padding: '10px 20px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 14, fontWeight: 500, color: '#64748b', cursor: 'pointer', marginBottom: -2 },
-  tabActive: { color: '#2563eb', borderBottomColor: '#2563eb' },
+  tabBar: { display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', marginBottom: 20 },
+  tab: { padding: '10px 20px', background: 'none', border: 'none', borderBottom: '2px solid transparent', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', cursor: 'pointer', marginBottom: -2 },
+  tabActive: { color: 'var(--accent)', borderBottomColor: 'var(--accent)' },
 
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   statsBar: { display: 'flex', gap: 12, flexWrap: 'wrap' },
-  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569' },
+  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' },
   statDot: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, fontWeight: 600, fontSize: 12 },
 
   toolbar: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
-  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  filterSelect: { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
+  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', background: 'var(--surface)', color: 'var(--text-primary)' },
+  filterSelect: { padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' },
 
-  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)' },
+  card: { backgroundColor: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' },
 
-  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14 },
+  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid var(--border)', backgroundColor: 'var(--surface-2)', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', fontSize: 14 },
   col: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
 
-  expandBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#64748b', padding: '2px 4px' },
+  expandBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: 'var(--text-muted)', padding: '2px 4px' },
   typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
-  rowBtn: { background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+  rowBtn: { background: 'none', border: '1px solid var(--border)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
 
-  primaryBtn: { padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  cancelBtn: { padding: '10px 20px', backgroundColor: '#fff', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
+  primaryBtn: { padding: '10px 20px', backgroundColor: 'var(--accent)', color: 'var(--accent-contrast)', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  cancelBtn: { padding: '10px 20px', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
 
-  empty: { padding: 40, textAlign: 'center' as const, color: '#94a3b8', fontSize: 14 },
+  empty: { padding: 40, textAlign: 'center' as const, color: 'var(--text-disabled)', fontSize: 14 },
 
-  linesContainer: { backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' },
-  linesHeader: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #e2e8f0', fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  lineRow: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid #f1f5f9', fontSize: 14, alignItems: 'center' },
+  linesContainer: { backgroundColor: 'var(--surface-2)', borderBottom: '2px solid var(--border)' },
+  linesHeader: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  lineRow: { display: 'flex', padding: '6px 16px 6px 32px', borderBottom: '1px solid var(--border-subtle)', fontSize: 14, alignItems: 'center' },
 
-  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { backgroundColor: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgb(0 0 0 / 0.2)' },
-  modalTitle: { fontSize: 20, fontWeight: 700, color: '#1e293b', marginBottom: 16 },
+  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  modal: { backgroundColor: 'var(--surface)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'auto', boxShadow: 'var(--shadow-lg)' },
+  modalTitle: { fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   formRow: { display: 'flex', gap: 16 },
   field: { display: 'flex', flexDirection: 'column', gap: 6, flex: 1 },
-  label: { fontSize: 13, fontWeight: 500, color: '#374151' },
-  input: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  select: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
-  error: { padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: 13 },
+  label: { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' },
+  input: { padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', background: 'var(--surface)', color: 'var(--text-primary)' },
+  select: { padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' },
+  error: { padding: '10px 14px', backgroundColor: 'var(--tint-bad)', border: '1px solid var(--tint-bad-border)', borderRadius: 8, color: 'var(--danger)', fontSize: 13 },
   modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
 };

@@ -64,6 +64,7 @@ export class StockReportService {
 
     // Build per-product activity aggregates
     const productActivity = new Map<string, {
+      openingStockGrn: number;
       openingGrn: number;
       openingIssue: number;
       openingReturn: number;
@@ -71,6 +72,7 @@ export class StockReportService {
       openingAdjNeg: number;
       openingTransferIn: number;
       openingTransferOut: number;
+      periodOpeningStock: number;
       periodGrn: number;
       periodIssue: number;
       periodReturn: number;
@@ -82,10 +84,10 @@ export class StockReportService {
 
     for (const p of targetProducts) {
       productActivity.set(p.id, {
-        openingGrn: 0, openingIssue: 0, openingReturn: 0,
+        openingStockGrn: 0, openingGrn: 0, openingIssue: 0, openingReturn: 0,
         openingAdjPos: 0, openingAdjNeg: 0,
         openingTransferIn: 0, openingTransferOut: 0,
-        periodGrn: 0, periodIssue: 0, periodReturn: 0,
+        periodOpeningStock: 0, periodGrn: 0, periodIssue: 0, periodReturn: 0,
         periodAdjPos: 0, periodAdjNeg: 0,
         periodTransferIn: 0, periodTransferOut: 0,
       });
@@ -143,11 +145,18 @@ export class StockReportService {
           }
           break;
         }
+        case 'OPENING': {
+          // Opening stock is a separate column — track it independently
+          if (isBeforeStart) target.openingStockGrn += mov.quantity;
+          else target.periodOpeningStock += mov.quantity;
+          break;
+        }
       }
     }
 
     // Build report rows
     const rows: StockBWARow[] = [];
+    let totalOpeningStockQty = 0;
     let totalOpeningQty = 0;
     let totalGrnQty = 0;
     let totalIssueQty = 0;
@@ -159,6 +168,8 @@ export class StockReportService {
 
     for (const p of targetProducts) {
       const act = productActivity.get(p.id)!;
+
+      const openingStockQty = r2(act.openingStockGrn);
 
       // Opening = GRN + Return + AdjPos + TransferIn - Issue - AdjNeg - TransferOut
       const openingQty = r2(
@@ -174,7 +185,7 @@ export class StockReportService {
       const transferOutQty = r2(act.periodTransferOut);
 
       const closingQty = r2(
-        openingQty + grnQty + returnQty + adjustmentQty + transferInQty - issueQty - transferOutQty
+        openingStockQty + openingQty + grnQty + returnQty + adjustmentQty + transferInQty - issueQty - transferOutQty
       );
 
       rows.push({
@@ -182,6 +193,7 @@ export class StockReportService {
         productCode: p.sku,
         productName: p.name,
         unit: p.unit,
+        openingStockQty,
         openingQty,
         grnQty,
         issueQty,
@@ -192,6 +204,7 @@ export class StockReportService {
         closingQty,
       });
 
+      totalOpeningStockQty += openingStockQty;
       totalOpeningQty += openingQty;
       totalGrnQty += grnQty;
       totalIssueQty += issueQty;
@@ -209,6 +222,7 @@ export class StockReportService {
       startDate: filter.startDate,
       endDate: filter.endDate,
       rows,
+      totalOpeningStockQty: r2(totalOpeningStockQty),
       totalOpeningQty: r2(totalOpeningQty),
       totalGrnQty: r2(totalGrnQty),
       totalIssueQty: r2(totalIssueQty),

@@ -416,6 +416,34 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
           }
           break;
         }
+
+        case 'OPENING': {
+          // Opening stock: SET (not add) the quantity on hand for a product/warehouse.
+          // Guard: caller MUST check no OPENING movement already exists for this product/warehouse.
+          const targetWarehouseId = movement.fromWarehouseId ?? movement.toWarehouseId;
+          if (!targetWarehouseId) throw new Error('Warehouse required for OPENING');
+
+          const existing = await client.query(
+            `SELECT id FROM stock_levels
+             WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3 FOR UPDATE`,
+            [tenantId, movement.productId, targetWarehouseId]
+          );
+
+          if (existing.rows.length === 0) {
+            await client.query(
+              `INSERT INTO stock_levels (id, tenant_id, product_id, warehouse_id, quantity_on_hand, quantity_reserved, unit_cost)
+               VALUES ($1, $2, $3, $4, $5, 0, $6)`,
+              [uuid(), tenantId, movement.productId, targetWarehouseId, movement.quantity, movement.unitCost]
+            );
+          } else {
+            await client.query(
+              `UPDATE stock_levels SET quantity_on_hand = $1, unit_cost = $2, updated_at = NOW()
+               WHERE tenant_id = $3 AND product_id = $4 AND warehouse_id = $5`,
+              [movement.quantity, movement.unitCost, tenantId, movement.productId, targetWarehouseId]
+            );
+          }
+          break;
+        }
       }
 
       await client.query('COMMIT');
@@ -492,6 +520,18 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
             if (targetWarehouseId) {
               await client.query(
                 `UPDATE stock_levels SET quantity_on_hand = 0, updated_at = NOW()
+                 WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3`,
+                [tenantId, movement.productId, targetWarehouseId]
+              );
+            }
+            break;
+          }
+          case 'OPENING': {
+            // Reversing opening stock sets quantity to 0 (same as ADJUSTMENT)
+            const targetWarehouseId = movement.fromWarehouseId ?? movement.toWarehouseId;
+            if (targetWarehouseId) {
+              await client.query(
+                `UPDATE stock_levels SET quantity_on_hand = 0, unit_cost = 0, updated_at = NOW()
                  WHERE tenant_id = $1 AND product_id = $2 AND warehouse_id = $3`,
                 [tenantId, movement.productId, targetWarehouseId]
               );
