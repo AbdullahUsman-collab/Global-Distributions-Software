@@ -352,8 +352,6 @@ export class SalesService {
    */
   async postSaleBill(tenantId: string, voucherId: string, role: SystemRoleName = 'ADMIN'): Promise<VoucherHeader> {
     requirePermission(role, Permissions.SALES_POST);
-    // Post the voucher (generates LedgerEntry records)
-    const postedVoucher = await this.voucherRepo.postVoucher(tenantId, voucherId);
 
     // Get the voucher lines to extract product/quantity data
     const voucherLines = await this.voucherRepo.getVoucherLines(tenantId, voucherId);
@@ -362,18 +360,40 @@ export class SalesService {
     const products = await this.inventoryRepo.getProducts(tenantId);
     const productMap = new Map(products.map(p => [p.id, p]));
 
+    // Get stock levels for all products — used for both validation and movement creation
+    const allStockLevels = await this.inventoryRepo.getStockLevels(tenantId);
+
+    // Validate sufficient stock BEFORE posting the voucher.
+    // This prevents posting a voucher with no matching stock movements.
+    for (const line of voucherLines) {
+      if (line.productId && line.quantity && line.quantity > 0) {
+        const productLevels = allStockLevels.filter(sl => sl.productId === line.productId);
+        const totalAvailable = productLevels.reduce((sum, sl) => sum + sl.quantityOnHand, 0);
+
+        if (totalAvailable < line.quantity) {
+          const product = productMap.get(line.productId);
+          const productName = product?.name ?? line.productId;
+          throw new Error(
+            `Insufficient stock for "${productName}": available ${totalAvailable}, requested ${line.quantity}`
+          );
+        }
+      }
+    }
+
+    // All stock checks passed — now post the voucher (creates LedgerEntry records)
+    const postedVoucher = await this.voucherRepo.postVoucher(tenantId, voucherId);
+
     // Calculate total COGS for GL posting
     let totalCogs = 0;
 
     // Create stock ISSUE movements for lines with product references
     for (const line of voucherLines) {
       if (line.productId && line.quantity && line.quantity > 0) {
-        // Get the stock level to find the source warehouse and current cost
-        const stockLevels = await this.inventoryRepo.getStockLevels(tenantId);
-        const productLevels = stockLevels.filter(sl => sl.productId === line.productId);
+        const productLevels = allStockLevels.filter(sl => sl.productId === line.productId);
 
-        // Use the first available warehouse with stock
-        const sourceLevel = productLevels.find(sl => sl.quantityOnHand >= line.quantity);
+        // Find the best warehouse: prefer one with enough stock
+        const sourceLevel = productLevels.find(sl => sl.quantityOnHand >= line.quantity)
+          ?? productLevels[0];
 
         // Get the product's Cost_rate for COGS calculation
         const product = productMap.get(line.productId);
@@ -404,7 +424,6 @@ export class SalesService {
           const createdMovement = await this.inventoryRepo.createStockMovement(tenantId, movement);
           await this.inventoryRepo.postStockMovement(tenantId, createdMovement.id);
         }
-        // If no stock available, log but don't fail — legacy doesn't verify stock sufficiency
       }
     }
 

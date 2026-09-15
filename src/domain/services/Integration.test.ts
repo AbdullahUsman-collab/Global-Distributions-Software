@@ -167,7 +167,7 @@ describe('End-to-End Integration', () => {
       const stockAfter = await inventoryRepo.getStockLevels(TENANT_ID);
       const productStock = stockAfter.find(s => s.productId === product.id);
       expect(productStock).toBeDefined();
-      expect(productStock!.quantityOnHand).toBeLessThan(100);
+      expect(productStock!.quantityOnHand).toBeLessThan(1000);
     });
 
     it('posted SV cannot be deleted', async () => {
@@ -232,8 +232,8 @@ describe('End-to-End Integration', () => {
       const stockAfter = await inventoryRepo.getStockLevels(TENANT_ID);
       const productStock = stockAfter.find(s => s.productId === product.id);
       expect(productStock).toBeDefined();
-      // Seed starts at 100 for wh-1, GRN adds 10 → should be 110
-      expect(productStock!.quantityOnHand).toBe(110);
+      // Seed starts at 1000 for wh-1, GRN adds 10 → should be 1010
+      expect(productStock!.quantityOnHand).toBe(1010);
     });
 
     it('posted PV cannot be deleted', async () => {

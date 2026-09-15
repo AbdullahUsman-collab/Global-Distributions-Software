@@ -270,7 +270,7 @@ export function createMockInventoryRepo(products: Product[] = SEED_PRODUCTS): II
       tenantId: TENANT_ID,
       productId: p.id,
       warehouseId: 'wh-1',
-      quantityOnHand: 100,
+      quantityOnHand: 1000,
       quantityReserved: 0,
       unitCost: p.purchaseRate,
       reorderLevel: 10,

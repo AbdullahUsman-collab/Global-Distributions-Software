@@ -312,12 +312,12 @@ describe('DashboardService', () => {
     it('returns correct totals from seed stock levels', async () => {
       const data = await service.getDashboardData(TENANT_ID, 'month');
       expect(data.inventory.totalProducts).toBe(SEED_PRODUCTS.length);
-      expect(data.inventory.totalStockQty).toBe(100 * SEED_PRODUCTS.length); // 100 each
+      expect(data.inventory.totalStockQty).toBe(1000 * SEED_PRODUCTS.length); // 1000 each
     });
 
     it('calculates stock value from quantity * unitCost', async () => {
       const data = await service.getDashboardData(TENANT_ID, 'month');
-      const expectedValue = SEED_PRODUCTS.reduce((s, p) => s + 100 * p.purchaseRate, 0);
+      const expectedValue = SEED_PRODUCTS.reduce((s, p) => s + 1000 * p.purchaseRate, 0);
       expect(data.inventory.totalStockValue).toBe(expectedValue);
     });
   });
