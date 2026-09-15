@@ -55,7 +55,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--dash-bg)',
   },
   main: {
     display: 'flex',

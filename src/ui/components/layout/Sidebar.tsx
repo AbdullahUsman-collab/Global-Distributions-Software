@@ -185,8 +185,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             onClick={onClose}
             style={{
               ...styles.navItem,
-              backgroundColor: isActive(item.path) ? '#eff6ff' : 'transparent',
-              color: isActive(item.path) ? '#2563eb' : '#64748b',
+              backgroundColor: isActive(item.path) ? 'var(--accent-soft)' : 'transparent',
+              color: isActive(item.path) ? 'var(--accent-soft-contrast)' : 'var(--text-muted)',
             }}
           >
             <span style={styles.navIcon}>{item.icon}</span>
@@ -205,8 +205,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
 const styles: { [key: string]: React.CSSProperties } = {
   sidebar: {
     height: 'calc(100vh - 64px)',
-    backgroundColor: '#ffffff',
-    borderRight: '1px solid #e2e8f0',
+    backgroundColor: 'var(--surface)',
+    borderRight: '1px solid var(--border)',
     display: 'flex',
     flexDirection: 'column',
     width: '240px',
@@ -253,11 +253,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   footer: {
     padding: '16px',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border)',
   },
   footerText: {
     fontSize: '12px',
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     textAlign: 'center',
   },
 };

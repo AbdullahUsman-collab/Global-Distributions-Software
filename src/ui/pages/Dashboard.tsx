@@ -1,15 +1,15 @@
 /**
- * Dashboard Page
+ * Dashboard Page — Step 88A UI modernization
  * Operational overview with real ERP data.
  *
- * Features:
- * - KPI cards (Sales, Purchases, Receivables, Payables, Inventory, Cash)
- * - Period filter (Today, Week, Month, Quarter, Year, Custom)
- * - Recent transactions
- * - Receivables/Payables aging summary
- * - Quick actions
- *
- * All data sourced from existing services — no duplicate accounting logic.
+ * Step 88A notes (UI-only modernization):
+ * - Same data source (getDashboard → DashboardService), same period logic,
+ *   same navigation targets, same refresh events — behavior is unchanged.
+ * - Presentation now consumes the design-token system (src/ui/styles/theme.css)
+ *   so the page supports light/dark mode and brand-derived accent colors.
+ * - Tables adapt to stacked cards on narrow screens; type/status colors keep the
+ *   same semantics (status chips now also surface the existing `status` field).
+ * - No business values, calculations, queries, or tenant handling were changed.
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -39,15 +39,18 @@ const PERIOD_OPTIONS: { key: DashboardPeriod; label: string }[] = [
   { key: 'custom', label: 'Custom' },
 ];
 
-const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
-  SV: { bg: '#dbeafe', fg: '#1d4ed8' },
-  PV: { bg: '#dcfce7', fg: '#166534' },
-  SRV: { bg: '#fef3c7', fg: '#92400e' },
-  PRV: { bg: '#fce7f3', fg: '#9d174d' },
-  CR: { bg: '#d1fae5', fg: '#065f46' },
-  CP: { bg: '#fee2e2', fg: '#991b1b' },
-  JV: { bg: '#f3e8ff', fg: '#6b21a8' },
+/** Voucher-type badge colors: light mode keeps the original palette; dark mode
+ *  uses the equivalent token set for readability. */
+const TYPE_STYLES: Record<string, { light: { bg: string; fg: string }; dark: { bg: string; fg: string }; className: string }> = {
+  SV:  { light: { bg: '#dbeafe', fg: '#1d4ed8' }, dark: { bg: '#172b4a', fg: '#93c5fd' }, className: 'type-badge--sv' },
+  PV:  { light: { bg: '#dcfce7', fg: '#166534' }, dark: { bg: '#052e16', fg: '#4ade80' }, className: 'type-badge--pv' },
+  SRV: { light: { bg: '#fef3c7', fg: '#92400e' }, dark: { bg: '#451a03', fg: '#fbbf24' }, className: 'type-badge--srv' },
+  PRV: { light: { bg: '#fce7f3', fg: '#9d174d' }, dark: { bg: '#500724', fg: '#f9a8d4' }, className: 'type-badge--prv' },
+  CR:  { light: { bg: '#d1fae5', fg: '#065f46' }, dark: { bg: '#06281c', fg: '#6ee7b7' }, className: 'type-badge--cr' },
+  CP:  { light: { bg: '#fee2e2', fg: '#991b1b' }, dark: { bg: '#450a0a', fg: '#fca5a5' }, className: 'type-badge--cp' },
+  JV:  { light: { bg: '#f3e8ff', fg: '#6b21a8' }, dark: { bg: '#3b1d54', fg: '#d8b4fe' }, className: 'type-badge--jv' },
 };
+const TYPE_FALLBACK = { light: { bg: '#f1f5f9', fg: '#475569' }, dark: { bg: '#273549', fg: '#cbd5e1' }, className: 'type-badge--other' };
 
 const TYPE_LABELS: Record<string, string> = {
   SV: 'Sale',
@@ -59,9 +62,21 @@ const TYPE_LABELS: Record<string, string> = {
   JV: 'Journal',
 };
 
+const STATUS_STYLES: Record<string, string> = {
+  POSTED: 'status-chip--posted',
+  DRAFT: 'status-chip--draft',
+  CANCELLED: 'status-chip--cancelled',
+};
+
 /* ═══════════════════════════════════════════════════════════ */
 /* Main Dashboard Component                                    */
 /* ═══════════════════════════════════════════════════════════ */
+
+function greetingForHour(hour: number): string {
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export const Dashboard: React.FC = () => {
   const { user, tenant } = useAuth();
@@ -100,63 +115,123 @@ export const Dashboard: React.FC = () => {
     'payment-posted', 'payment-deleted',
   ]);
 
+  const today = new Date();
+  const todayLabel = today.toLocaleDateString('en-PK', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+  const periodLabel = PERIOD_OPTIONS.find(p => p.key === period)?.label ?? 'Custom';
+
   return (
-    <div className="page-pad dashboard-page" style={styles.page}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Dashboard</h1>
-          <p style={styles.subtitle}>{tenant.brandName} — {user.displayName}</p>
+    <div className="page-pad dashboard-page">
+      {/* Welcome / brand area */}
+      <div className="dash-welcome">
+        <div className="dash-welcome-main">
+          <div className="dash-welcome-brandmark" style={{ backgroundColor: tenant.primaryColor }} aria-hidden="true">
+            {tenant.brandName.charAt(0)}
+          </div>
+          <div className="dash-welcome-text">
+            <h1 className="dash-welcome-title">
+              {greetingForHour(today.getHours())}, {user.displayName}
+            </h1>
+            <p className="dash-welcome-subtitle">
+              <span className="dash-welcome-brand" style={{ color: tenant.primaryColor }}>
+                {tenant.brandName}
+              </span>
+              <span className="dash-welcome-sep" aria-hidden="true">·</span>
+              <span>{todayLabel}</span>
+            </p>
+          </div>
         </div>
+        {!loading && !error && data && (
+          <span className="dash-period-chip" title="Currently viewing data for this period">
+            {periodLabel}
+            {period === 'custom' && customStart && customEnd ? `: ${customStart} → ${customEnd}` : ''}
+          </span>
+        )}
       </div>
 
       {/* Period Filter */}
-      <div className="dashboard-period-bar" style={styles.periodBar}>
-        <div className="dashboard-period-tabs" style={styles.periodTabs}>
+      <div className="dashboard-period-bar dash-filter-bar">
+        <div className="dashboard-period-tabs dash-period-tabs" role="radiogroup" aria-label="Dashboard period">
           {PERIOD_OPTIONS.map(p => (
             <button
               key={p.key}
+              type="button"
+              role="radio"
+              aria-checked={period === p.key}
               onClick={() => setPeriod(p.key)}
-              style={{
-                ...styles.periodTab,
-                ...(period === p.key ? styles.periodTabActive : {}),
-              }}
+              className={`dash-period-tab ${period === p.key ? 'dash-period-tab--active' : ''}`}
             >
               {p.label}
             </button>
           ))}
         </div>
         {period === 'custom' && (
-          <div className="dashboard-custom-range" style={styles.customRange}>
+          <div className="dashboard-custom-range dash-custom-range">
             <input
               type="date"
               value={customStart}
               onChange={e => setCustomStart(e.target.value)}
-              style={styles.dateInput}
+              className="dash-date-input"
+              aria-label="Custom range start date"
             />
-            <span style={styles.dateSep}>to</span>
+            <span className="dash-date-sep" aria-hidden="true">to</span>
             <input
               type="date"
               value={customEnd}
               onChange={e => setCustomEnd(e.target.value)}
-              style={styles.dateInput}
+              className="dash-date-input"
+              aria-label="Custom range end date"
             />
           </div>
         )}
       </div>
 
-      {/* Loading State */}
+      {/* Loading State — skeleton layout */}
       {loading && (
-        <div style={styles.loadingBox}>
-          <p style={styles.loadingText}>Loading dashboard data...</p>
+        <div className="dash-skeletons" aria-busy="true" aria-live="polite">
+          <span className="sr-only">Loading dashboard data…</span>
+          <div className="dashboard-kpi-grid dash-kpi-grid">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="dash-card dash-kpi-card dash-kpi-card--static">
+                <div className="skeleton dash-skel-icon" />
+                <div className="dash-skel-lines">
+                  <div className="skeleton dash-skel-line dash-skel-line--sm" />
+                  <div className="skeleton dash-skel-line dash-skel-line--lg" />
+                  <div className="skeleton dash-skel-line dash-skel-line--sm" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="dashboard-two-col dash-two-col">
+            <div className="dash-card">
+              <div className="skeleton dash-skel-line dash-skel-line--md" />
+              <div className="dash-skel-rows">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="skeleton dash-skel-line dash-skel-line--row" />
+                ))}
+              </div>
+            </div>
+            <div className="dash-card">
+              <div className="skeleton dash-skel-line dash-skel-line--md" />
+              <div className="dash-skel-rows">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="skeleton dash-skel-line dash-skel-line--row" />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Error State */}
       {error && !loading && (
-        <div style={styles.errorBox}>
-          <p style={styles.errorText}>{error}</p>
-          <button onClick={loadData} style={styles.retryBtn}>Retry</button>
+        <div className="dash-error" role="alert">
+          <svg className="dash-error-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8a1 1 0 011 1v4a1 1 0 11-2 0V9a1 1 0 011-1zm0 8a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+          </svg>
+          <p className="dash-error-text">{error}</p>
+          <button type="button" onClick={loadData} className="dash-retry-btn">Retry</button>
         </div>
       )}
 
@@ -164,11 +239,10 @@ export const Dashboard: React.FC = () => {
       {!loading && !error && data && (
         <>
           {/* KPI Cards */}
-          <div className="dashboard-kpi-grid" style={styles.kpiGrid}>
+          <div className="dashboard-kpi-grid dash-kpi-grid">
             <KpiCardComponent
               card={data.sales}
-              iconBg="#dbeafe"
-              iconColor="#2563eb"
+              tone="sales"
               onClick={() => navigate('/bills')}
               icon={
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -179,8 +253,7 @@ export const Dashboard: React.FC = () => {
             />
             <KpiCardComponent
               card={data.purchases}
-              iconBg="#dcfce7"
-              iconColor="#16a34a"
+              tone="purchases"
               onClick={() => navigate('/bills')}
               icon={
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -190,8 +263,7 @@ export const Dashboard: React.FC = () => {
             />
             <KpiCardComponent
               card={{ label: 'Receivables', amount: (data.receivables ?? {}).grandTotal ?? 0, count: 0 }}
-              iconBg="#fef3c7"
-              iconColor="#d97706"
+              tone="receivables"
               onClick={() => navigate('/aging')}
               icon={
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -202,8 +274,7 @@ export const Dashboard: React.FC = () => {
             />
             <KpiCardComponent
               card={{ label: 'Payables', amount: (data.payables ?? {}).grandTotal ?? 0, count: 0 }}
-              iconBg="#fce7f3"
-              iconColor="#be185d"
+              tone="payables"
               onClick={() => navigate('/aging')}
               icon={
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -219,8 +290,7 @@ export const Dashboard: React.FC = () => {
                 count: (data.inventory ?? {}).totalProducts ?? 0,
                 secondary: (data.inventory ?? {}).totalStockQty ?? 0,
               }}
-              iconBg="#f0fdf4"
-              iconColor="#15803d"
+              tone="inventory"
               onClick={() => navigate('/inventory')}
               icon={
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -234,8 +304,7 @@ export const Dashboard: React.FC = () => {
                 amount: (data.cashPosition ?? {}).totalBalance ?? 0,
                 count: (data.cashPosition ?? {}).accountCount ?? 0,
               }}
-              iconBg="#ede9fe"
-              iconColor="#7c3aed"
+              tone="cash"
               onClick={() => navigate('/cash-book')}
               icon={
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -246,145 +315,173 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {/* Sales vs Purchases + Aging Summary Row */}
-          <div className="dashboard-two-col" style={styles.twoCol}>
+          <div className="dashboard-two-col dash-two-col">
             {/* Sales vs Purchases */}
-            <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Sales vs Purchases</h2>
-              <div style={styles.svPurchaseGrid}>
+            <section className="dash-card">
+              <h2 className="dash-card-title">Sales vs Purchases</h2>
+              <div className="dash-summary-list">
                 <SummaryRow label="Sales" amount={(data.sales ?? {}).amount ?? 0} count={(data.sales ?? {}).count ?? 0} color="#1d4ed8" />
                 <SummaryRow label="Purchases" amount={(data.purchases ?? {}).amount ?? 0} count={(data.purchases ?? {}).count ?? 0} color="#166534" />
                 <SummaryRow label="Sale Returns" amount={(data.saleReturns ?? {}).amount ?? 0} count={(data.saleReturns ?? {}).count ?? 0} color="#92400e" />
                 <SummaryRow label="Purchase Returns" amount={(data.purchaseReturns ?? {}).amount ?? 0} count={(data.purchaseReturns ?? {}).count ?? 0} color="#9d174d" />
               </div>
-            </div>
+            </section>
 
             {/* Aging Summary */}
-            <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Aging Summary</h2>
+            <section className="dash-card">
+              <h2 className="dash-card-title">Aging Summary</h2>
               <AgingSummaryCompact
                 receivables={data.receivables}
                 payables={data.payables}
                 onNavigate={() => navigate('/aging')}
               />
-            </div>
+            </section>
           </div>
 
           {/* Recent Transactions + Quick Actions Row */}
-          <div className="dashboard-two-col" style={styles.twoCol}>
+          <div className="dashboard-two-col dash-two-col">
             {/* Recent Transactions */}
-            <div style={styles.card}>
-              <div style={styles.cardHeader}>
-                <h2 style={styles.cardTitle}>Recent Transactions</h2>
-                <button onClick={() => navigate('/bills')} style={styles.viewAllBtn}>
+            <section className="dash-card">
+              <div className="dash-card-header">
+                <h2 className="dash-card-title dash-card-title--flush">Recent Transactions</h2>
+                <button type="button" onClick={() => navigate('/bills')} className="dash-view-all-btn">
                   View All
                 </button>
               </div>
               {data.recentTransactions.length === 0 ? (
-                <p style={styles.emptyText}>No transactions in this period.</p>
+                <div className="dash-empty">
+                  <svg width="28" height="28" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                  </svg>
+                  <p>No transactions in this period.</p>
+                </div>
               ) : (
-                <div className="table-wrap" style={styles.tableWrap}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th style={styles.th}>Type</th>
-                        <th style={styles.th}>Date</th>
-                        <th style={styles.th}>Party</th>
-                        <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.recentTransactions.map(t => {
-                        const colors = TYPE_COLORS[t.voucherType] || { bg: '#f1f5f9', fg: '#475569' };
-                        return (
+                <>
+                  {/* Desktop / tablet table */}
+                  <div className="table-wrap dash-table-wrap">
+                    <table className="dash-table">
+                      <thead>
+                        <tr>
+                          <th style={thStyle}>Type</th>
+                          <th style={thStyle}>Date</th>
+                          <th style={thStyle}>Party</th>
+                          <th style={{ ...thStyle, textAlign: 'right' }}>Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.recentTransactions.map(t => (
                           <tr
                             key={t.id}
-                            style={{ ...styles.tr, cursor: 'pointer' }}
+                            className="dash-tr"
+                            tabIndex={0}
                             onClick={() => navigate(`/bills/${t.id}`)}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/bills/${t.id}`); } }}
+                            aria-label={`Open ${TYPE_LABELS[t.voucherType] || t.voucherType} ${t.voucherNumber}`}
                           >
-                            <td style={styles.td}>
-                              <span style={{ ...styles.typeBadge, backgroundColor: colors.bg, color: colors.fg }}>
-                                {TYPE_LABELS[t.voucherType] || t.voucherType}
-                              </span>
+                            <td style={tdStyle}>
+                              <TypeBadge voucherType={t.voucherType} />
                             </td>
-                            <td style={styles.td}>{t.date}</td>
-                            <td style={styles.td}>{t.partyName || '—'}</td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                            <td style={tdStyle}>{t.date}</td>
+                            <td style={tdStyle}>{t.partyName || '—'}</td>
+                            <td style={{ ...tdStyle, textAlign: 'right', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                               {fmtCurrency(t.total)}
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Mobile stacked transaction cards */}
+                  <div className="dash-tx-cards">
+                    {data.recentTransactions.map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        className="dash-tx-card"
+                        onClick={() => navigate(`/bills/${t.id}`)}
+                      >
+                        <div className="dash-tx-card-top">
+                          <TypeBadge voucherType={t.voucherType} />
+                          <StatusChip status={t.status} />
+                        </div>
+                        <div className="dash-tx-card-mid">
+                          <span className="dash-tx-card-party">{t.partyName || '—'}</span>
+                          <span className="dash-tx-card-amount">{fmtCurrency(t.total)}</span>
+                        </div>
+                        <div className="dash-tx-card-date">{t.date}</div>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
-            </div>
+            </section>
 
             {/* Quick Actions */}
-            <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Quick Actions</h2>
-              <div style={styles.actionsGrid}>
-                <QuickAction label="New Sale" path="/sales" color="#dbeafe" iconColor="#2563eb"
+            <section className="dash-card">
+              <h2 className="dash-card-title">Quick Actions</h2>
+              <div className="dash-actions-grid">
+                <QuickAction label="New Sale" tone="sales"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/sales')}
                 />
-                <QuickAction label="New Purchase" path="/purchases" color="#dcfce7" iconColor="#16a34a"
+                <QuickAction label="New Purchase" tone="purchases"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/purchases')}
                 />
-                <QuickAction label="Sale Return" path="/sales" color="#fef3c7" iconColor="#92400e"
+                <QuickAction label="Sale Return" tone="returns"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/sales')}
                 />
-                <QuickAction label="Purchase Return" path="/purchases" color="#fce7f3" iconColor="#9d174d"
+                <QuickAction label="Purchase Return" tone="prv"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/purchases')}
                 />
-                <QuickAction label="Receipt" path="/customer-receipts" color="#d1fae5" iconColor="#065f46"
+                <QuickAction label="Receipt" tone="receipt"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/customer-receipts')}
                 />
-                <QuickAction label="Cash Book" path="/cash-book" color="#ede9fe" iconColor="#7c3aed"
+                <QuickAction label="Cash Book" tone="cash"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/cash-book')}
                 />
-                <QuickAction label="Journal" path="/finance" color="#f3e8ff" iconColor="#6b21a8"
+                <QuickAction label="Journal" tone="journal"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/finance')}
                 />
-                <QuickAction label="View Bills" path="/bills" color="#f1f5f9" iconColor="#475569"
+                <QuickAction label="View Bills" tone="neutral"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/bills')}
                 />
-                <QuickAction label="Aging Report" path="/aging" color="#fef3c7" iconColor="#92400e"
+                <QuickAction label="Aging Report" tone="aging"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/aging')}
                 />
-                <QuickAction label="Finance" path="/finance" color="#dbeafe" iconColor="#2563eb"
+                <QuickAction label="Finance" tone="sales"
                   icon={<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" /></svg>}
                   onClick={() => navigate('/finance')}
                 />
               </div>
-            </div>
+            </section>
           </div>
         </>
       )}
 
-      {/* Responsive CSS */}
+      {/* Responsive CSS (scoped to dashboard classes) */}
       <style>{`
-        .dashboard-page { max-width: 1400px; }
+        .dashboard-page { max-width: 1400px; margin: 0 auto; padding-top: 8px; }
         .dashboard-period-bar { display: flex; flex-direction: column; gap: 12px; }
         .dashboard-period-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
         .dashboard-custom-range { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .dashboard-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .dashboard-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
         .dashboard-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
         @media (max-width: 1024px) {
           .dashboard-two-col { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
-          .dashboard-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+          .dashboard-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
           .dashboard-period-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+          .dashboard-two-col { gap: 16px; }
         }
         @media (max-width: 480px) {
           .dashboard-kpi-grid { grid-template-columns: 1fr; }
@@ -398,27 +495,73 @@ export const Dashboard: React.FC = () => {
 /* Sub-components                                              */
 /* ═══════════════════════════════════════════════════════════ */
 
+const thStyle: React.CSSProperties = {
+  textAlign: 'left',
+  color: 'var(--dash-table-head-fg)',
+  backgroundColor: 'var(--dash-table-head-bg)',
+  fontWeight: 600,
+  fontSize: '11px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  whiteSpace: 'nowrap',
+  padding: '10px 14px',
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '11px 14px',
+  color: 'var(--text-primary)',
+  whiteSpace: 'nowrap',
+  borderBottom: '1px solid var(--dash-table-row-border)',
+};
+
+const KPI_TONES: Record<string, { iconBgLight: string; iconFg: string; iconBgDark: string; iconFgDark: string }> = {
+  sales:       { iconBgLight: '#dbeafe', iconFg: '#2563eb', iconBgDark: '#172b4a', iconFgDark: '#93c5fd' },
+  purchases:   { iconBgLight: '#dcfce7', iconFg: '#16a34a', iconBgDark: '#052e16', iconFgDark: '#4ade80' },
+  receivables: { iconBgLight: '#fef3c7', iconFg: '#d97706', iconBgDark: '#451a03', iconFgDark: '#fbbf24' },
+  payables:    { iconBgLight: '#fce7f3', iconFg: '#be185d', iconBgDark: '#500724', iconFgDark: '#f9a8d4' },
+  inventory:   { iconBgLight: '#f0fdf4', iconFg: '#15803d', iconBgDark: '#06281c', iconFgDark: '#6ee7b7' },
+  cash:        { iconBgLight: '#ede9fe', iconFg: '#7c3aed', iconBgDark: '#3b1d54', iconFgDark: '#d8b4fe' },
+};
+
 const KpiCardComponent: React.FC<{
   card: KpiCard;
-  iconBg: string;
-  iconColor: string;
+  tone: keyof typeof KPI_TONES;
   icon: React.ReactNode;
   onClick: () => void;
-}> = ({ card, iconBg, iconColor, icon, onClick }) => (
-  <button onClick={onClick} style={styles.kpiCard}>
-    <div style={{ ...styles.kpiIcon, backgroundColor: iconBg, color: iconColor }}>
-      {icon}
-    </div>
-    <div style={styles.kpiContent}>
-      <span style={styles.kpiLabel}>{card.label}</span>
-      <span style={styles.kpiAmount}>{fmtCurrency(card.amount)}</span>
-      <span style={styles.kpiMeta}>
-        {card.count > 0 && `${card.count} transactions`}
-        {card.secondary !== undefined && card.secondary > 0 && ` · ${fmt(card.secondary)} units`}
+}> = ({ card, tone, icon, onClick }) => {
+  return (
+    <button type="button" onClick={onClick} className="dash-card dash-kpi-card" aria-label={`${card.label}: ${fmtCurrency(card.amount)} — view details`}>
+      <div className={`dash-kpi-icon dash-tone-${tone}`}>{icon}</div>
+      <div className="dash-kpi-content">
+        <span className="dash-kpi-label">{card.label}</span>
+        <span className="dash-kpi-amount">{fmtCurrency(card.amount)}</span>
+        <span className="dash-kpi-meta">
+          {card.count > 0 && `${card.count} transactions`}
+          {card.secondary !== undefined && card.secondary > 0 && ` · ${fmt(card.secondary)} units`}
+        </span>
+      </div>
+      <span className="dash-kpi-arrow" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" clipRule="evenodd" />
+        </svg>
       </span>
-    </div>
-  </button>
-);
+    </button>
+  );
+};
+
+const TypeBadge: React.FC<{ voucherType: string }> = ({ voucherType }) => {
+  const t = TYPE_STYLES[voucherType] || TYPE_FALLBACK;
+  return (
+    <span className={`dash-type-badge ${t.className}`}>
+      {TYPE_LABELS[voucherType] || voucherType}
+    </span>
+  );
+};
+
+const StatusChip: React.FC<{ status: string }> = ({ status }) => {
+  if (!status) return null;
+  return <span className={`dash-status-chip ${STATUS_STYLES[status] || 'status-chip--other'}`}>{status}</span>;
+};
 
 const SummaryRow: React.FC<{
   label: string;
@@ -426,14 +569,14 @@ const SummaryRow: React.FC<{
   count: number;
   color: string;
 }> = ({ label, amount, count, color }) => (
-  <div style={styles.summaryRow}>
-    <div style={styles.summaryLeft}>
-      <span style={{ ...styles.summaryDot, backgroundColor: color }} />
-      <span style={styles.summaryLabel}>{label}</span>
+  <div className="dash-summary-row">
+    <div className="dash-summary-left">
+      <span className="dash-summary-dot" style={{ backgroundColor: color }} aria-hidden="true" />
+      <span className="dash-summary-label">{label}</span>
     </div>
-    <div style={styles.summaryRight}>
-      <span style={styles.summaryAmount}>{fmtCurrency(amount)}</span>
-      {count > 0 && <span style={styles.summaryCount}>{count}</span>}
+    <div className="dash-summary-right">
+      <span className="dash-summary-amount">{fmtCurrency(amount)}</span>
+      {count > 0 && <span className="dash-summary-count">{count}</span>}
     </div>
   </div>
 );
@@ -443,17 +586,20 @@ const AgingSummaryCompact: React.FC<{
   payables: AgingSummary;
   onNavigate: () => void;
 }> = ({ receivables, payables, onNavigate }) => (
-  <div style={styles.agingContainer}>
-    <div style={styles.agingSection}>
-      <h3 style={styles.agingTitle}>Receivables</h3>
+  <div className="dash-aging">
+    <div className="dash-aging-section">
+      <h3 className="dash-aging-title">Receivables</h3>
       <AgingBar summary={receivables} color="#2563eb" />
     </div>
-    <div style={styles.agingSection}>
-      <h3 style={styles.agingTitle}>Payables</h3>
+    <div className="dash-aging-section">
+      <h3 className="dash-aging-title">Payables</h3>
       <AgingBar summary={payables} color="#be185d" />
     </div>
-    <button onClick={onNavigate} style={styles.agingLink}>
-      View Full Aging Report →
+    <button type="button" onClick={onNavigate} className="dash-aging-link">
+      View Full Aging Report
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" clipRule="evenodd" />
+      </svg>
     </button>
   </div>
 );
@@ -463,7 +609,7 @@ const AgingBar: React.FC<{
   color: string;
 }> = ({ summary, color }) => {
   const total = summary.grandTotal;
-  if (total === 0) return <p style={styles.emptyText}>No outstanding balances</p>;
+  if (total === 0) return <p className="dash-empty-text">No outstanding balances</p>;
 
   const segments = [
     { label: 'Current', value: summary.current },
@@ -476,7 +622,7 @@ const AgingBar: React.FC<{
 
   return (
     <>
-      <div style={styles.agingBarOuter}>
+      <div className="dash-aging-bar" role="img" aria-label={`Aging: ${segments.map(s => `${s.label} ${fmtCurrency(s.value)}`).join(', ')}`}>
         {segments.map((seg, i) => {
           const width = (seg.value / total) * 100;
           const opacity = 1 - (i * 0.12);
@@ -494,9 +640,9 @@ const AgingBar: React.FC<{
           );
         })}
       </div>
-      <div style={styles.agingChips}>
+      <div className="dash-aging-chips">
         {segments.map(seg => (
-          <span key={seg.label} style={styles.agingChip}>
+          <span key={seg.label} className="dash-aging-chip">
             {seg.label}: {fmtCurrency(seg.value)}
           </span>
         ))}
@@ -505,359 +651,28 @@ const AgingBar: React.FC<{
   );
 };
 
+const ACTION_TONES: Record<string, { bg: string; fg: string; bgDark: string; fgDark: string }> = {
+  sales:     { bg: '#dbeafe', fg: '#2563eb', bgDark: '#172b4a', fgDark: '#93c5fd' },
+  purchases: { bg: '#dcfce7', fg: '#16a34a', bgDark: '#052e16', fgDark: '#4ade80' },
+  returns:   { bg: '#fef3c7', fg: '#92400e', bgDark: '#451a03', fgDark: '#fbbf24' },
+  prv:       { bg: '#fce7f3', fg: '#9d174d', bgDark: '#500724', fgDark: '#f9a8d4' },
+  receipt:   { bg: '#d1fae5', fg: '#065f46', bgDark: '#06281c', fgDark: '#6ee7b7' },
+  cash:      { bg: '#ede9fe', fg: '#7c3aed', bgDark: '#3b1d54', fgDark: '#d8b4fe' },
+  journal:   { bg: '#f3e8ff', fg: '#6b21a8', bgDark: '#3b1d54', fgDark: '#d8b4fe' },
+  neutral:   { bg: '#f1f5f9', fg: '#475569', bgDark: '#273549', fgDark: '#cbd5e1' },
+  aging:     { bg: '#fef3c7', fg: '#92400e', bgDark: '#451a03', fgDark: '#fbbf24' },
+};
+
 const QuickAction: React.FC<{
   label: string;
-  path: string;
-  color: string;
-  iconColor: string;
+  tone: keyof typeof ACTION_TONES;
   icon: React.ReactNode;
   onClick: () => void;
-}> = ({ label, color, iconColor, icon, onClick }) => (
-  <button onClick={onClick} style={styles.actionBtn}>
-    <div style={{ ...styles.actionIcon, backgroundColor: color, color: iconColor }}>
+}> = ({ label, tone, icon, onClick }) => (
+  <button type="button" onClick={onClick} className="dash-action-btn">
+    <span className={`dash-action-icon dash-tone-${tone}`}>
       {icon}
-    </div>
-    <span style={styles.actionLabel}>{label}</span>
+    </span>
+    <span className="dash-action-label">{label}</span>
   </button>
 );
-
-/* ═══════════════════════════════════════════════════════════ */
-/* Styles                                                      */
-/* ═══════════════════════════════════════════════════════════ */
-
-const styles: { [key: string]: React.CSSProperties } = {
-  page: {
-    padding: '24px',
-    maxWidth: '1400px',
-    margin: '0 auto',
-  },
-  header: {
-    marginBottom: '24px',
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#1e293b',
-    margin: 0,
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#64748b',
-    marginTop: '4px',
-  },
-  periodBar: {
-    marginBottom: '24px',
-  },
-  periodTabs: {
-    display: 'flex',
-    gap: '4px',
-    flexWrap: 'wrap',
-  },
-  periodTab: {
-    padding: '6px 14px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '6px',
-    backgroundColor: '#ffffff',
-    color: '#64748b',
-    fontSize: '13px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  periodTabActive: {
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
-    borderColor: '#2563eb',
-  },
-  customRange: {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  dateInput: {
-    padding: '6px 10px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '6px',
-    fontSize: '13px',
-  },
-  dateSep: {
-    color: '#94a3b8',
-    fontSize: '13px',
-  },
-  loadingBox: {
-    textAlign: 'center',
-    padding: '64px 24px',
-  },
-  loadingText: {
-    color: '#94a3b8',
-    fontSize: '14px',
-  },
-  errorBox: {
-    textAlign: 'center',
-    padding: '48px 24px',
-    backgroundColor: '#fef2f2',
-    borderRadius: '12px',
-    border: '1px solid #fecaca',
-  },
-  errorText: {
-    color: '#991b1b',
-    fontSize: '14px',
-    marginBottom: '12px',
-  },
-  retryBtn: {
-    padding: '8px 16px',
-    backgroundColor: '#dc2626',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
-  kpiGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px',
-    marginBottom: '24px',
-  },
-  kpiCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '16px',
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0',
-    cursor: 'pointer',
-    textAlign: 'left',
-    width: '100%',
-    font: 'inherit',
-  },
-  kpiIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  kpiContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    minWidth: 0,
-  },
-  kpiLabel: {
-    fontSize: '12px',
-    color: '#64748b',
-    fontWeight: '500',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-  },
-  kpiAmount: {
-    fontSize: '20px',
-    fontWeight: '700',
-    color: '#1e293b',
-    fontFamily: 'monospace',
-    lineHeight: '1.2',
-  },
-  kpiMeta: {
-    fontSize: '11px',
-    color: '#94a3b8',
-    marginTop: '2px',
-  },
-  twoCol: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '24px',
-    marginBottom: '24px',
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    padding: '20px',
-    border: '1px solid #e2e8f0',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
-  },
-  cardTitle: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '16px',
-  },
-  viewAllBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#2563eb',
-    fontSize: '13px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    padding: 0,
-    marginBottom: '16px',
-  },
-  svPurchaseGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  summaryRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '8px 0',
-    borderBottom: '1px solid #f1f5f9',
-  },
-  summaryLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  summaryDot: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-  },
-  summaryLabel: {
-    fontSize: '13px',
-    color: '#475569',
-  },
-  summaryRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  summaryAmount: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1e293b',
-    fontFamily: 'monospace',
-  },
-  summaryCount: {
-    fontSize: '11px',
-    color: '#94a3b8',
-    backgroundColor: '#f1f5f9',
-    padding: '2px 6px',
-    borderRadius: '10px',
-  },
-  agingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  agingSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-  agingTitle: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#475569',
-    margin: 0,
-  },
-  agingBarOuter: {
-    display: 'flex',
-    height: '8px',
-    borderRadius: '4px',
-    overflow: 'hidden',
-    backgroundColor: '#f1f5f9',
-  },
-  agingChips: {
-    display: 'flex',
-    gap: '6px',
-    flexWrap: 'wrap',
-  },
-  agingChip: {
-    fontSize: '11px',
-    color: '#64748b',
-    backgroundColor: '#f8fafc',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    border: '1px solid #e2e8f0',
-  },
-  agingLink: {
-    background: 'none',
-    border: 'none',
-    color: '#2563eb',
-    fontSize: '13px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    padding: 0,
-    textAlign: 'left',
-  },
-  emptyText: {
-    fontSize: '13px',
-    color: '#94a3b8',
-    textAlign: 'center',
-    padding: '16px 0',
-  },
-  tableWrap: {
-    overflowX: 'auto',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    fontSize: '13px',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '8px 10px',
-    borderBottom: '1px solid #e2e8f0',
-    color: '#64748b',
-    fontWeight: '600',
-    fontSize: '11px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-    whiteSpace: 'nowrap',
-  },
-  tr: {
-    borderBottom: '1px solid #f1f5f9',
-  },
-  td: {
-    padding: '8px 10px',
-    color: '#1e293b',
-    whiteSpace: 'nowrap',
-  },
-  typeBadge: {
-    display: 'inline-block',
-    padding: '2px 8px',
-    borderRadius: '10px',
-    fontSize: '11px',
-    fontWeight: '500',
-  },
-  actionsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '8px',
-  },
-  actionBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 12px',
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    font: 'inherit',
-    textAlign: 'left',
-    fontSize: '13px',
-    color: '#475569',
-  },
-  actionIcon: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '6px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  actionLabel: {
-    fontWeight: '500',
-  },
-};

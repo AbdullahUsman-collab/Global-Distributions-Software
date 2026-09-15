@@ -1,0 +1,869 @@
+/**
+ * Design Tokens — Light & Dark
+ * First theme system for the ERP UI (Step 88A, Dashboard modernization).
+ *
+ * Layers:
+ *  1. Light tokens (:root) — application defaults
+ *  2. Dark tokens  ([data-theme="dark"]) — intentionally designed dark palette
+ *  3. Brand layer  — accent tokens derived from tenant.primaryColor
+ *                    (set by lib/theme.ts per active brand; light + dark variants)
+ *  4. Dashboard component tokens — consumed by src/ui/pages/Dashboard.tsx
+ *
+ * Theme resolution (per lib/theme.ts):
+ *  1. Active brand/tenant accent (brand layer)
+ *  2. Light/dark mode (data-theme attribute; persisted, system-aware)
+ *  3. Application defaults (:root light tokens)
+ *
+ * IMPORTANT: tokens only — no business styles, no layout overrides for other pages.
+ */
+
+/* ─── 1. Light tokens (application defaults) ─────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
+  --surface-raised: #ffffff;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-disabled: #94a3b8;
+
+  /* Borders */
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-subtle: #eef2f7;
+
+  /* Accent (application default = original UI blue) */
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-softer: #dbeafe;
+  --accent-contrast: #ffffff;
+  --accent-soft-contrast: #1d4ed8;
+
+  /* Status colors */
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --success-fg: #166534;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --warning-fg: #92400e;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --danger-fg: #991b1b;
+  --info-soft: #dbeafe;
+  --info-fg: #1d4ed8;
+  --neutral-soft: #f1f5f9;
+  --neutral-fg: #475569;
+  --purple-soft: #f3e8ff;
+  --purple-fg: #6b21a8;
+  --green-soft: #d1fae5;
+  --green-fg: #065f46;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+  --shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 10px 40px -10px rgb(15 23 42 / 0.18);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Motion */
+  --motion-fast: 0.15s ease;
+  --motion: 0.2s ease;
+
+  /* Dashboard component tokens (light values) */
+  --dash-bg: #f8fafc;
+  --dash-card: #ffffff;
+  --dash-table-head-bg: #f1f5f9;
+  --dash-table-head-fg: #64748b;
+  --dash-table-row-hover: #f8fafc;
+  --dash-table-border: #eef2f7;
+  --dash-table-row-border: #f1f5f9;
+  --dash-kpi-hover-shadow: 0 8px 24px -8px rgb(15 23 42 / 0.12);
+}
+
+/* ─── 2. Dark tokens — intentionally designed, not an inversion ──────────── */
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces: deep blue-grey, cards elevated one step */
+  --surface: #0f172a;
+  --surface-2: #1e293b;
+  --surface-3: #273549;
+  --surface-raised: #1e293b;
+
+  /* Text */
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-disabled: #64748b;
+
+  /* Borders */
+  --border: #334155;
+  --border-strong: #475569;
+  --border-subtle: #293545;
+
+  /* Accent: lighter for contrast on dark */
+  --accent: #3b82f6;
+  --accent-strong: #60a5fa;
+  --accent-soft: #1e3a5f;
+  --accent-softer: #172b4a;
+  --accent-contrast: #ffffff;
+  --accent-soft-contrast: #93c5fd;
+
+  /* Status: brighter on dark surfaces */
+  --success: #4ade80;
+  --success-soft: #052e16;
+  --success-fg: #4ade80;
+  --warning: #fbbf24;
+  --warning-soft: #451a03;
+  --warning-fg: #fbbf24;
+  --danger: #f87171;
+  --danger-soft: #450a0a;
+  --danger-fg: #fca5a5;
+  --info-soft: #172b4a;
+  --info-fg: #93c5fd;
+  --neutral-soft: #273549;
+  --neutral-fg: #cbd5e1;
+  --purple-soft: #3b1d54;
+  --purple-fg: #d8b4fe;
+  --green-soft: #06281c;
+  --green-fg: #6ee7b7;
+
+  /* Shadows: deeper but restrained */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 40px -10px rgb(0 0 0 / 0.6);
+
+  /* Dashboard component tokens (dark values) */
+  --dash-bg: #0b1220;
+  --dash-card: #1e293b;
+  --dash-table-head-bg: #273549;
+  --dash-table-head-fg: #94a3b8;
+  --dash-table-row-hover: #24334a;
+  --dash-table-border: #293545;
+  --dash-table-row-border: #273549;
+  --dash-kpi-hover-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.5);
+}
+
+/* ─── 3. Brand accent layer (set inline by lib/theme.ts from tenant config) ─
+ * The style element #brand-theme overrides --accent* per active brand, with a
+ * computed dark-mode variant. If a brand has no color configured, these
+ * variables are left untouched and the application defaults apply.
+ * -------------------------------------------------------------------------- */
+
+/* ─── 4. Accessibility ────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print: always print light regardless of active theme */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* 5. Dashboard components (Step 88A) — classes prefixed "dash-"           */
+/*    Consumed only by src/ui/pages/Dashboard.tsx                          */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Welcome / brand area ── */
+
+.dash-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.dash-welcome-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dash-welcome-brandmark {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-welcome-text {
+  min-width: 0;
+}
+
+.dash-welcome-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.dash-welcome-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dash-welcome-brand {
+  font-weight: 600;
+}
+
+.dash-welcome-sep {
+  color: var(--text-disabled);
+}
+
+.dash-period-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-soft-contrast);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* ── Cards ── */
+
+.dash-card {
+  background: var(--dash-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.dash-card-title--flush {
+  margin-bottom: 0;
+}
+
+.dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+/* ── Period filter ── */
+
+.dash-filter-bar {
+  margin-bottom: 24px;
+}
+
+.dash-period-tab {
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  background: var(--dash-card);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 999px;
+  transition: background var(--motion-fast), color var(--motion-fast), border-color var(--motion-fast);
+}
+
+.dash-period-tab:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.dash-period-tab--active,
+.dash-period-tab--active:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.dash-date-input {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--dash-card);
+  color: var(--text-primary);
+}
+
+.dash-date-sep {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── KPI cards ── */
+
+.dash-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  transition: transform var(--motion-fast), box-shadow var(--motion), border-color var(--motion-fast);
+}
+
+.dash-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--dash-kpi-hover-shadow);
+  border-color: var(--border-strong);
+}
+
+.dash-kpi-card--static:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-kpi-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dash-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dash-kpi-amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-kpi-meta {
+  font-size: 11px;
+  color: var(--text-disabled);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-kpi-arrow {
+  margin-left: auto;
+  color: var(--text-disabled);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--motion-fast), transform var(--motion-fast);
+  flex-shrink: 0;
+}
+
+.dash-kpi-card:hover .dash-kpi-arrow,
+.dash-kpi-card:focus-visible .dash-kpi-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--accent);
+}
+
+/* KPI / quick-action tone palette (light values; dark overrides below) */
+
+.dash-tone-sales       { background-color: #dbeafe; color: #2563eb; }
+.dash-tone-purchases   { background-color: #dcfce7; color: #16a34a; }
+.dash-tone-receivables { background-color: #fef3c7; color: #d97706; }
+.dash-tone-payables    { background-color: #fce7f3; color: #be185d; }
+.dash-tone-inventory   { background-color: #f0fdf4; color: #15803d; }
+.dash-tone-cash        { background-color: #ede9fe; color: #7c3aed; }
+.dash-tone-returns     { background-color: #fef3c7; color: #92400e; }
+.dash-tone-prv         { background-color: #fce7f3; color: #9d174d; }
+.dash-tone-receipt     { background-color: #d1fae5; color: #065f46; }
+.dash-tone-journal     { background-color: #f3e8ff; color: #6b21a8; }
+.dash-tone-neutral     { background-color: #f1f5f9; color: #475569; }
+.dash-tone-aging       { background-color: #fef3c7; color: #92400e; }
+
+[data-theme='dark'] .dash-tone-sales       { background-color: #172b4a; color: #93c5fd; }
+[data-theme='dark'] .dash-tone-purchases   { background-color: #052e16; color: #4ade80; }
+[data-theme='dark'] .dash-tone-receivables { background-color: #451a03; color: #fbbf24; }
+[data-theme='dark'] .dash-tone-payables    { background-color: #500724; color: #f9a8d4; }
+[data-theme='dark'] .dash-tone-inventory   { background-color: #06281c; color: #6ee7b7; }
+[data-theme='dark'] .dash-tone-cash        { background-color: #3b1d54; color: #d8b4fe; }
+[data-theme='dark'] .dash-tone-returns     { background-color: #451a03; color: #fbbf24; }
+[data-theme='dark'] .dash-tone-prv         { background-color: #500724; color: #f9a8d4; }
+[data-theme='dark'] .dash-tone-receipt     { background-color: #06281c; color: #6ee7b7; }
+[data-theme='dark'] .dash-tone-journal     { background-color: #3b1d54; color: #d8b4fe; }
+[data-theme='dark'] .dash-tone-neutral     { background-color: #273549; color: #cbd5e1; }
+[data-theme='dark'] .dash-tone-aging       { background-color: #451a03; color: #fbbf24; }
+
+/* ── Sales vs Purchases summary ── */
+
+.dash-summary-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--dash-table-row-border);
+}
+
+.dash-summary-row:last-child {
+  border-bottom: none;
+}
+
+.dash-summary-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dash-summary-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dash-summary-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dash-summary-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-summary-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-summary-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--neutral-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* ── Aging summary ── */
+
+.dash-aging {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dash-aging-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dash-aging-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.dash-aging-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--neutral-soft);
+}
+
+.dash-aging-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dash-aging-chip {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.dash-aging-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  min-height: 44px;
+}
+
+.dash-aging-link:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+/* ── Recent transactions: table (desktop) + stacked cards (mobile) ── */
+
+.dash-table-wrap {
+  margin-top: 4px;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dash-table thead th {
+  border-bottom: 1px solid var(--dash-table-border);
+}
+
+.dash-tr {
+  cursor: pointer;
+  transition: background var(--motion-fast);
+}
+
+.dash-tr:hover {
+  background: var(--dash-table-row-hover);
+}
+
+.dash-tr:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.dash-type-badge,
+.dash-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.type-badge--sv  { background-color: #dbeafe; color: #1d4ed8; }
+.type-badge--pv  { background-color: #dcfce7; color: #166534; }
+.type-badge--srv { background-color: #fef3c7; color: #92400e; }
+.type-badge--prv { background-color: #fce7f3; color: #9d174d; }
+.type-badge--cr  { background-color: #d1fae5; color: #065f46; }
+.type-badge--cp  { background-color: #fee2e2; color: #991b1b; }
+.type-badge--jv  { background-color: #f3e8ff; color: #6b21a8; }
+.type-badge--other { background-color: #f1f5f9; color: #475569; }
+
+[data-theme='dark'] .type-badge--sv  { background-color: #172b4a; color: #93c5fd; }
+[data-theme='dark'] .type-badge--pv  { background-color: #052e16; color: #4ade80; }
+[data-theme='dark'] .type-badge--srv { background-color: #451a03; color: #fbbf24; }
+[data-theme='dark'] .type-badge--prv { background-color: #500724; color: #f9a8d4; }
+[data-theme='dark'] .type-badge--cr  { background-color: #06281c; color: #6ee7b7; }
+[data-theme='dark'] .type-badge--cp  { background-color: #450a0a; color: #fca5a5; }
+[data-theme='dark'] .type-badge--jv  { background-color: #3b1d54; color: #d8b4fe; }
+[data-theme='dark'] .type-badge--other { background-color: #273549; color: #cbd5e1; }
+
+.status-chip--posted    { background-color: var(--success-soft); color: var(--success-fg); }
+.status-chip--draft     { background-color: var(--warning-soft); color: var(--warning-fg); }
+.status-chip--cancelled { background-color: var(--danger-soft); color: var(--danger-fg); }
+.status-chip--other     { background-color: var(--neutral-soft); color: var(--neutral-fg); }
+
+/* Mobile transaction cards — hidden on desktop */
+
+.dash-tx-cards {
+  display: none;
+}
+
+.dash-tx-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font: inherit;
+  min-height: 44px;
+  transition: border-color var(--motion-fast), background var(--motion-fast);
+}
+
+.dash-tx-card:hover {
+  border-color: var(--border-strong);
+  background: var(--dash-table-row-hover);
+}
+
+.dash-tx-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dash-tx-card-mid {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-tx-card-party {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-tx-card-amount {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dash-tx-card-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Quick actions ── */
+
+.dash-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.dash-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-height: 48px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: border-color var(--motion-fast), background var(--motion-fast), transform var(--motion-fast);
+}
+
+.dash-action-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--dash-table-row-hover);
+  transform: translateY(-1px);
+}
+
+.dash-action-btn:active {
+  transform: translateY(0);
+}
+
+.dash-action-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-action-label {
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── States: loading / error / empty ── */
+
+.dash-skel-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.dash-skel-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.dash-skel-line {
+  height: 10px;
+  border-radius: 6px;
+}
+
+.dash-skel-line--sm { width: 55%; }
+.dash-skel-line--lg { width: 85%; height: 16px; }
+.dash-skel-line--md { width: 40%; }
+.dash-skel-line--row { width: 100%; height: 14px; }
+
+.dash-skel-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.dash-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--danger-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.dash-error-icon {
+  color: var(--danger);
+}
+
+.dash-error-text {
+  color: var(--danger-fg);
+  font-size: 14px;
+  margin: 0;
+}
+
+.dash-retry-btn {
+  padding: 10px 20px;
+  background: var(--danger);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--motion-fast);
+}
+
+.dash-retry-btn:hover {
+  filter: brightness(1.08);
+}
+
+.dash-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+  color: var(--text-disabled);
+  font-size: 13px;
+  text-align: center;
+}
+
+.dash-empty-text {
+  font-size: 13px;
+  color: var(--text-disabled);
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+}
+
+/* ── Dashboard responsive rules (mobile transaction cards, spacing) ── */
+
+@media (max-width: 768px) {
+  .dash-card { padding: 16px; border-radius: var(--radius-md); }
+  .dash-welcome-title { font-size: 19px; }
+  .dash-welcome-brandmark { width: 40px; height: 40px; font-size: 16px; }
+}
+
+@media (max-width: 640px) {
+  .dash-table-wrap { display: none; }
+  .dash-tx-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .dash-actions-grid { gap: 8px; }
+  .dash-period-chip { display: none; }
+}
+
+@media (min-width: 641px) {
+  .dash-tx-cards { display: none !important; }
+}
+

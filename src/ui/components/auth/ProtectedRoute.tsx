@@ -20,6 +20,7 @@ import { UserSession, User } from '../../../domain/types/auth';
 import { Tenant, TenantPublicConfig } from '../../../domain/types/tenant';
 import { apiGetMe, clearLocalSession } from '../../lib/session';
 import { getAuthorizedTenants } from '../../lib/api';
+import { applyBrandTheme } from '../../lib/theme';
 
 interface AuthContext {
   session: UserSession;
@@ -112,6 +113,11 @@ export const ProtectedRoute: React.FC = () => {
   }, []);
 
   useEffect(() => { loadAuth(); }, [loadAuth]);
+
+  // Presentation only: derive accent tokens from the active brand's config.
+  useEffect(() => {
+    applyBrandTheme(authContext?.tenant);
+  }, [authContext?.tenant]);
 
   if (loading) {
     return (
