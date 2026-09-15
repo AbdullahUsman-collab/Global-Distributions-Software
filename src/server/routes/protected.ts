@@ -2115,6 +2115,7 @@ export function createProtectedRoutes(
               tenantId,
               movementType: 'OPENING',
               movementDate: new Date().toISOString().slice(0, 10),
+              fromWarehouseId: whId,
               toWarehouseId: whId,
               productId: line.productId,
               quantity: line.quantity,
