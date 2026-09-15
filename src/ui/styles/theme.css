@@ -399,6 +399,191 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════ */
+/* 7. Inventory module (Step 88C) — consumed by Inventory.tsx. Light       */
+/*    values are the module's original hexes (identity unchanged); dark    */
+/*    values intentionally designed for contrast.                          */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Movement type badge pairs (bg, fg) */
+  --imt-grn-bg: #dcfce7;        --imt-grn-fg: #15803d;
+  --imt-issue-bg: #fee2e2;      --imt-issue-fg: #dc2626;
+  --imt-transfer-bg: #dbeafe;   --imt-transfer-fg: #1d4ed8;
+  --imt-adjustment-bg: #fef3c7; --imt-adjustment-fg: #b45309;
+  --imt-return-bg: #f3e8ff;     --imt-return-fg: #7c3aed;
+
+  /* BWA column semantics */
+  --inv-open: #1d4ed8;
+  --inv-grn: #15803d;
+  --inv-issue: #dc2626;
+  --inv-return: #7c3aed;
+  --inv-adjust: #b45309;
+  --inv-trf-in: #2563eb;
+  --inv-trf-out: #9333ea;
+  --inv-closing: #1e293b;
+
+  /* Category badge + misc */
+  --inv-cat-bg: #dbeafe;
+  --inv-cat-fg: #1d4ed8;
+}
+
+[data-theme='dark'] {
+  --imt-grn-bg: #052e16;        --imt-grn-fg: #4ade80;
+  --imt-issue-bg: #450a0a;      --imt-issue-fg: #fca5a5;
+  --imt-transfer-bg: #172b4a;   --imt-transfer-fg: #93c5fd;
+  --imt-adjustment-bg: #451a03; --imt-adjustment-fg: #fbbf24;
+  --imt-return-bg: #3b1d54;     --imt-return-fg: #d8b4fe;
+
+  --inv-open: #93c5fd;
+  --inv-grn: #4ade80;
+  --inv-issue: #f87171;
+  --inv-return: #d8b4fe;
+  --inv-adjust: #fbbf24;
+  --inv-trf-in: #93c5fd;
+  --inv-trf-out: #d8b4fe;
+  --inv-closing: #f1f5f9;
+
+  --inv-cat-bg: #172b4a;
+  --inv-cat-fg: #93c5fd;
+}
+
+/* ── Inventory interactive polish ── */
+
+.inv-row {
+  transition: background-color var(--motion-fast);
+}
+.inv-row:hover {
+  background-color: var(--dash-table-row-hover);
+}
+
+.inv-expand {
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+.inv-expand:hover {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
+
+.inv-row-btn {
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
+}
+.inv-row-btn:hover {
+  background-color: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.inv-row-btn--danger:hover {
+  background-color: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.inv-btn-primary {
+  transition: filter var(--motion-fast), transform var(--motion-fast);
+}
+.inv-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.inv-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.inv-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.inv-btn-tool {
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
+}
+.inv-btn-tool:hover {
+  background-color: var(--dash-table-row-hover);
+  border-color: var(--border-strong);
+}
+
+.inv-tab {
+  position: relative;
+  transition: color var(--motion-fast);
+}
+.inv-tab::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--motion);
+}
+.inv-tab:hover {
+  color: var(--text-primary) !important;
+}
+.inv-tab:hover::after,
+.inv-tab-active::after {
+  transform: scaleX(1);
+}
+.inv-tab-active {
+  color: var(--accent) !important;
+}
+
+.inv-input:focus-visible,
+.inv-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+.inv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+  background-color: rgb(15 23 42 / 0.45);
+  backdrop-filter: blur(2px);
+}
+
+[data-theme='dark'] .inv-modal-overlay {
+  background-color: rgb(0 0 0 / 0.6);
+}
+
+/* Inventory page-scoped focus + mobile touch targets. The module is otherwise
+   inline-styled; geometry stays in the component, theming/focus lives here. */
+.inv-page button {
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
+}
+
+.inv-page input:focus-visible,
+.inv-page select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+.inv-page .inv-btn-tool {
+  min-height: 37px;
+}
+
+@media (max-width: 640px) {
+  .inv-page .inv-btn-primary,
+  .inv-page .inv-btn-tool,
+  .inv-page .inv-tab {
+    min-height: 44px;
+  }
+  .inv-page .inv-row-btn {
+    min-width: 32px;
+    min-height: 32px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
 /* 5. Dashboard components (Step 88A) — classes prefixed "dash-"           */
 /*    Consumed only by src/ui/pages/Dashboard.tsx                          */
 /* ═══════════════════════════════════════════════════════════════════════ */
@@ -1077,5 +1262,22 @@
 
 @media (min-width: 641px) {
   .dash-tx-cards { display: none !important; }
+}
+
+/* ── Sale Bill line-item responsive layout ── */
+
+.sale-line-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .sale-lines-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .sale-line-details-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .sale-line-details-grid { grid-template-columns: 1fr; }
 }
 

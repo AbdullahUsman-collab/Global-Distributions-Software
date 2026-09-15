@@ -506,6 +506,7 @@ const SaleBillForm: React.FC<{
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [narration, setNarration] = useState('');
   const [lines, setLines] = useState<SaleBillLine[]>([]);
+  const [expandedLines, setExpandedLines] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
 
   // Load master data
@@ -541,6 +542,8 @@ const SaleBillForm: React.FC<{
         quantity: totalPacksForLine,
         rate: line.rate,
         tradeDiscountPercent: line.tradeDiscountPercent,
+        tradeOfferPercent: line.tradeOfferPercent,
+        specialDiscountPercent: line.specialDiscountPercent,
         gstPercent: line.gstPercent,
         furtherTaxPercent: line.furtherTaxPercent,
         fedPercent: line.fedPercent,
@@ -567,57 +570,98 @@ const SaleBillForm: React.FC<{
     };
   }, [lines, productMap]);
 
-  // Add new line
-  const addLine = () => {
+  // Add new empty line (for dynamic line addition)
+  const addEmptyLine = () => {
     setLines(prev => [...prev, {
-      productId: products[0]?.id ?? '',
+      productId: '',
       cartons: 0,
       packs: 0,
-      rate: products[0]?.saleRate ?? 0,
-      tradeDiscountPercent: products[0]?.tradeDiscount ?? 0,
-      gstPercent: products[0]?.gstPercent ?? 0,
-      furtherTaxPercent: products[0]?.furtherTaxPercent ?? 0,
-      fedPercent: products[0]?.fedPercent ?? 0,
-      advanceTaxPercent: products[0]?.advanceTaxSalePercent ?? 0,
+      rate: 0,
+      purchaseRate: 0,
+      retailPrice: 0,
+      marginPercent: 0,
+      tradeDiscountPercent: 0,
+      tradeOfferPercent: 0,
+      specialDiscountPercent: 0,
+      minQuantity: 0,
+      hsCode: '',
+      gstType: 'VAT',
+      gstPercent: 0,
+      fedPercent: 0,
+      furtherTaxPercent: 0,
+      advanceTaxPercent: 0,
     }]);
   };
 
+  // Initialize with one empty line
+  useEffect(() => {
+    if (lines.length === 0) addEmptyLine();
+  }, []);
+
   // Update line
   const updateLine = (idx: number, updates: Partial<SaleBillLine>) => {
-    setLines(prev => prev.map((l, i) => {
-      if (i !== idx) return l;
-      const updated = { ...l, ...updates };
-      // Auto-fill from product if product changed
-      if (updates.productId) {
-        const product = productMap.get(updates.productId);
-        if (product) {
-          updated.rate = product.saleRate;
-          updated.tradeDiscountPercent = product.tradeDiscount;
-          updated.gstPercent = product.gstPercent;
-          updated.furtherTaxPercent = product.furtherTaxPercent;
-          updated.fedPercent = product.fedPercent;
-          updated.advanceTaxPercent = product.advanceTaxSalePercent;
+    setLines(prev => {
+      const next = prev.map((l, i) => {
+        if (i !== idx) return l;
+        const updated = { ...l, ...updates };
+        // Auto-fill ALL fields from product if product changed
+        if (updates.productId) {
+          const product = productMap.get(updates.productId);
+          if (product) {
+            updated.rate = product.saleRate;
+            updated.purchaseRate = product.purchaseRate;
+            updated.retailPrice = product.retailPrice;
+            updated.marginPercent = product.margin;
+            updated.tradeDiscountPercent = product.tradeDiscount;
+            updated.tradeOfferPercent = 0;
+            updated.specialDiscountPercent = 0;
+            updated.minQuantity = product.minQuantity;
+            updated.hsCode = product.hsCode;
+            updated.gstType = product.gstType;
+            updated.gstPercent = product.gstPercent;
+            updated.fedPercent = product.fedPercent;
+            updated.furtherTaxPercent = product.furtherTaxPercent;
+            updated.advanceTaxPercent = product.advanceTaxSalePercent;
+          }
         }
+        // Auto-calculate packs from cartons × pcsPerCarton
+        if (updates.cartons !== undefined) {
+          const product = productMap.get(updated.productId);
+          const pcsPerCarton = product?.pcsPerCarton ?? 1;
+          updated.packs = updates.cartons * pcsPerCarton;
+        }
+        return updated;
+      });
+      // Auto-append empty line when a product is selected on the last line
+      const lastLine = next[next.length - 1];
+      if (lastLine && lastLine.productId !== '' && idx === next.length - 1) {
+        next.push({
+          productId: '', cartons: 0, packs: 0, rate: 0,
+          purchaseRate: 0, retailPrice: 0, marginPercent: 0,
+          tradeDiscountPercent: 0, tradeOfferPercent: 0, specialDiscountPercent: 0,
+          minQuantity: 0, hsCode: '', gstType: 'VAT', gstPercent: 0,
+          fedPercent: 0, furtherTaxPercent: 0, advanceTaxPercent: 0,
+        });
       }
-      // Auto-calculate packs from cartons × pcsPerCarton
-      if (updates.cartons !== undefined) {
-        const product = productMap.get(updated.productId);
-        const pcsPerCarton = product?.pcsPerCarton ?? 1;
-        updated.packs = updates.cartons * pcsPerCarton;
-      }
-      return updated;
-    }));
+      return next;
+    });
   };
 
-  // Remove line
-  const removeLine = (idx: number) => {
-    setLines(prev => prev.filter((_, i) => i !== idx));
+  // Toggle expand/collapse for secondary fields
+  const toggleExpand = (idx: number) => {
+    setExpandedLines(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
   };
 
   // Save
   const handleSave = async () => {
     if (!customerId) { alert('Select a customer'); return; }
-    if (lines.length === 0) { alert('Add at least one line'); return; }
+    const validLines = lines.filter(l => l.productId);
+    if (validLines.length === 0) { alert('Add at least one line with a product'); return; }
 
     setSaving(true);
     try {
@@ -626,7 +670,7 @@ const SaleBillForm: React.FC<{
         // warehouseId intentionally omitted — server resolves the implicit default
         date,
         narration: narration || undefined,
-        lines,
+        lines: validLines,
       });
 
       // Auto-post
@@ -670,16 +714,16 @@ const SaleBillForm: React.FC<{
         <div style={{ marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600' }}>Bill Lines</h3>
-            <button onClick={addLine} style={styles.smallBtn}>+ Add Line</button>
           </div>
 
-          {lines.length === 0 ? (
-            <p style={{ color: '#94a3b8', fontSize: '13px' }}>No lines added. Click "+ Add Line" to start.</p>
+          {lines.filter(l => l.productId).length === 0 && lines.every(l => !l.productId) ? (
+            <p style={{ color: '#94a3b8', fontSize: '13px' }}>Select a product on the line below to start.</p>
           ) : (
-            <div className="table-wrap">
+            <div className="table-wrap sale-lines-wrap">
               <table style={styles.table}>
                 <thead>
                   <tr>
+                    <th style={styles.th}></th>
                     <th style={styles.th}>Item</th>
                     <th style={styles.th}>Ctns</th>
                     <th style={styles.th}>Pcs</th>
@@ -695,74 +739,186 @@ const SaleBillForm: React.FC<{
                 <tbody>
                   {lines.map((line, idx) => {
                     const detail = calculation.lines[idx];
+                    const isExpanded = expandedLines.has(idx);
+                    const hasProduct = !!line.productId;
                     return (
-                      <tr key={idx} style={styles.tr}>
-                        <td style={styles.td}>
-                          <select
-                            value={line.productId}
-                            onChange={e => updateLine(idx, { productId: e.target.value })}
-                            style={{ ...styles.select, minWidth: '150px' }}
-                          >
-                            {products.map(p => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            value={line.cartons}
-                            onChange={e => updateLine(idx, { cartons: Number(e.target.value) })}
-                            style={{ ...styles.input, width: '60px' }}
-                            min={0}
-                          />
-                        </td>
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            value={line.packs}
-                            onChange={e => updateLine(idx, { packs: Number(e.target.value) })}
-                            style={{ ...styles.input, width: '60px' }}
-                            min={0}
-                          />
-                        </td>
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            value={line.rate}
-                            onChange={e => updateLine(idx, { rate: Number(e.target.value) })}
-                            style={{ ...styles.input, width: '80px' }}
-                            min={0}
-                            step={0.01}
-                          />
-                        </td>
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            value={line.tradeDiscountPercent}
-                            onChange={e => updateLine(idx, { tradeDiscountPercent: Number(e.target.value) })}
-                            style={{ ...styles.input, width: '50px' }}
-                            min={0}
-                            step={0.1}
-                          />
-                        </td>
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            value={line.gstPercent}
-                            onChange={e => updateLine(idx, { gstPercent: Number(e.target.value) })}
-                            style={{ ...styles.input, width: '50px' }}
-                            min={0}
-                            step={0.1}
-                          />
-                        </td>
-                        <td style={styles.td}>{detail ? fmt(detail.amount) : '0.00'}</td>
-                        <td style={styles.td}>{detail ? fmt(detail.gstAmount + detail.fedAmount) : '0.00'}</td>
-                        <td style={styles.td}><strong>{detail ? fmt(detail.netAmount) : '0.00'}</strong></td>
-                        <td style={styles.td}>
-                          <button onClick={() => removeLine(idx)} style={styles.dangerBtn}>×</button>
-                        </td>
-                      </tr>
+                      <React.Fragment key={idx}>
+                        <tr style={styles.tr}>
+                          <td style={{ ...styles.td, width: '32px' }}>
+                            {hasProduct && (
+                              <button
+                                onClick={() => toggleExpand(idx)}
+                                title={isExpanded ? 'Collapse details' : 'Expand details'}
+                                style={{
+                                  ...styles.smallBtn,
+                                  padding: '2px 6px',
+                                  fontSize: '11px',
+                                  backgroundColor: isExpanded ? '#dbeafe' : '#f1f5f9',
+                                  color: isExpanded ? '#2563eb' : '#64748b',
+                                }}
+                              >
+                                {isExpanded ? '▼' : '▶'}
+                              </button>
+                            )}
+                          </td>
+                          <td style={styles.td}>
+                            <select
+                              value={line.productId}
+                              onChange={e => updateLine(idx, { productId: e.target.value })}
+                              style={{ ...styles.select, minWidth: '150px' }}
+                            >
+                              <option value="">Select Item</option>
+                              {products.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={styles.td}>
+                            <input
+                              type="number"
+                              value={line.cartons}
+                              onChange={e => updateLine(idx, { cartons: Number(e.target.value) })}
+                              style={{ ...styles.input, width: '60px' }}
+                              min={0}
+                            />
+                          </td>
+                          <td style={styles.td}>
+                            <input
+                              type="number"
+                              value={line.packs}
+                              onChange={e => updateLine(idx, { packs: Number(e.target.value) })}
+                              style={{ ...styles.input, width: '60px' }}
+                              min={0}
+                            />
+                          </td>
+                          <td style={styles.td}>
+                            <input
+                              type="number"
+                              value={line.rate}
+                              onChange={e => updateLine(idx, { rate: Number(e.target.value) })}
+                              style={{ ...styles.input, width: '80px' }}
+                              min={0}
+                              step={0.01}
+                            />
+                          </td>
+                          <td style={styles.td}>
+                            <input
+                              type="number"
+                              value={line.tradeDiscountPercent}
+                              onChange={e => updateLine(idx, { tradeDiscountPercent: Number(e.target.value) })}
+                              style={{ ...styles.input, width: '50px' }}
+                              min={0}
+                              step={0.1}
+                            />
+                          </td>
+                          <td style={styles.td}>
+                            <input
+                              type="number"
+                              value={line.gstPercent}
+                              onChange={e => updateLine(idx, { gstPercent: Number(e.target.value) })}
+                              style={{ ...styles.input, width: '50px' }}
+                              min={0}
+                              step={0.1}
+                            />
+                          </td>
+                          <td style={styles.td}>{detail ? fmt(detail.amount) : '0.00'}</td>
+                          <td style={styles.td}>{detail ? fmt(detail.gstAmount + detail.fedAmount) : '0.00'}</td>
+                          <td style={styles.td}><strong>{detail ? fmt(detail.netAmount) : '0.00'}</strong></td>
+                          <td style={styles.td}>
+                            <button onClick={() => {
+                              setLines(prev => prev.filter((_, i) => i !== idx));
+                              setExpandedLines(prev => { const n = new Set(prev); n.delete(idx); return n; });
+                            }} style={styles.dangerBtn}>×</button>
+                          </td>
+                        </tr>
+                        {/* Expanded secondary fields panel */}
+                        {isExpanded && hasProduct && (
+                          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                            <td colSpan={11} style={{ padding: '12px 16px', backgroundColor: '#f8fafc' }}>
+                              <div className="sale-line-details">
+                                <div className="sale-line-details-grid">
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Purchase Rate</label>
+                                    <input type="number" value={line.purchaseRate ?? 0}
+                                      onChange={e => updateLine(idx, { purchaseRate: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.01} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Retail Price</label>
+                                    <input type="number" value={line.retailPrice ?? 0}
+                                      onChange={e => updateLine(idx, { retailPrice: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.01} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Margin %</label>
+                                    <input type="number" value={line.marginPercent ?? 0}
+                                      onChange={e => updateLine(idx, { marginPercent: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.01} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Trade Offer %</label>
+                                    <input type="number" value={line.tradeOfferPercent ?? 0}
+                                      onChange={e => updateLine(idx, { tradeOfferPercent: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.1} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Special Disc %</label>
+                                    <input type="number" value={line.specialDiscountPercent ?? 0}
+                                      onChange={e => updateLine(idx, { specialDiscountPercent: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.1} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Min Qty</label>
+                                    <input type="number" value={line.minQuantity ?? 0}
+                                      onChange={e => updateLine(idx, { minQuantity: Number(e.target.value) })}
+                                      style={styles.input} min={0} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>HS Code</label>
+                                    <input type="text" value={line.hsCode ?? ''}
+                                      onChange={e => updateLine(idx, { hsCode: e.target.value })}
+                                      style={styles.input} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>GST Type</label>
+                                    <select value={line.gstType ?? 'VAT'}
+                                      onChange={e => updateLine(idx, { gstType: e.target.value })}
+                                      style={styles.select}>
+                                      <option value="VAT">Standard VAT</option>
+                                      <option value="3RD">3rd Schedule</option>
+                                      <option value="8TH">8th Schedule</option>
+                                    </select>
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>FED %</label>
+                                    <input type="number" value={line.fedPercent ?? 0}
+                                      onChange={e => updateLine(idx, { fedPercent: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.1} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Further Tax %</label>
+                                    <input type="number" value={line.furtherTaxPercent ?? 0}
+                                      onChange={e => updateLine(idx, { furtherTaxPercent: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.1} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Advance Tax %</label>
+                                    <input type="number" value={line.advanceTaxPercent ?? 0}
+                                      onChange={e => updateLine(idx, { advanceTaxPercent: Number(e.target.value) })}
+                                      style={styles.input} min={0} step={0.1} />
+                                  </div>
+                                  <div style={styles.formGroup}>
+                                    <label style={styles.label}>Cost Rate</label>
+                                    <input type="number" value={productMap.get(line.productId)?.costRate ?? 0}
+                                      style={{ ...styles.input, backgroundColor: '#f1f5f9', color: '#64748b' }}
+                                      readOnly tabIndex={-1} />
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
