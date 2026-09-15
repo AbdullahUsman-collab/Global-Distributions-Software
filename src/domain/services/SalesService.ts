@@ -63,14 +63,30 @@ export interface SaleBillLine {
   packs: number;
   /** Sale rate per piece (auto-filled from Product.saleRate, can be overridden) */
   rate: number;
+  /** Purchase rate per piece (auto-filled from Product.purchaseRate) */
+  purchaseRate?: number;
+  /** Retail price (auto-filled from Product.retailPrice) */
+  retailPrice?: number;
+  /** Margin percent (auto-filled, derived from retail/sale rates) */
+  marginPercent?: number;
   /** Trade discount percentage (auto-filled from Product.tradeDiscount) */
   tradeDiscountPercent: number;
+  /** Trade offer percentage (auto-filled from Product, new per-line field) */
+  tradeOfferPercent?: number;
+  /** Special discount percentage (new per-line field) */
+  specialDiscountPercent?: number;
+  /** Minimum order quantity (auto-filled from Product.minQuantity) */
+  minQuantity?: number;
+  /** HS code (auto-filled from Product.hsCode) */
+  hsCode?: string;
+  /** GST type (auto-filled from Product.gstType: 'VAT' | '3RD' | '8TH') */
+  gstType?: string;
   /** GST percentage (auto-filled from Product.gstPercent) */
   gstPercent: number;
-  /** Further Tax percentage (auto-filled from Product.fedPercent) */
-  furtherTaxPercent: number;
-  /** FED percentage */
+  /** FED percentage (auto-filled from Product.fedPercent) */
   fedPercent: number;
+  /** Further Tax percentage (auto-filled from Product.furtherTaxPercent) */
+  furtherTaxPercent: number;
   /** Advance Tax percentage (auto-filled from Product.advanceTaxSalePercent) */
   advanceTaxPercent: number;
   /** Line description/narration */
@@ -146,6 +162,8 @@ export class SalesService {
       quantity: totalPacks,
       rate: line.rate,
       tradeDiscountPercent: line.tradeDiscountPercent,
+      tradeOfferPercent: line.tradeOfferPercent,
+      specialDiscountPercent: line.specialDiscountPercent,
       gstPercent: line.gstPercent,
       furtherTaxPercent: line.furtherTaxPercent,
       fedPercent: line.fedPercent,
@@ -227,18 +245,21 @@ export class SalesService {
     const products = await this.inventoryRepo.getProducts(tenantId);
     const productMap = new Map(products.map(p => [p.id, p]));
 
-    for (const line of dto.lines) {
+    // Filter out empty lines (no productId) — supports dynamic line-addition UI
+    const validLines = dto.lines.filter(line => line.productId);
+
+    for (const line of validLines) {
       const product = productMap.get(line.productId);
       if (!product) throw new Error(`Product not found: ${line.productId}`);
       if (!product.isActive) throw new Error(`Product is inactive: ${product.name}`);
     }
 
     // Calculate bill for validation
-    const calculation = await this.calculateBill(tenantId, dto.lines);
+    const calculation = await this.calculateBill(tenantId, validLines);
 
     // Calculate total COGS for GL posting
     let totalCogs = 0;
-    for (const line of dto.lines) {
+    for (const line of validLines) {
       const product = productMap.get(line.productId);
       const costRate = product?.costRate ?? 0;
       totalCogs += calculateCOGS(line.packs, costRate);
@@ -252,7 +273,7 @@ export class SalesService {
     // CREDIT: Inventory — Cost Amount [VERIFIED — audit/65]
     const balancedLines: CreateVoucherDTO['lines'] = [
       // DEBIT: Customer AR — per-product lines with bill metadata
-      ...dto.lines.map((line, idx) => {
+      ...validLines.map((line, idx) => {
         const detail = calculation.lines[idx];
         const product = productMap.get(line.productId)!;
         return {

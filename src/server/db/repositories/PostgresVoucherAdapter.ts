@@ -65,7 +65,10 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
   async getVoucherLines(tenantId: string, voucherId: string): Promise<VoucherLine[]> {
     const result = await query(
       `SELECT id, voucher_id, tenant_id, account_id, description, debit, credit, line_order,
-              contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std
+              contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std,
+              rate, purchase_rate, retail_price, margin_percent, trade_discount_percent, trade_offer_percent,
+              special_discount_percent, min_quantity, hs_code, gst_type, fed_percent, further_tax_percent,
+              advance_tax_percent
        FROM voucher_lines
        WHERE tenant_id = $1 AND voucher_id = $2
        ORDER BY line_order`,
@@ -96,8 +99,11 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
         const resolvedAccountId = this.resolveAccountId(line.accountId, acctMap);
         await client.query(
           `INSERT INTO voucher_lines (id, voucher_id, tenant_id, account_id, description, debit, credit, line_order,
-             contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+             contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std,
+             rate, purchase_rate, retail_price, margin_percent, trade_discount_percent, trade_offer_percent,
+             special_discount_percent, min_quantity, hs_code, gst_type, fed_percent, further_tax_percent,
+             advance_tax_percent)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
           [
             uuid(), voucherId, tenantId, resolvedAccountId, line.description,
             line.debit, line.credit, i + 1,
@@ -105,6 +111,12 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
             line.productId ?? null, line.branch ?? null,
             line.stInvNo ?? null, line.stRate ?? null,
             line.stAmount ?? null, line.amtExclStd ?? null,
+            line.rate ?? null, line.purchaseRate ?? null, line.retailPrice ?? null,
+            line.marginPercent ?? null, line.tradeDiscountPercent ?? null,
+            line.tradeOfferPercent ?? null, line.specialDiscountPercent ?? null,
+            line.minQuantity ?? null, line.hsCode ?? null, line.gstType ?? null,
+            line.fedPercent ?? null, line.furtherTaxPercent ?? null,
+            line.advanceTaxPercent ?? null,
           ]
         );
       }
@@ -147,8 +159,11 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
           const resolvedAccountId = this.resolveAccountId(line.accountId, acctMap);
           await client.query(
             `INSERT INTO voucher_lines (id, voucher_id, tenant_id, account_id, description, debit, credit, line_order,
-               contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+               contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std,
+               rate, purchase_rate, retail_price, margin_percent, trade_discount_percent, trade_offer_percent,
+               special_discount_percent, min_quantity, hs_code, gst_type, fed_percent, further_tax_percent,
+               advance_tax_percent)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
             [
               uuid(), id, tenantId, resolvedAccountId, line.description,
               line.debit, line.credit, i + 1,
@@ -156,6 +171,12 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
               line.productId ?? null, line.branch ?? null,
               line.stInvNo ?? null, line.stRate ?? null,
               line.stAmount ?? null, line.amtExclStd ?? null,
+              line.rate ?? null, line.purchaseRate ?? null, line.retailPrice ?? null,
+              line.marginPercent ?? null, line.tradeDiscountPercent ?? null,
+              line.tradeOfferPercent ?? null, line.specialDiscountPercent ?? null,
+              line.minQuantity ?? null, line.hsCode ?? null, line.gstType ?? null,
+              line.fedPercent ?? null, line.furtherTaxPercent ?? null,
+              line.advanceTaxPercent ?? null,
             ]
           );
         }
@@ -353,6 +374,19 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
       stRate: r.st_rate != null ? Number(r.st_rate) : undefined,
       stAmount: r.st_amount != null ? Number(r.st_amount) : undefined,
       amtExclStd: r.amt_excl_std != null ? Number(r.amt_excl_std) : undefined,
+      rate: r.rate != null ? Number(r.rate) : undefined,
+      purchaseRate: r.purchase_rate != null ? Number(r.purchase_rate) : undefined,
+      retailPrice: r.retail_price != null ? Number(r.retail_price) : undefined,
+      marginPercent: r.margin_percent != null ? Number(r.margin_percent) : undefined,
+      tradeDiscountPercent: r.trade_discount_percent != null ? Number(r.trade_discount_percent) : undefined,
+      tradeOfferPercent: r.trade_offer_percent != null ? Number(r.trade_offer_percent) : undefined,
+      specialDiscountPercent: r.special_discount_percent != null ? Number(r.special_discount_percent) : undefined,
+      minQuantity: r.min_quantity != null ? Number(r.min_quantity) : undefined,
+      hsCode: r.hs_code,
+      gstType: r.gst_type,
+      fedPercent: r.fed_percent != null ? Number(r.fed_percent) : undefined,
+      furtherTaxPercent: r.further_tax_percent != null ? Number(r.further_tax_percent) : undefined,
+      advanceTaxPercent: r.advance_tax_percent != null ? Number(r.advance_tax_percent) : undefined,
     };
   }
 

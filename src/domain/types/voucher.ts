@@ -74,20 +74,16 @@ export interface VoucherLine {
   lineOrder: number;
 
   // ─── Verified Legacy Fields ────────────────────────────────
-  // Source: audit/23_DATA_MODEL.md (Voucher_Lines.Acc_No2)
   /** Contra / reference account code (Acc_No2 in legacy) */
   contraAccountId?: string;
-  // Source: audit/23_DATA_MODEL.md (Bill_Lines.Packs, Bill_Lines.Item_No)
   /** Quantity (for SV/PV/SRV/PRV bill-line vouchers) */
   quantity?: number;
   /** Product reference ID (for SV/PV/SRV/PRV bill-line vouchers) */
   productId?: string;
-  // Source: audit/23_DATA_MODEL.md (Bills.SP_ID — Branch/Store)
   /** Branch / Store code for this line */
   branch?: string;
 
   // ─── Legacy Voucher_Lines Tax Fields ────────────────────────
-  // Source: audit/23_DATA_MODEL.md (Voucher_Lines.ST_InvNo, ST_Rate, ST_Amount, Amt_Excl_Std)
   /** Sales Tax Invoice Number */
   stInvNo?: string;
   /** Sales Tax Rate (%) */
@@ -96,6 +92,34 @@ export interface VoucherLine {
   stAmount?: number;
   /** Amount Excluding Standard/Sales Tax */
   amtExclStd?: number;
+
+  // ─── Sale Line Override Fields (migration 013) ──────────────
+  /** Sale rate per piece at time of sale */
+  rate?: number;
+  /** Purchase rate per piece at time of sale */
+  purchaseRate?: number;
+  /** Retail price at time of sale */
+  retailPrice?: number;
+  /** Margin percent at time of sale */
+  marginPercent?: number;
+  /** Trade discount percent at time of sale */
+  tradeDiscountPercent?: number;
+  /** Trade offer percent at time of sale */
+  tradeOfferPercent?: number;
+  /** Special discount percent at time of sale */
+  specialDiscountPercent?: number;
+  /** Minimum order quantity at time of sale */
+  minQuantity?: number;
+  /** HS code at time of sale */
+  hsCode?: string;
+  /** GST type at time of sale ('VAT' | '3RD' | '8TH') */
+  gstType?: string;
+  /** FED percent at time of sale */
+  fedPercent?: number;
+  /** Further tax percent at time of sale */
+  furtherTaxPercent?: number;
+  /** Advance tax percent at time of sale */
+  advanceTaxPercent?: number;
 }
 
 /** Voucher header — one per journal entry, cash/bank receipt/payment */
@@ -168,6 +192,19 @@ export interface CreateVoucherDTO {
     stRate?: number;
     stAmount?: number;
     amtExclStd?: number;
+    rate?: number;
+    purchaseRate?: number;
+    retailPrice?: number;
+    marginPercent?: number;
+    tradeDiscountPercent?: number;
+    tradeOfferPercent?: number;
+    specialDiscountPercent?: number;
+    minQuantity?: number;
+    hsCode?: string;
+    gstType?: string;
+    fedPercent?: number;
+    furtherTaxPercent?: number;
+    advanceTaxPercent?: number;
   }[];
 }
 
@@ -188,6 +225,19 @@ export interface UpdateVoucherDTO {
     stRate?: number;
     stAmount?: number;
     amtExclStd?: number;
+    rate?: number;
+    purchaseRate?: number;
+    retailPrice?: number;
+    marginPercent?: number;
+    tradeDiscountPercent?: number;
+    tradeOfferPercent?: number;
+    specialDiscountPercent?: number;
+    minQuantity?: number;
+    hsCode?: string;
+    gstType?: string;
+    fedPercent?: number;
+    furtherTaxPercent?: number;
+    advanceTaxPercent?: number;
   }[];
 }
 

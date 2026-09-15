@@ -421,6 +421,8 @@ export interface BillLineTaxInput {
   quantity: number;
   rate: number;
   tradeDiscountPercent: number;
+  tradeOfferPercent?: number;
+  specialDiscountPercent?: number;
   gstPercent: number;
   furtherTaxPercent: number;
   fedPercent: number;
@@ -509,7 +511,8 @@ export interface StockBWAReport {
 
 export function calculateBillLineTax(input: BillLineTaxInput): BillLineTaxResult {
   const amount = input.quantity * input.rate;
-  const discountAmount = amount * (input.tradeDiscountPercent / 100);
+  const totalDiscountPercent = (input.tradeDiscountPercent || 0) + (input.tradeOfferPercent || 0) + (input.specialDiscountPercent || 0);
+  const discountAmount = amount * (totalDiscountPercent / 100);
   const toAmount = amount - discountAmount;
   const gstAmount = toAmount * (input.gstPercent / 100);
   const furtherTaxAmount = toAmount * (input.furtherTaxPercent / 100);
