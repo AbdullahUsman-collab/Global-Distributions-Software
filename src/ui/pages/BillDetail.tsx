@@ -23,7 +23,8 @@ import {
   BillAccountingEntry,
   BillInventoryMovement,
 } from '../../domain/services/BillDetailService';
-import { BILL_TYPE_LABELS, BILL_TYPE_COLORS } from '../lib/billLabels';
+import {  BILL_TYPE_LABELS,
+ } from '../lib/billLabels';
 import { VoucherStatus, VOUCHER_STATUS_LABELS } from '../../domain/types/voucher';
 import { printWindow, generateCsv, downloadFile, generateExportFilename } from '../utils/export';
 
@@ -32,8 +33,16 @@ import { printWindow, generateCsv, downloadFile, generateExportFilename } from '
 const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
-  DRAFT:  { bg: '#fef3c7', fg: '#92400e' },
-  POSTED: { bg: '#dcfce7', fg: '#166534' },
+  DRAFT:  { bg: 'var(--tx-draft-bg)', fg: 'var(--tx-draft-fg)' },
+  POSTED: { bg: 'var(--tx-posted-bg)', fg: 'var(--tx-posted-fg)' },
+};
+
+/** UI-bound token map mirroring domain BILL_TYPE_COLORS identity (presentation only). */
+const TYPE_TOKENS: Record<string, { bg: string; fg: string }> = {
+  SV:  { bg: 'var(--tx-type-sv-bg)',  fg: 'var(--tx-type-sv-fg)' },
+  PV:  { bg: 'var(--tx-type-pv-bg)',  fg: 'var(--tx-type-pv-fg)' },
+  SRV: { bg: 'var(--tx-type-srv-bg)', fg: 'var(--tx-type-srv-fg)' },
+  PRV: { bg: 'var(--tx-type-prv-bg)', fg: 'var(--tx-type-prv-fg)' },
 };
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -55,6 +64,9 @@ export const BillDetailPage: React.FC = () => {
   // GL aggregate lines (inventory debit, input tax, COGS pairs) without product
   // metadata — those belong in Accounting Entries below, not as dash-rows here.
   const productLines = detail ? detail.lines.filter(bl => bl.line.productId) : [];
+  const hasOverrideColumns = productLines.some(bl =>
+    bl.line.tradeDiscountPercent != null || bl.line.furtherTaxPercent != null || bl.line.fedPercent != null
+  );
 
   useEffect(() => {
     if (!voucherId) {
@@ -103,7 +115,7 @@ export const BillDetailPage: React.FC = () => {
   // Export CSV handler
   const handleExportCsv = () => {
     if (!detail) return;
-    const headers = ['#', 'Product', 'SKU', 'Qty', 'Rate', 'Amount', 'Tax', 'Total'];
+    const headers = ['#', 'Product', 'SKU', 'Qty', 'Rate', 'Amount', 'Margin %', 'Tax', 'Total'];
     const rows = productLines.map((bl, i) => [
       i + 1,
       bl.productName || '',
@@ -111,6 +123,7 @@ export const BillDetailPage: React.FC = () => {
       bl.quantity || '',
       bl.rate ? bl.rate.toFixed(2) : '',
       bl.amount.toFixed(2),
+      bl.marginPercent > 0 ? `${bl.marginPercent}%` : '',
       bl.gstAmount > 0 ? bl.gstAmount.toFixed(2) : '',
       bl.netAmount.toFixed(2),
     ]);
@@ -138,7 +151,7 @@ export const BillDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="page-pad bill-detail-page" style={styles.page}>
+    <div className="page-pad tx-page bill-detail-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -147,10 +160,10 @@ export const BillDetailPage: React.FC = () => {
         </div>
         {detail && (
           <div style={{ display: 'flex', gap: '8px' }} className="no-print">
-            <button onClick={handleExportCsv} style={styles.exportBtn}>
+            <button onClick={handleExportCsv} className="tx-btn tx-btn-secondary" style={styles.exportBtn}>
               Export CSV
             </button>
-            <button onClick={handlePrint} style={styles.printBtn}>
+            <button onClick={handlePrint} className="tx-btn tx-btn-primary" style={styles.printBtn}>
               Print
             </button>
           </div>
@@ -169,9 +182,9 @@ export const BillDetailPage: React.FC = () => {
         <div style={styles.errorBox}>
           <p style={styles.errorText}>{error}</p>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-            <button onClick={() => navigate('/bills')} style={styles.retryBtn}>Back to Bills</button>
+            <button onClick={() => navigate('/bills')}                        className="tx-btn" style={styles.retryBtn}>Back to Bills</button>
             {error !== 'Bill not found or access denied' && (
-              <button onClick={() => window.location.reload()} style={styles.retryBtn}>Retry</button>
+              <button onClick={() => window.location.reload()}                        className="tx-btn" style={styles.retryBtn}>Retry</button>
             )}
           </div>
         </div>
@@ -187,8 +200,8 @@ export const BillDetailPage: React.FC = () => {
                 <span style={styles.fieldLabel}>Type</span>
                 <span style={{
                   ...styles.typeBadge,
-                  backgroundColor: BILL_TYPE_COLORS[detail.voucher.voucherType]?.bg ?? '#f1f5f9',
-                  color: BILL_TYPE_COLORS[detail.voucher.voucherType]?.fg ?? '#475569',
+                  backgroundColor: TYPE_TOKENS[detail.voucher.voucherType]?.bg ?? 'var(--tx-neutral-bg)',
+                  color: TYPE_TOKENS[detail.voucher.voucherType]?.fg ?? 'var(--tx-neutral-fg)',
                 }}>
                   {BILL_TYPE_LABELS[detail.voucher.voucherType] || detail.voucher.voucherType}
                 </span>
@@ -205,8 +218,8 @@ export const BillDetailPage: React.FC = () => {
                 <span style={styles.fieldLabel}>Status</span>
                 <span style={{
                   ...styles.statusBadge,
-                  backgroundColor: STATUS_COLORS[detail.voucher.status]?.bg ?? '#f1f5f9',
-                  color: STATUS_COLORS[detail.voucher.status]?.fg ?? '#475569',
+                  backgroundColor: STATUS_COLORS[detail.voucher.status]?.bg ?? 'var(--tx-neutral-bg)',
+                  color: STATUS_COLORS[detail.voucher.status]?.fg ?? 'var(--tx-neutral-fg)',
                 }}>
                   {VOUCHER_STATUS_LABELS[detail.voucher.status]}
                 </span>
@@ -231,11 +244,11 @@ export const BillDetailPage: React.FC = () => {
             {/* Navigation links */}
             <div style={styles.navLinks}>
               {detail.partyType !== 'unknown' && (
-                <button onClick={navigateToLedger} style={styles.navLinkBtn}>
+                <button onClick={navigateToLedger} className="tx-btn" style={styles.navLinkBtn}>
                   View Ledger
                 </button>
               )}
-              <button onClick={navigateToAging} style={styles.navLinkBtn}>
+              <button onClick={navigateToAging} className="tx-btn" style={styles.navLinkBtn}>
                 View Aging
               </button>
             </div>
@@ -255,6 +268,7 @@ export const BillDetailPage: React.FC = () => {
                       <th style={{ ...styles.th, textAlign: 'right' }}>Qty</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Rate</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Margin %</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Tax</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Total</th>
                     </tr>
@@ -275,6 +289,9 @@ export const BillDetailPage: React.FC = () => {
                           {fmt(bl.amount)}
                         </td>
                         <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.marginPercent > 0 ? `${bl.marginPercent}%` : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
                           {bl.gstAmount > 0 ? fmt(bl.gstAmount) : '—'}
                         </td>
                         <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace', fontWeight: '600' }}>
@@ -293,6 +310,11 @@ export const BillDetailPage: React.FC = () => {
             <h2 style={styles.sectionTitle}>Summary</h2>
             <div style={styles.summaryGrid}>
               <SummaryLine label="Subtotal (Value Excl Tax)" amount={detail.taxSummary.subtotal} />
+              {!hasOverrideColumns && detail.taxSummary.totalDiscount === 0 && detail.taxSummary.totalTax === 0 && (
+                <p style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '13px', fontStyle: 'italic', margin: '4px 0 8px' }}>
+                  Detailed tax/discount breakdown not available for this bill.
+                </p>
+              )}
               {detail.taxSummary.totalTradeDiscount > 0 && <SummaryLine label="Trade Discount" amount={detail.taxSummary.totalTradeDiscount} />}
               {detail.taxSummary.totalTradeOffer > 0 && <SummaryLine label="Trade Offer" amount={detail.taxSummary.totalTradeOffer} />}
               {detail.taxSummary.totalSpecialDiscount > 0 && <SummaryLine label="Special Discount" amount={detail.taxSummary.totalSpecialDiscount} />}
@@ -345,7 +367,7 @@ export const BillDetailPage: React.FC = () => {
                   </thead>
                   <tbody>
                     {detail.accountingEntries.map((ae, i) => (
-                      <tr key={i} style={styles.tr}>
+                      <tr key={i} className="tx-tr" style={styles.tr}>
                         <td style={styles.td}>
                           <span style={styles.accountCode}>{ae.accountCode}</span>
                           <span style={styles.accountName}>{ae.accountName}</span>
@@ -408,7 +430,7 @@ export const BillDetailPage: React.FC = () => {
                   </thead>
                   <tbody>
                     {detail.inventoryMovements.map((im, i) => (
-                      <tr key={i} style={styles.tr}>
+                      <tr key={i} className="tx-tr" style={styles.tr}>
                         <td style={styles.td}>{im.movementType}</td>
                         <td style={styles.td}>{im.productName}</td>
                         <td style={styles.td}>{im.productSku || '—'}</td>
@@ -424,8 +446,8 @@ export const BillDetailPage: React.FC = () => {
                         <td style={styles.td}>
                           <span style={{
                             ...styles.directionBadge,
-                            backgroundColor: im.direction === 'IN' ? '#dcfce7' : '#fef3c7',
-                            color: im.direction === 'IN' ? '#166534' : '#92400e',
+                            backgroundColor: im.direction === 'IN' ? 'var(--tx-dir-in-bg)' : 'var(--tx-dir-out-bg)',
+                            color: im.direction === 'IN' ? 'var(--tx-dir-in-fg)' : 'var(--tx-dir-out-fg)',
                           }}>
                             {im.direction === 'IN' ? 'Stock In' : 'Stock Out'}
                           </span>
@@ -468,8 +490,8 @@ const SummaryLine: React.FC<{ label: string; amount: number; bold?: boolean }> =
     fontWeight: bold ? '700' : '400',
     fontSize: bold ? '15px' : '14px',
   }}>
-    <span style={{ color: '#475569' }}>{label}</span>
-    <span style={{ fontFamily: 'monospace', color: '#1e293b' }}>{fmt(amount)}</span>
+    <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
+    <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>{fmt(amount)}</span>
   </div>
 );
 
@@ -487,7 +509,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#2563eb',
+    color: 'var(--accent)',
     cursor: 'pointer',
     fontSize: '13px',
     padding: 0,
@@ -496,7 +518,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     margin: 0,
   },
   loadingBox: {
@@ -504,35 +526,35 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '64px 24px',
   },
   loadingText: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
   },
   errorBox: {
     textAlign: 'center',
     padding: '48px 24px',
-    backgroundColor: '#fef2f2',
+    backgroundColor: 'var(--tx-tint-red)',
     borderRadius: '12px',
-    border: '1px solid #fecaca',
+    border: '1px solid var(--tx-tint-red-border)',
   },
   errorText: {
-    color: '#991b1b',
+    color: 'var(--danger-fg)',
     fontSize: '14px',
     marginBottom: '12px',
   },
   retryBtn: {
     padding: '8px 16px',
-    backgroundColor: '#dc2626',
-    color: '#ffffff',
+    backgroundColor: 'var(--danger)',
+    color: '#fff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
     borderRadius: '12px',
     padding: '20px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     marginBottom: '20px',
   },
   headerGrid: {
@@ -548,14 +570,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   fieldLabel: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
   },
   fieldValue: {
     fontSize: '15px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
   },
   typeBadge: {
     display: 'inline-block',
@@ -575,7 +597,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   narration: {
     fontSize: '14px',
-    color: '#475569',
+    color: 'var(--text-secondary)',
     marginTop: '4px',
     lineHeight: '1.5',
   },
@@ -587,18 +609,16 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   navLinkBtn: {
     padding: '6px 14px',
-    backgroundColor: '#f1f5f9',
-    border: '1px solid #e2e8f0',
+    backgroundColor: 'var(--surface-3)',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '13px',
-    color: '#2563eb',
+    color: 'var(--accent)',
     cursor: 'pointer',
     fontWeight: '500',
   },
   printBtn: {
     padding: '8px 16px',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '13px',
@@ -607,9 +627,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   exportBtn: {
     padding: '8px 16px',
-    backgroundColor: '#ffffff',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
@@ -618,7 +636,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   sectionTitle: {
     fontSize: '15px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     marginBottom: '16px',
   },
   tableWrap: {
@@ -632,8 +650,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   th: {
     textAlign: 'left',
     padding: '10px 12px',
-    borderBottom: '2px solid #e2e8f0',
-    color: '#64748b',
+    borderBottom: '2px solid var(--border)',
+    color: 'var(--text-muted)',
     fontWeight: '600',
     fontSize: '12px',
     textTransform: 'uppercase' as const,
@@ -641,30 +659,30 @@ const styles: { [key: string]: React.CSSProperties } = {
     whiteSpace: 'nowrap',
   },
   tr: {
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--dash-table-row-border)',
   },
   td: {
     padding: '10px 12px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     verticalAlign: 'middle',
   },
   accountCode: {
     fontWeight: '600',
     marginRight: '6px',
-    color: '#2563eb',
+    color: 'var(--accent)',
     fontFamily: 'monospace',
   },
   accountName: {
-    color: '#64748b',
+    color: 'var(--text-muted)',
     fontSize: '12px',
   },
   totalRow: {
-    borderTop: '2px solid #e2e8f0',
+    borderTop: '2px solid var(--border)',
   },
   totalCell: {
     padding: '10px 12px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
   },
   directionBadge: {
     display: 'inline-block',
@@ -677,7 +695,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     maxWidth: '400px',
   },
   summaryDivider: {
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border)',
     margin: '4px 0',
   },
 };

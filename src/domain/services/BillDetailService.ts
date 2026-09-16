@@ -38,6 +38,7 @@ export interface BillLineDetail {
   furtherTaxAmount: number;
   fedAmount: number;
   advanceTaxAmount: number;
+  marginPercent: number;
   netAmount: number;
   stockMovement?: StockMovement;
 }
@@ -202,6 +203,10 @@ export class BillDetailService {
       const fedAmount = amtExclStd * ((line.fedPercent || 0) / 100);
       const advanceTaxAmount = amtExclStd * ((line.advanceTaxPercent || 0) / 100);
 
+      // Margin % = (retailPrice - rate) / retailPrice * 100
+      const retailPrice = line.retailPrice || 0;
+      const marginPercent = retailPrice > 0 ? Number((((retailPrice - rate) / retailPrice) * 100).toFixed(1)) : 0;
+
       return {
         line,
         productName: product?.name ?? (line.productId ? `Product ${line.productId}` : ''),
@@ -219,6 +224,7 @@ export class BillDetailService {
         furtherTaxAmount,
         fedAmount,
         advanceTaxAmount,
+        marginPercent,
         netAmount: line.debit || line.credit,
         stockMovement: movement,
       };
