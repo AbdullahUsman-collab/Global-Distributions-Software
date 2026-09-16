@@ -236,7 +236,25 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
     return this.mapStockMovementRow(result.rows[0]);
   }
 
+  /**
+   * Coerce a numeric that must be finite before it reaches a DECIMAL column.
+   * Same pattern as PostgresVoucherAdapter.finNum: pg serializes JS NaN as the
+   * literal string 'NaN', which Postgres numeric stores verbatim — poisoning
+   * every downstream SUM/AVCO calculation (see voucher #17 outage).
+   */
+  private static finNum(v: unknown): number | null {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
   async createStockMovement(tenantId: string, movement: Omit<StockMovement, 'id' | 'createdAt'>): Promise<StockMovement> {
+    // quantity is NOT NULL in stock_movements — reject non-finite outright
+    // (coercing to null would only trade a clear error for a cryptic 23502).
+    const quantity = Number(movement.quantity);
+    if (!Number.isFinite(quantity)) {
+      throw new Error(`Invalid stock movement quantity for product ${movement.productId}: ${String(movement.quantity)}`);
+    }
     const id = uuid();
     const result = await query(
       `INSERT INTO stock_movements (id, tenant_id, product_id, from_warehouse_id, to_warehouse_id, movement_type, status,
@@ -244,7 +262,7 @@ export class PostgresInventoryAdapter implements IInventoryRepository {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW())
        RETURNING *`,
       [id, tenantId, movement.productId, movement.fromWarehouseId || null, movement.toWarehouseId || null,
-       movement.movementType, movement.status, movement.quantity, movement.unitCost,
+       movement.movementType, movement.status, quantity, PostgresInventoryAdapter.finNum(movement.unitCost),
        movement.referenceId || null, movement.referenceType || null,
        movement.narration || null, movement.createdBy]
     );
