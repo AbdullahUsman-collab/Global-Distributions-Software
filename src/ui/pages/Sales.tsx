@@ -527,6 +527,15 @@ const SaleBillForm: React.FC<{
   // Get product map for auto-fill
   const productMap = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
 
+  // Map productId → total quantity on hand
+  const stockMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const sl of stockLevels) {
+      map.set(sl.productId, (map.get(sl.productId) ?? 0) + sl.quantityOnHand);
+    }
+    return map;
+  }, [stockLevels]);
+
   // Calculate bill
   const calculation = useMemo<SaleBillCalculation>(() => {
     const lineDetails: SaleLineTaxDetail[] = [];
@@ -676,9 +685,10 @@ const SaleBillForm: React.FC<{
       // Auto-post
       await postSaleBill(voucher.id);
       onSaved();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save bill:', err);
-      alert(err instanceof Error ? err.message : 'Failed to save bill');
+      const msg = err?.message || (typeof err === 'string' ? err : null) || 'Failed to save bill';
+      alert(msg);
     } finally {
       setSaving(false);
     }
@@ -768,9 +778,15 @@ const SaleBillForm: React.FC<{
                               style={{ ...styles.select, minWidth: '150px' }}
                             >
                               <option value="">Select Item</option>
-                              {products.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                              ))}
+                              {products.map(p => {
+                                const qty = stockMap.get(p.id) ?? 0;
+                                const oos = qty === 0;
+                                return (
+                                  <option key={p.id} value={p.id} style={oos ? { color: '#94a3b8' } : undefined}>
+                                    {p.name}{oos ? ' (Out of Stock)' : ''}
+                                  </option>
+                                );
+                              })}
                             </select>
                           </td>
                           <td style={styles.td}>

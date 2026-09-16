@@ -126,7 +126,7 @@ export function createProtectedRoutes(
           return;
         }
         console.error('Create sale error:', error);
-        res.status(500).json({ error: 'Failed to create sale bill' });
+        res.status(500).json({ error: error?.message || 'Failed to create sale bill' });
       }
     }
   );
@@ -2084,11 +2084,12 @@ export function createProtectedRoutes(
         }
 
         // Guard: check for existing OPENING movements for any of these products
+        // Only block DRAFT movements (POSTED ones can be superseded by a new OPENING)
         const productIds = lines.map((l: any) => l.productId);
         const placeholders = productIds.map((_: any, i: number) => `$${i + 2}`).join(', ');
         const existingOpenings = await getPool().query(
           `SELECT product_id FROM stock_movements
-           WHERE tenant_id = $1 AND movement_type = 'OPENING' AND status IN ('DRAFT', 'POSTED')
+           WHERE tenant_id = $1 AND movement_type = 'OPENING' AND status = 'DRAFT'
            AND product_id IN (${placeholders})`,
           [tenantId, ...productIds]
         );

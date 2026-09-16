@@ -48,6 +48,8 @@ export const BillDetailPage: React.FC = () => {
   const [detail, setDetail] = useState<BillDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAccounting, setShowAccounting] = useState(false);
+  const [showMovements, setShowMovements] = useState(false);
 
   // Line Items shows only actual product lines. The accounting engine also posts
   // GL aggregate lines (inventory debit, input tax, COGS pairs) without product
@@ -316,11 +318,22 @@ export const BillDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Accounting Entries */}
+          {/* Accounting Entries — collapsed by default (internal/admin reference) */}
           {detail.accountingEntries.length > 0 && (
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Accounting Entries</h2>
-              <div className="table-wrap" style={styles.tableWrap}>
+              <button
+                onClick={() => setShowAccounting(!showAccounting)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
+                }}
+              >
+                <h2 style={{ ...styles.sectionTitle, margin: 0, flex: 1 }}>
+                  {showAccounting ? '▼' : '▶'} Accounting Entries (Internal)
+                </h2>
+              </button>
+              {showAccounting && (
+                <div className="table-wrap" style={styles.tableWrap}>
                 <table style={styles.table}>
                   <thead>
                     <tr>
@@ -360,14 +373,26 @@ export const BillDetailPage: React.FC = () => {
                   </tfoot>
                 </table>
               </div>
+              )}
             </div>
           )}
 
-          {/* Inventory Movements */}
+          {/* Inventory Movements — collapsed by default */}
           {detail.inventoryMovements.length > 0 && (
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Inventory Movements</h2>
-              <div className="table-wrap" style={styles.tableWrap}>
+              <button
+                onClick={() => setShowMovements(!showMovements)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
+                }}
+              >
+                <h2 style={{ ...styles.sectionTitle, margin: 0, flex: 1 }}>
+                  {showMovements ? '▼' : '▶'} Inventory Movements
+                </h2>
+              </button>
+              {showMovements && (
+                <div className="table-wrap" style={styles.tableWrap}>
                 <table style={styles.table}>
                   <thead>
                     <tr>
@@ -411,6 +436,7 @@ export const BillDetailPage: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           )}
         </>

@@ -342,6 +342,13 @@ export async function getWarehouses() {
   return apiRequest<any[]>('/warehouses');
 }
 
+export async function setOpeningStock(lines: { productId: string; warehouseId?: string; quantity: number; unitCost?: number }[]) {
+  return apiRequest<any>('/opening-stock', {
+    method: 'POST',
+    body: JSON.stringify({ lines }),
+  });
+}
+
 // ─── Purchases API ────────────────────────────────────────────
 
 export async function createPurchaseBill(dto: any) {

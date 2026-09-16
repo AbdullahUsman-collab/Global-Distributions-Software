@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
-import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement, getStockBalanceWithActivity } from '../lib/api';
+import { getProducts, getWarehouses, getStockLevels, createProduct, updateProduct, deleteProduct, getProductBatches, getProductSerials, getStockMovements, createStockMovement, postStockMovement, cancelStockMovement, getStockBalanceWithActivity, setOpeningStock } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
 import {
   Product,
@@ -106,6 +106,7 @@ export const Inventory: React.FC = () => {
 
 const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -115,8 +116,9 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getProducts();
-      setProducts(data);
+      const [prods, levels] = await Promise.all([getProducts(), getStockLevels()]);
+      setProducts(prods);
+      setStockLevels(levels);
     } finally {
       setLoading(false);
     }
@@ -144,6 +146,15 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     const inactive = products.filter(p => !p.isActive).length;
     return { total: products.length, active, inactive };
   }, [products]);
+
+  // Map productId → total quantity on hand across all warehouses
+  const stockMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const sl of stockLevels) {
+      map.set(sl.productId, (map.get(sl.productId) ?? 0) + sl.quantityOnHand);
+    }
+    return map;
+  }, [stockLevels]);
 
   const handleCreate = async (dto: CreateProductDTO) => {
     await createProduct(dto);
@@ -196,7 +207,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           <div style={{ padding: 24 }}><div className="skeleton" style={{ width: '100%', height: 400 }} /></div>
         ) : (
           <>
-            <div style={{ ...styles.treeHeader, minWidth: 760 }}>
+            <div style={{ ...styles.treeHeader, minWidth: 840 }}>
               <span style={{ ...styles.col, flex: '0 0 90px' }}>SKU</span>
               <span style={{ ...styles.col, flex: '1' }}>Product Name</span>
               <span style={{ ...styles.col, flex: '0 0 100px' }}>Category</span>
@@ -204,13 +215,17 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               <span style={{ ...styles.col, flex: '0 0 70px' }}>Carton</span>
               <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Sale</span>
               <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right' }}>Purchase</span>
+              <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right' }}>Stock</span>
               <span style={{ ...styles.col, flex: '0 0 50px' }}>GST</span>
               <span style={{ ...styles.col, flex: '0 0 50px' }}>Status</span>
               <span style={{ ...styles.col, flex: '0 0 80px' }}>Actions</span>
             </div>
             {filtered.length === 0 && <div style={styles.empty}>No items found.</div>}
-            {filtered.map(p => (
-              <div key={p.id} style={{ ...styles.voucherRow, minWidth: 760, opacity: p.isActive ? 1 : 0.5 }}>
+            {filtered.map(p => {
+              const qty = stockMap.get(p.id) ?? 0;
+              const outOfStock = qty === 0;
+              return (
+              <div key={p.id} style={{ ...styles.voucherRow, minWidth: 840, opacity: p.isActive ? 1 : 0.5 }}>
                 <span style={{ ...styles.col, flex: '0 0 90px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{p.sku}</span>
                 <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{p.name}</span>
                 <span style={{ ...styles.col, flex: '0 0 100px' }}>
@@ -220,15 +235,27 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                 <span style={{ ...styles.col, flex: '0 0 70px', fontSize: 13 }}>{p.pcsPerCarton}</span>
                 <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(p.saleRate)}</span>
                 <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(p.purchaseRate)}</span>
+                <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
+                  {outOfStock ? (
+                    <span style={{ color: '#dc2626', fontSize: 11, fontWeight: 600 }}>0</span>
+                  ) : (
+                    qty.toLocaleString()
+                  )}
+                </span>
                 <span style={{ ...styles.col, flex: '0 0 50px', fontSize: 13 }}>{p.gstPercent}%</span>
                 <span style={{ ...styles.col, flex: '0 0 50px' }}>
-                  <span style={{ ...styles.statusDot, backgroundColor: p.isActive ? 'var(--success)' : 'var(--danger)' }} />
+                  {outOfStock ? (
+                    <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 8, fontSize: 10, fontWeight: 600, backgroundColor: '#fef2f2', color: '#dc2626', whiteSpace: 'nowrap' }}>Out of Stock</span>
+                  ) : (
+                    <span style={{ ...styles.statusDot, backgroundColor: p.isActive ? 'var(--success)' : 'var(--danger)' }} />
+                  )}
                 </span>
                 <span style={{ ...styles.col, flex: '0 0 80px', gap: 4 }}>
                   <button onClick={() => setEditProduct(p)} className="inv-row-btn" style={styles.rowBtn} title="Edit" aria-label={`Edit ${p.name}`}>✎</button>
                 </span>
               </div>
-            ))}
+              );
+            })}
           </>
         )}
       </div>
@@ -242,9 +269,14 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       {editProduct && (
         <ProductModal
           product={editProduct}
+          currentStock={stockMap.get(editProduct.id) ?? 0}
           onClose={() => setEditProduct(null)}
           onSave={(dto) => handleUpdate(editProduct.id, dto)}
           onDeactivate={() => handleDeactivate(editProduct.id)}
+          onUpdateStock={async (qty) => {
+            await setOpeningStock([{ productId: editProduct.id, quantity: qty }]);
+            await load();
+          }}
         />
       )}
     </>
@@ -255,10 +287,12 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
 
 const ProductModal: React.FC<{
   product?: Product;
+  currentStock?: number;
   onClose: () => void;
   onSave: (dto: CreateProductDTO) => void;
   onDeactivate?: () => void;
-}> = ({ product, onClose, onSave, onDeactivate }) => {
+  onUpdateStock?: (newQty: number) => Promise<void>;
+}> = ({ product, currentStock, onClose, onSave, onDeactivate, onUpdateStock }) => {
   const isEdit = !!product;
   const [sku, setSku] = useState(product?.sku ?? '');
   const [name, setName] = useState(product?.name ?? '');
@@ -281,6 +315,9 @@ const ProductModal: React.FC<{
   const [margin, setMargin] = useState(product?.margin ?? 0.072);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [stockQty, setStockQty] = useState(currentStock ?? 0);
+  const [stockSaving, setStockSaving] = useState(false);
+  const [stockError, setStockError] = useState('');
 
   // Computed costRate for display
   const computedCostRate = (retailPrice || 0) - (purchaseRate || 0) * margin;
@@ -434,6 +471,46 @@ const ProductModal: React.FC<{
               <input type="number" min={0} max={100} step={0.1} value={furtherTaxPercent} onChange={e => setFurtherTaxPercent(parseFloat(e.target.value) || 0)} style={styles.input} />
             </div>
           </div>
+          {isEdit && onUpdateStock && (
+            <div style={{ ...styles.formRow, backgroundColor: '#f8fafc', padding: '12px', borderRadius: 8, border: '1px solid #e2e8f0', marginTop: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ ...styles.field, marginBottom: 0, minWidth: 120 }}>
+                  <label style={styles.label}>Current Stock</label>
+                  <input type="number" value={stockQty} readOnly style={{ ...styles.input, backgroundColor: '#e2e8f0', fontWeight: 600, cursor: 'default' }} />
+                </div>
+                <div style={{ ...styles.field, marginBottom: 0, minWidth: 120 }}>
+                  <label style={styles.label}>New Quantity</label>
+                  <input type="number" min={0} step={1} defaultValue={currentStock ?? 0} id="stock-update-qty" style={styles.input} />
+                </div>
+                <button
+                  type="button"
+                  disabled={stockSaving}
+                  onClick={async () => {
+                    const input = document.getElementById('stock-update-qty') as HTMLInputElement;
+                    const newQty = parseInt(input?.value ?? '0', 10);
+                    if (isNaN(newQty) || newQty < 0) {
+                      setStockError('Quantity must be a non-negative number.');
+                      return;
+                    }
+                    setStockError('');
+                    setStockSaving(true);
+                    try {
+                      await onUpdateStock(newQty);
+                      setStockQty(newQty);
+                    } catch (err: any) {
+                      setStockError(err?.message || err?.error || 'Failed to update stock.');
+                    } finally {
+                      setStockSaving(false);
+                    }
+                  }}
+                  style={{ ...styles.primaryBtn, alignSelf: 'flex-end', height: 36 }}
+                >
+                  {stockSaving ? 'Saving...' : 'Update Stock'}
+                </button>
+              </div>
+              {stockError && <div style={{ ...styles.error, marginTop: 6 }}>{stockError}</div>}
+            </div>
+          )}
           {error && <div style={styles.error}>{error}</div>}
           <div style={styles.modalActions}>
             <button type="button" onClick={onClose} className="inv-btn-tool" style={styles.cancelBtn}>Cancel</button>
