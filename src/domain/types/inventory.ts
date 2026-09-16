@@ -517,9 +517,9 @@ export function calculateBillLineTax(input: BillLineTaxInput): BillLineTaxResult
   // gstPercent guarded like every other percentage — an undefined/NaN gstPercent
   // (UI transient input state) poisoned voucher #17's AR line with numeric 'NaN'.
   const gstAmount = toAmount * ((input.gstPercent || 0) / 100);
-  const furtherTaxAmount = toAmount * (input.furtherTaxPercent / 100);
-  const fedAmount = toAmount * (input.fedPercent / 100);
-  const advanceTaxAmount = toAmount * (input.advanceTaxPercent / 100);
+  const furtherTaxAmount = toAmount * ((input.furtherTaxPercent || 0) / 100);
+  const fedAmount = toAmount * ((input.fedPercent || 0) / 100);
+  const advanceTaxAmount = toAmount * ((input.advanceTaxPercent || 0) / 100);
   const netAmount = toAmount + gstAmount + furtherTaxAmount + fedAmount + advanceTaxAmount;
 
   return {

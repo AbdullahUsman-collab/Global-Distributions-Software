@@ -351,7 +351,33 @@ export async function setOpeningStock(lines: { productId: string; warehouseId?: 
 
 // ─── Purchases API ────────────────────────────────────────────
 
-export async function createPurchaseBill(dto: any) {
+export interface PurchaseBillDTO {
+  supplierId: string;
+  date: string;
+  warehouseId?: string;
+  narration?: string;
+  lines: {
+    productId: string;
+    cartons: number;
+    packs: number;
+    rate: number;
+    retailPrice?: number;
+    marginPercent?: number;
+    tradeDiscountPercent: number;
+    tradeOfferPercent?: number;
+    specialDiscountPercent?: number;
+    minQuantity?: number;
+    hsCode?: string;
+    gstType?: string;
+    gstPercent: number;
+    fedPercent: number;
+    furtherTaxPercent: number;
+    advanceTaxPercent: number;
+    description?: string;
+  }[];
+}
+
+export async function createPurchaseBill(dto: PurchaseBillDTO) {
   return apiRequest<any>('/purchases', {
     method: 'POST',
     body: JSON.stringify(dto),

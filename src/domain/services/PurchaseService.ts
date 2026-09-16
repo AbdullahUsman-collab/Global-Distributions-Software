@@ -63,16 +63,30 @@ export interface PurchaseBillLine {
   packs: number;
   /** Purchase rate per piece */
   rate: number;
+  /** Retail price (for margin visibility) */
+  retailPrice?: number;
+  /** Margin percent (derived: (retailPrice - rate) / retailPrice * 100) */
+  marginPercent?: number;
   /** Trade discount percentage */
   tradeDiscountPercent: number;
+  /** Trade offer percentage */
+  tradeOfferPercent?: number;
+  /** Special discount percentage */
+  specialDiscountPercent?: number;
   /** GST percentage */
   gstPercent: number;
   /** Further Tax percentage */
   furtherTaxPercent: number;
   /** FED percentage */
   fedPercent: number;
-  /** Advance Tax percentage */
+  /** Advance Tax (Purchase) percentage */
   advanceTaxPercent: number;
+  /** Minimum quantity */
+  minQuantity?: number;
+  /** HS Code */
+  hsCode?: string;
+  /** GST Type */
+  gstType?: 'VAT' | '3RD' | '8TH';
   /** Line description/narration */
   description?: string;
 }
@@ -143,6 +157,8 @@ export class PurchaseService {
       quantity: totalPacks,
       rate: line.rate,
       tradeDiscountPercent: line.tradeDiscountPercent,
+      tradeOfferPercent: line.tradeOfferPercent,
+      specialDiscountPercent: line.specialDiscountPercent,
       gstPercent: line.gstPercent,
       furtherTaxPercent: line.furtherTaxPercent,
       fedPercent: line.fedPercent,
@@ -220,18 +236,22 @@ export class PurchaseService {
     if (!supplier) throw new Error('Supplier not found');
     if (!supplier.isActive) throw new Error('Supplier is inactive');
 
+    // Filter out empty lines (no productId)
+    const validLines = dto.lines.filter(l => l.productId);
+    if (validLines.length === 0) throw new Error('At least one line with a product is required');
+
     // Validate products exist
     const products = await this.inventoryRepo.getProducts(tenantId);
     const productMap = new Map(products.map(p => [p.id, p]));
 
-    for (const line of dto.lines) {
+    for (const line of validLines) {
       const product = productMap.get(line.productId);
       if (!product) throw new Error(`Product not found: ${line.productId}`);
       if (!product.isActive) throw new Error(`Product is inactive: ${product.name}`);
     }
 
     // Calculate bill for validation
-    const calculation = await this.calculateBill(tenantId, dto.lines);
+    const calculation = await this.calculateBill(tenantId, validLines);
 
     // Create balanced GL entries.
     // DEBIT: Inventory (base amount) + Tax Input (GST + Further Tax + FED + Advance Tax)
@@ -266,7 +286,7 @@ export class PurchaseService {
         credit: 0,
       }] : []),
       // CREDIT: Supplier AP — per-product lines (mirrors Customer AR pattern)
-      ...dto.lines.map((line, idx) => {
+      ...validLines.map((line, idx) => {
         const detail = calculation.lines[idx];
         const product = productMap.get(line.productId)!;
         return {
@@ -280,6 +300,19 @@ export class PurchaseService {
           stRate: line.gstPercent,
           stAmount: detail.gstAmount,
           amtExclStd: detail.toAmount,
+          rate: line.rate,
+          purchaseRate: line.rate,
+          retailPrice: line.retailPrice,
+          marginPercent: line.marginPercent,
+          tradeDiscountPercent: line.tradeDiscountPercent,
+          tradeOfferPercent: line.tradeOfferPercent,
+          specialDiscountPercent: line.specialDiscountPercent,
+          minQuantity: line.minQuantity,
+          hsCode: line.hsCode,
+          gstType: line.gstType,
+          fedPercent: line.fedPercent,
+          furtherTaxPercent: line.furtherTaxPercent,
+          advanceTaxPercent: line.advanceTaxPercent,
         };
       }),
     ];
@@ -354,6 +387,7 @@ export class PurchaseService {
             movementDate: postedVoucher.date,
             referenceType: 'Voucher',
             referenceId: voucherId,
+            fromWarehouseId: destLevel.warehouseId,
             toWarehouseId: destLevel.warehouseId,
             productId: line.productId,
             quantity: line.quantity,

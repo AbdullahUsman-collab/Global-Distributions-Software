@@ -245,7 +245,7 @@ export function createProtectedRoutes(
           return;
         }
         console.error('Post purchase error:', error);
-        res.status(500).json({ error: 'Failed to post purchase bill' });
+        res.status(500).json({ error: error?.message || 'Failed to post purchase bill' });
       }
     }
   );

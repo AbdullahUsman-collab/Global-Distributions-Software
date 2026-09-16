@@ -16,7 +16,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import {
   getSuppliers, createSupplier, updateSupplier, deleteSupplier,
-  getAccounts, getLedger, getProducts,
+  getAccounts, getLedger, getProducts, getStockLevels,
   getPurchases, createPurchaseBill, postPurchaseBill, deletePurchaseBill,
   getPurchaseReturns, createPurchaseReturn, postPurchaseReturn, deletePurchaseReturn,
 } from '../lib/api';
@@ -55,9 +55,19 @@ const TABS: { key: PurchasesTab; label: string }[] = [
 
 const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/**
+ * NaN-safe numeric parser — returns 0 for empty string, NaN, or
+ * Infinity. Mirrors Sales.tsx num() to prevent the NaN-poisoning
+ * class of bugs (voucher #17, production outage 2026-09-16).
+ */
+const num = (raw: string): number => {
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+};
+
 const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
-  DRAFT:  { bg: '#fef3c7', fg: '#92400e' },
-  POSTED: { bg: '#dcfce7', fg: '#166534' },
+  DRAFT:  { bg: 'var(--tx-draft-bg)', fg: 'var(--tx-draft-fg)' },
+  POSTED: { bg: 'var(--tx-posted-bg)', fg: 'var(--tx-posted-fg)' },
 };
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -70,7 +80,7 @@ export const Purchases: React.FC = () => {
   const [tab, setTab] = useState<PurchasesTab>('suppliers');
 
   return (
-    <div className="page-pad" style={styles.page}>
+    <div className="page-pad tx-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -86,6 +96,8 @@ export const Purchases: React.FC = () => {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
+            className={`tx-tab${tab === t.key ? ' tx-tab-active' : ''}`}
+            aria-pressed={tab === t.key}
             style={{ ...styles.tab, ...(tab === t.key ? styles.tabActive : {}) }}
           >
             {t.label}
@@ -214,7 +226,7 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           onChange={e => setSearchPrefix(e.target.value)}
           style={styles.searchInput}
         />
-        <button onClick={handleCreate} style={styles.primaryBtn}>+ New Supplier</button>
+        <button onClick={handleCreate} className="tx-btn tx-btn-primary" style={styles.primaryBtn}>+ New Supplier</button>
       </div>
 
       {/* Supplier Form Modal */}
@@ -251,7 +263,7 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               {filteredSuppliers.map(s => {
                 const bal = balanceMap.get(s.id);
                 return (
-                <tr key={s.id} style={styles.tr}>
+                <tr key={s.id} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>{s.name}</td>
                   <td style={styles.td}>{s.contactPerson ?? '—'}</td>
                   <td style={styles.td} className="purchases-hide-mobile">{s.phone ?? '—'}</td>
@@ -270,25 +282,25 @@ const SuppliersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: s.isActive ? '#dcfce7' : '#fee2e2',
-                      color: s.isActive ? '#166534' : '#991b1b',
+                      backgroundColor: s.isActive ? 'var(--tx-active-bg)' : 'var(--tx-inactive-bg)',
+                      color: s.isActive ? 'var(--tx-active-fg)' : 'var(--tx-inactive-fg)',
                     }}>
                       {s.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <button onClick={() => handleEdit(s)} style={styles.linkBtn}>Edit</button>
+                    <button onClick={() => handleEdit(s)} className="tx-btn tx-btn-link" style={styles.linkBtn}>Edit</button>
                     <button
                       onClick={() => {
                         const code = accountCodeMap.get(s.accountHeadId);
                         if (code) navigate('/finance', { state: { tab: 'ledger', accountId: code } });
                       }}
-                      style={styles.linkBtn}
+                      className="tx-btn tx-btn-link" style={styles.linkBtn}
                     >
                       Ledger
                     </button>
                     {s.isActive && (
-                      <button onClick={() => handleDeactivate(s.id)} style={styles.dangerBtn}>Deactivate</button>
+                      <button onClick={() => handleDeactivate(s.id)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>Deactivate</button>
                     )}
                   </td>
                 </tr>
@@ -339,7 +351,7 @@ const SupplierForm: React.FC<{
   };
 
   return (
-    <div style={styles.modalOverlay}>
+    <div className="tx-modal-overlay" style={styles.modalOverlay}>
       <div style={styles.modal}>
         <h2 style={styles.modalTitle}>{supplier ? 'Edit Supplier' : 'New Supplier'}</h2>
         <form onSubmit={handleSubmit}>
@@ -381,15 +393,15 @@ const SupplierForm: React.FC<{
               <input
                 type="number"
                 value={creditLimit}
-                onChange={e => setCreditLimit(Number(e.target.value))}
+                onChange={e => setCreditLimit(num(e.target.value))}
                 style={styles.input}
                 min={0}
               />
             </div>
           </div>
           <div style={styles.formActions}>
-            <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
-            <button type="submit" style={styles.primaryBtn}>{supplier ? 'Update' : 'Create'}</button>
+            <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
+            <button type="submit" className="tx-btn tx-btn-primary" style={styles.primaryBtn}>{supplier ? 'Update' : 'Create'}</button>
           </div>
         </form>
       </div>
@@ -452,7 +464,7 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <h2 style={styles.sectionTitle}>Purchase Bills</h2>
-        <button onClick={() => setShowForm(true)} style={styles.primaryBtn}>+ New Purchase Bill</button>
+        <button onClick={() => setShowForm(true)} className="tx-btn tx-btn-primary" style={styles.primaryBtn}>+ New Purchase Bill</button>
       </div>
 
       {/* Bill Form Modal */}
@@ -483,25 +495,25 @@ const PurchaseBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             </thead>
             <tbody>
               {bills.map(b => (
-                <tr key={b.voucher.id} style={styles.tr}>
+                <tr key={b.voucher.id} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>{b.voucher.voucherNumber}</td>
                   <td style={styles.td}>{b.voucher.date}</td>
                   <td style={styles.td}>{b.voucher.narration}</td>
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[b.voucher.status]?.bg ?? '#f1f5f9',
-                      color: STATUS_COLORS[b.voucher.status]?.fg ?? '#475569',
+                      backgroundColor: STATUS_COLORS[b.voucher.status]?.bg ?? 'var(--tx-neutral-bg)',
+                      color: STATUS_COLORS[b.voucher.status]?.fg ?? 'var(--tx-neutral-fg)',
                     }}>
                       {VOUCHER_STATUS_LABELS[b.voucher.status]}
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <button onClick={() => navigate('/bills/' + b.voucher.id)} style={styles.linkBtn}>View</button>
+                    <button onClick={() => navigate('/bills/' + b.voucher.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>View</button>
                     {b.voucher.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => handlePost(b.voucher.id)} style={styles.linkBtn}>Post</button>
-                        <button onClick={() => handleDelete(b.voucher.id)} style={styles.dangerBtn}>Delete</button>
+                        <button onClick={() => handlePost(b.voucher.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>Post</button>
+                        <button onClick={() => handleDelete(b.voucher.id)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>Delete</button>
                       </>
                     )}
                   </td>
@@ -525,28 +537,41 @@ const PurchaseBillForm: React.FC<{
   const { user } = useAuth();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
 
   const [supplierId, setSupplierId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [narration, setNarration] = useState('');
   const [lines, setLines] = useState<PurchaseBillLine[]>([]);
+  const [expandedLines, setExpandedLines] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
 
   // Load master data
   useEffect(() => {
     const load = async () => {
-      const [supps, prods] = await Promise.all([
+      const [supps, prods, lvls] = await Promise.all([
         getSuppliers(),
         getProducts(),
+        getStockLevels(),
       ]);
       setSuppliers(supps);
       setProducts(prods.filter(p => p.isActive));
+      setStockLevels(lvls);
     };
     load();
   }, [tenantId]);
 
   // Get product map for auto-fill
   const productMap = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
+
+  // Map productId → total quantity on hand
+  const stockMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const sl of stockLevels) {
+      map.set(sl.productId, (map.get(sl.productId) ?? 0) + sl.quantityOnHand);
+    }
+    return map;
+  }, [stockLevels]);
 
   // Calculate bill
   const calculation = useMemo<PurchaseBillCalculation>(() => {
@@ -563,6 +588,8 @@ const PurchaseBillForm: React.FC<{
         quantity: totalPacksForLine,
         rate: line.rate,
         tradeDiscountPercent: line.tradeDiscountPercent,
+        tradeOfferPercent: line.tradeOfferPercent,
+        specialDiscountPercent: line.specialDiscountPercent,
         gstPercent: line.gstPercent,
         furtherTaxPercent: line.furtherTaxPercent,
         fedPercent: line.fedPercent,
@@ -589,36 +616,39 @@ const PurchaseBillForm: React.FC<{
     };
   }, [lines, productMap]);
 
-  // Add new line
-  const addLine = () => {
-    setLines(prev => [...prev, {
-      productId: products[0]?.id ?? '',
-      cartons: 0,
-      packs: 0,
-      rate: products[0]?.purchaseRate ?? 0,
-      tradeDiscountPercent: products[0]?.tradeDiscount ?? 0,
-      gstPercent: products[0]?.gstPercent ?? 0,
-      furtherTaxPercent: products[0]?.furtherTaxPercent ?? 0,
-      fedPercent: products[0]?.fedPercent ?? 0,
-      advanceTaxPercent: products[0]?.advanceTaxPurchasePercent ?? 0,
-    }]);
+  // Toggle expand/collapse for a line
+  const toggleExpand = (idx: number) => {
+    setExpandedLines(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
   };
 
-  // Update line
+  // Update line — auto-fill from product on product change
   const updateLine = (idx: number, updates: Partial<PurchaseBillLine>) => {
     setLines(prev => prev.map((l, i) => {
       if (i !== idx) return l;
       const updated = { ...l, ...updates };
-      // Auto-fill from product if product changed
+      // Auto-fill all fields from product master when product changes
       if (updates.productId) {
         const product = productMap.get(updates.productId);
         if (product) {
           updated.rate = product.purchaseRate;
+          updated.retailPrice = product.retailPrice;
+          updated.marginPercent = product.retailPrice > 0
+            ? ((product.retailPrice - product.purchaseRate) / product.retailPrice) * 100
+            : 0;
           updated.tradeDiscountPercent = product.tradeDiscount;
+          updated.tradeOfferPercent = 0;
+          updated.specialDiscountPercent = 0;
           updated.gstPercent = product.gstPercent;
           updated.furtherTaxPercent = product.furtherTaxPercent;
           updated.fedPercent = product.fedPercent;
           updated.advanceTaxPercent = product.advanceTaxPurchasePercent;
+          updated.minQuantity = product.minQuantity;
+          updated.hsCode = product.hsCode;
+          updated.gstType = product.gstType;
         }
       }
       // Auto-calculate packs from cartons × pcsPerCarton
@@ -631,40 +661,60 @@ const PurchaseBillForm: React.FC<{
     }));
   };
 
-  // Remove line
-  const removeLine = (idx: number) => {
-    setLines(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  // Save
+  // Save — filter empty lines before submission
   const handleSave = async () => {
     if (!supplierId) { alert('Select a supplier'); return; }
-    if (lines.length === 0) { alert('Add at least one line'); return; }
+    const validLines = lines.filter(l => l.productId);
+    if (validLines.length === 0) { alert('Add at least one item'); return; }
 
     setSaving(true);
     try {
       const voucher = await createPurchaseBill({
         supplierId,
-        // warehouseId intentionally omitted — server resolves the implicit default
         date,
         narration: narration || undefined,
-        lines,
+        lines: validLines,
       });
 
       // Auto-post
       await postPurchaseBill(voucher.id);
       onSaved();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save bill:', err);
-      alert(err instanceof Error ? err.message : 'Failed to save bill');
+      const msg = err?.message || (typeof err === 'string' ? err : null) || 'Failed to save bill';
+      alert(msg);
     } finally {
       setSaving(false);
     }
   };
 
+  // Ensure at least one empty trailing line exists
+  useEffect(() => {
+    if (lines.length === 0 || lines[lines.length - 1].productId !== '') {
+      setLines(prev => [...prev, {
+        productId: '',
+        cartons: 0,
+        packs: 0,
+        rate: 0,
+        retailPrice: 0,
+        marginPercent: 0,
+        tradeDiscountPercent: 0,
+        tradeOfferPercent: 0,
+        specialDiscountPercent: 0,
+        gstPercent: 0,
+        furtherTaxPercent: 0,
+        fedPercent: 0,
+        advanceTaxPercent: 0,
+        minQuantity: 0,
+        hsCode: '',
+        gstType: undefined,
+      }]);
+    }
+  }, [lines]);
+
   return (
-    <div style={styles.modalOverlay}>
-      <div style={{ ...styles.modal, maxWidth: '900px' }}>
+    <div className="tx-modal-overlay" style={styles.modalOverlay}>
+      <div style={{ ...styles.modal, maxWidth: '1100px' }}>
         <h2 style={styles.modalTitle}>New Purchase Bill</h2>
 
         {/* Header Fields */}
@@ -692,49 +742,76 @@ const PurchaseBillForm: React.FC<{
         <div style={{ marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600' }}>Bill Lines</h3>
-            <button onClick={addLine} style={styles.smallBtn}>+ Add Line</button>
           </div>
 
-          {lines.length === 0 ? (
-            <p style={{ color: '#94a3b8', fontSize: '13px' }}>No lines added. Click "+ Add Line" to start.</p>
-          ) : (
-            <div className="table-wrap">
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Item</th>
-                    <th style={styles.th}>Ctns</th>
-                    <th style={styles.th}>Pcs</th>
-                    <th style={styles.th}>Rate</th>
-                    <th style={styles.th}>Disc%</th>
-                    <th style={styles.th}>ST%</th>
-                    <th style={styles.th}>Amount</th>
-                    <th style={styles.th}>Tax</th>
-                    <th style={styles.th}>Net</th>
-                    <th style={styles.th}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((line, idx) => {
-                    const detail = calculation.lines[idx];
-                    return (
-                      <tr key={idx} style={styles.tr}>
+          {lines.every(l => !l.productId) && (
+            <p style={{ color: 'var(--text-disabled)', fontSize: '13px', marginBottom: '8px' }}>Select a product below to start adding items.</p>
+          )}
+          <div className="table-wrap purchase-lines-wrap">
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={{ ...styles.th, width: '32px' }}></th>
+                  <th style={styles.th}>Item</th>
+                  <th style={styles.th}>Ctns</th>
+                  <th style={styles.th}>Pcs</th>
+                  <th style={styles.th}>Rate</th>
+                  <th style={styles.th}>Disc%</th>
+                  <th style={styles.th}>ST%</th>
+                  <th style={styles.th}>Amount</th>
+                  <th style={styles.th}>Tax</th>
+                  <th style={styles.th}>Net</th>
+                  <th style={{ ...styles.th, width: '32px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((line, idx) => {
+                  const detail = calculation.lines[idx];
+                  const hasProduct = !!line.productId;
+                  const isExpanded = expandedLines.has(idx);
+                  return (
+                    <React.Fragment key={idx}>
+                      <tr style={styles.tr}>
+                        <td style={{ ...styles.td, width: '32px' }}>
+                          {hasProduct && (
+                            <button
+                              onClick={() => toggleExpand(idx)}
+                              title={isExpanded ? 'Collapse details' : 'Expand details'}
+                              style={{
+                                ...styles.smallBtn,
+                                padding: '2px 6px',
+                                fontSize: '11px',
+                                backgroundColor: isExpanded ? '#dbeafe' : '#f1f5f9',
+                                color: isExpanded ? '#2563eb' : '#64748b',
+                              }}
+                            >
+                              {isExpanded ? '▼' : '▶'}
+                            </button>
+                          )}
+                        </td>
                         <td style={styles.td}>
                           <select
                             value={line.productId}
                             onChange={e => updateLine(idx, { productId: e.target.value })}
                             style={{ ...styles.select, minWidth: '150px' }}
                           >
-                            {products.map(p => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
+                            <option value="">Select Item</option>
+                            {products.map(p => {
+                              const qty = stockMap.get(p.id) ?? 0;
+                              const oos = qty === 0;
+                              return (
+                                <option key={p.id} value={p.id} style={oos ? { color: '#94a3b8' } : undefined}>
+                                  {p.name}{oos ? ' (Out of Stock)' : ''}
+                                </option>
+                              );
+                            })}
                           </select>
                         </td>
                         <td style={styles.td}>
                           <input
                             type="number"
                             value={line.cartons}
-                            onChange={e => updateLine(idx, { cartons: Number(e.target.value) })}
+                            onChange={e => updateLine(idx, { cartons: num(e.target.value) })}
                             style={{ ...styles.input, width: '60px' }}
                             min={0}
                           />
@@ -743,7 +820,7 @@ const PurchaseBillForm: React.FC<{
                           <input
                             type="number"
                             value={line.packs}
-                            onChange={e => updateLine(idx, { packs: Number(e.target.value) })}
+                            onChange={e => updateLine(idx, { packs: num(e.target.value) })}
                             style={{ ...styles.input, width: '60px' }}
                             min={0}
                           />
@@ -752,7 +829,7 @@ const PurchaseBillForm: React.FC<{
                           <input
                             type="number"
                             value={line.rate}
-                            onChange={e => updateLine(idx, { rate: Number(e.target.value) })}
+                            onChange={e => updateLine(idx, { rate: num(e.target.value) })}
                             style={{ ...styles.input, width: '80px' }}
                             min={0}
                             step={0.01}
@@ -762,7 +839,7 @@ const PurchaseBillForm: React.FC<{
                           <input
                             type="number"
                             value={line.tradeDiscountPercent}
-                            onChange={e => updateLine(idx, { tradeDiscountPercent: Number(e.target.value) })}
+                            onChange={e => updateLine(idx, { tradeDiscountPercent: num(e.target.value) })}
                             style={{ ...styles.input, width: '50px' }}
                             min={0}
                             step={0.1}
@@ -772,7 +849,7 @@ const PurchaseBillForm: React.FC<{
                           <input
                             type="number"
                             value={line.gstPercent}
-                            onChange={e => updateLine(idx, { gstPercent: Number(e.target.value) })}
+                            onChange={e => updateLine(idx, { gstPercent: num(e.target.value) })}
                             style={{ ...styles.input, width: '50px' }}
                             min={0}
                             step={0.1}
@@ -781,49 +858,157 @@ const PurchaseBillForm: React.FC<{
                         <td style={styles.td}>{detail ? fmt(detail.amount) : '0.00'}</td>
                         <td style={styles.td}>{detail ? fmt(detail.gstAmount + detail.fedAmount) : '0.00'}</td>
                         <td style={styles.td}><strong>{detail ? fmt(detail.netAmount) : '0.00'}</strong></td>
-                        <td style={styles.td}>
-                          <button onClick={() => removeLine(idx)} style={styles.dangerBtn}>×</button>
+                        <td style={{ ...styles.td, width: '32px' }}>
+                          {hasProduct && (
+                            <button onClick={() => setLines(prev => prev.filter((_, i) => i !== idx))} className="tx-btn tx-btn-danger" style={{ ...styles.dangerBtn, padding: '2px 6px' }}>×</button>
+                          )}
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={11} style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Purchase Rate</label>
+                                <input type="number" value={line.rate} onChange={e => updateLine(idx, { rate: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.01} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Retail Price</label>
+                                <input type="number" value={line.retailPrice ?? 0} onChange={e => updateLine(idx, { retailPrice: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.01} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Margin %</label>
+                                <input type="number" value={(() => { const rp = line.retailPrice ?? 0; const r = line.rate; return rp > 0 ? Number((((rp - r) / rp) * 100).toFixed(1)) : 0; })()} readOnly style={{ ...styles.input, width: '100%', backgroundColor: '#e2e8f0', cursor: 'default' }} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Trade Disc %</label>
+                                <input type="number" value={line.tradeDiscountPercent} onChange={e => updateLine(idx, { tradeDiscountPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Trade Offer %</label>
+                                <input type="number" value={line.tradeOfferPercent ?? 0} onChange={e => updateLine(idx, { tradeOfferPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Special Disc %</label>
+                                <input type="number" value={line.specialDiscountPercent ?? 0} onChange={e => updateLine(idx, { specialDiscountPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Min Qty</label>
+                                <input type="number" value={line.minQuantity ?? 0} onChange={e => updateLine(idx, { minQuantity: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>HS Code</label>
+                                <input value={line.hsCode ?? ''} onChange={e => updateLine(idx, { hsCode: e.target.value })} style={{ ...styles.input, width: '100%' }} placeholder="e.g. 3305.10" />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>GST Type</label>
+                                <select value={line.gstType ?? ''} onChange={e => updateLine(idx, { gstType: e.target.value as any })} style={{ ...styles.input, width: '100%' }}>
+                                  <option value="">Standard VAT</option>
+                                  <option value="VAT">VAT</option>
+                                  <option value="3RD">3rd Schedule</option>
+                                  <option value="8TH">8th Schedule</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>GST %</label>
+                                <input type="number" value={line.gstPercent} onChange={e => updateLine(idx, { gstPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>FED %</label>
+                                <input type="number" value={line.fedPercent} onChange={e => updateLine(idx, { fedPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Further Tax %</label>
+                                <input type="number" value={line.furtherTaxPercent} onChange={e => updateLine(idx, { furtherTaxPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Adv Tax (Purchase) %</label>
+                                <input type="number" value={line.advanceTaxPercent} onChange={e => updateLine(idx, { advanceTaxPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Cost Rate</label>
+                                <input type="number" value={line.rate} readOnly style={{ ...styles.input, width: '100%', backgroundColor: '#e2e8f0', cursor: 'default' }} />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Totals */}
-        {lines.length > 0 && (
-          <div style={styles.totalsBox}>
-            <div style={styles.totalRow}>
-              <span>Total Amount:</span><span>{fmt(calculation.totalAmount)}</span>
+        {/* Totals — full breakdown, only non-zero rows */}
+        {lines.some(l => l.productId) && (() => {
+          const hasProduct = lines.some(l => l.productId);
+          const totalTradeDiscount = lines.reduce((s, l) => s + ((l.packs * l.rate * (l.tradeDiscountPercent || 0)) / 100), 0);
+          const totalTradeOffer = lines.reduce((s, l) => s + ((l.packs * l.rate * (l.tradeOfferPercent || 0)) / 100), 0);
+          const totalSpecialDiscount = lines.reduce((s, l) => s + ((l.packs * l.rate * (l.specialDiscountPercent || 0)) / 100), 0);
+          return hasProduct ? (
+            <div style={styles.totalsBox}>
+              <div style={styles.totalRow}>
+                <span>Total Amount:</span><span>{fmt(calculation.totalAmount)}</span>
+              </div>
+              {totalTradeDiscount > 0 && (
+                <div style={styles.totalRow}>
+                  <span>Trade Discount:</span><span>{fmt(totalTradeDiscount)}</span>
+                </div>
+              )}
+              {totalTradeOffer > 0 && (
+                <div style={styles.totalRow}>
+                  <span>Trade Offer:</span><span>{fmt(totalTradeOffer)}</span>
+                </div>
+              )}
+              {totalSpecialDiscount > 0 && (
+                <div style={styles.totalRow}>
+                  <span>Special Discount:</span><span>{fmt(totalSpecialDiscount)}</span>
+                </div>
+              )}
+              {calculation.totalDiscount > 0 && (
+                <div style={styles.totalRow}>
+                  <span>Total Discount:</span><span>{fmt(calculation.totalDiscount)}</span>
+                </div>
+              )}
+              <div style={styles.totalRow}>
+                <span>After Discount (Value Excl Tax):</span><span>{fmt(calculation.totalToAmount)}</span>
+              </div>
+              {calculation.totalGst > 0 && (
+                <div style={styles.totalRow}>
+                  <span>GST:</span><span>{fmt(calculation.totalGst)}</span>
+                </div>
+              )}
+              {calculation.totalFurtherTax > 0 && (
+                <div style={styles.totalRow}>
+                  <span>Further Tax:</span><span>{fmt(calculation.totalFurtherTax)}</span>
+                </div>
+              )}
+              {calculation.totalFed > 0 && (
+                <div style={styles.totalRow}>
+                  <span>FED:</span><span>{fmt(calculation.totalFed)}</span>
+                </div>
+              )}
+              {calculation.totalAdvanceTax > 0 && (
+                <div style={styles.totalRow}>
+                  <span>Advance Tax:</span><span>{fmt(calculation.totalAdvanceTax)}</span>
+                </div>
+              )}
+              <div style={{ ...styles.totalRow, fontWeight: '700', fontSize: '15px', borderTop: '2px solid var(--border)', paddingTop: '8px' }}>
+                <span>Net Amount:</span><span>{fmt(calculation.totalNetAmount)}</span>
+              </div>
             </div>
-            <div style={styles.totalRow}>
-              <span>Discount:</span><span>{fmt(calculation.totalDiscount)}</span>
-            </div>
-            <div style={styles.totalRow}>
-              <span>After Discount (To.Amt):</span><span>{fmt(calculation.totalToAmount)}</span>
-            </div>
-            <div style={styles.totalRow}>
-              <span>GST:</span><span>{fmt(calculation.totalGst)}</span>
-            </div>
-            <div style={styles.totalRow}>
-              <span>FED:</span><span>{fmt(calculation.totalFed)}</span>
-            </div>
-            <div style={{ ...styles.totalRow, fontWeight: '700', fontSize: '15px', borderTop: '2px solid #e2e8f0', paddingTop: '8px' }}>
-              <span>Net Amount:</span><span>{fmt(calculation.totalNetAmount)}</span>
-            </div>
-          </div>
-        )}
+          ) : null;
+        })()}
 
         {/* Actions */}
         <div style={styles.formActions}>
-          <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
+          <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
           <button
             onClick={handleSave}
-            disabled={saving || lines.length === 0 || !supplierId}
-            style={styles.primaryBtn}
+            disabled={saving || !supplierId || lines.filter(l => l.productId).length === 0}
+            className="tx-btn tx-btn-primary" style={styles.primaryBtn}
           >
             {saving ? 'Saving...' : 'Save & Post Bill'}
           </button>
@@ -885,7 +1070,7 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     <div>
       <div style={styles.toolbar}>
         <h2 style={styles.sectionTitle}>Purchase Returns (PRV)</h2>
-        <button onClick={() => setShowForm(true)} style={styles.primaryBtn}>+ New Purchase Return</button>
+        <button onClick={() => setShowForm(true)} className="tx-btn tx-btn-primary" style={styles.primaryBtn}>+ New Purchase Return</button>
       </div>
 
       {showForm && (
@@ -914,25 +1099,25 @@ const PurchaseReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             </thead>
             <tbody>
               {returns.map(r => (
-                <tr key={r.id} style={styles.tr}>
+                <tr key={r.id} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>{r.voucherNumber}</td>
                   <td style={styles.td}>{r.date}</td>
                   <td style={styles.td}>{r.narration}</td>
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? '#f1f5f9',
-                      color: STATUS_COLORS[r.status]?.fg ?? '#475569',
+                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? 'var(--tx-neutral-bg)',
+                      color: STATUS_COLORS[r.status]?.fg ?? 'var(--tx-neutral-fg)',
                     }}>
                       {VOUCHER_STATUS_LABELS[r.status]}
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <button onClick={() => navigate('/bills/' + r.id)} style={styles.linkBtn}>View</button>
+                    <button onClick={() => navigate('/bills/' + r.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>View</button>
                     {r.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => handlePost(r.id)} style={styles.linkBtn}>Post</button>
-                        <button onClick={() => handleDelete(r.id)} style={styles.dangerBtn}>Delete</button>
+                        <button onClick={() => handlePost(r.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>Post</button>
+                        <button onClick={() => handleDelete(r.id)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>Delete</button>
                       </>
                     )}
                   </td>
@@ -1024,7 +1209,7 @@ const PurchaseReturnForm: React.FC<{
   };
 
   return (
-    <div style={styles.modalOverlay}>
+    <div className="tx-modal-overlay" style={styles.modalOverlay}>
       <div style={{ ...styles.modal, maxWidth: '900px' }}>
         <h2 style={styles.modalTitle}>New Purchase Return</h2>
 
@@ -1049,7 +1234,7 @@ const PurchaseReturnForm: React.FC<{
         <div style={{ marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600' }}>Return Lines</h3>
-            <button onClick={addLine} style={styles.secondaryBtn}>+ Add Line</button>
+            <button onClick={addLine} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>+ Add Line</button>
           </div>
           {lines.map((line, idx) => (
             <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
@@ -1057,17 +1242,17 @@ const PurchaseReturnForm: React.FC<{
                 <option value="">-- Product --</option>
                 {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <input type="number" placeholder="Packs" value={line.packs || ''} onChange={e => updateLine(idx, 'packs', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
-              <input type="number" placeholder="Rate" value={line.rate || ''} onChange={e => updateLine(idx, 'rate', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} step={0.01} />
-              <input type="number" placeholder="GST %" value={line.gstPercent || ''} onChange={e => updateLine(idx, 'gstPercent', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
-              <button onClick={() => removeLine(idx)} style={styles.dangerBtn}>✕</button>
+              <input type="number" placeholder="Packs" value={line.packs || ''} onChange={e => updateLine(idx, 'packs', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <input type="number" placeholder="Rate" value={line.rate || ''} onChange={e => updateLine(idx, 'rate', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} step={0.01} />
+              <input type="number" placeholder="GST %" value={line.gstPercent || ''} onChange={e => updateLine(idx, 'gstPercent', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <button onClick={() => removeLine(idx)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>✕</button>
             </div>
           ))}
         </div>
 
         <div style={styles.formActions}>
-          <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
-          <button type="button" onClick={handleSave} style={styles.primaryBtn} disabled={saving}>
+          <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
+          <button type="button" onClick={handleSave} className="tx-btn tx-btn-primary" style={styles.primaryBtn} disabled={saving}>
             {saving ? 'Saving...' : 'Create Return'}
           </button>
         </div>
@@ -1092,7 +1277,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
     fontSize: '13px',
     padding: 0,
@@ -1102,18 +1287,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     margin: 0,
   },
   subtitle: {
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     margin: '4px 0 0',
   },
   tabBar: {
     display: 'flex',
     gap: '4px',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid var(--border)',
     marginBottom: '20px',
     overflowX: 'auto',
   },
@@ -1122,15 +1307,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     background: 'none',
     border: 'none',
     borderBottom: '2px solid transparent',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   },
   tabActive: {
-    color: '#2563eb',
-    borderBottomColor: '#2563eb',
+    color: 'var(--accent)',
+    borderBottomColor: 'var(--accent)',
   },
   toolbar: {
     display: 'flex',
@@ -1147,15 +1332,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   searchInput: {
     padding: '8px 12px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
     minWidth: '200px',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   primaryBtn: {
     padding: '8px 16px',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '14px',
@@ -1164,18 +1349,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   secondaryBtn: {
     padding: '8px 16px',
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
     cursor: 'pointer',
   },
   smallBtn: {
     padding: '4px 10px',
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '4px',
     fontSize: '12px',
     cursor: 'pointer',
@@ -1183,7 +1364,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   linkBtn: {
     background: 'none',
     border: 'none',
-    color: '#2563eb',
     cursor: 'pointer',
     fontSize: '13px',
     padding: '2px 6px',
@@ -1191,19 +1371,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   dangerBtn: {
     background: 'none',
     border: 'none',
-    color: '#dc2626',
     cursor: 'pointer',
     fontSize: '13px',
     padding: '2px 6px',
   },
   loading: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
     textAlign: 'center',
     padding: '32px',
   },
   empty: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
     textAlign: 'center',
     padding: '32px',
@@ -1216,8 +1395,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   th: {
     textAlign: 'left',
     padding: '10px 12px',
-    borderBottom: '2px solid #e2e8f0',
-    color: '#64748b',
+    borderBottom: '2px solid var(--border)',
+    color: 'var(--text-muted)',
     fontWeight: '600',
     fontSize: '12px',
     textTransform: 'uppercase' as const,
@@ -1225,11 +1404,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     whiteSpace: 'nowrap',
   },
   tr: {
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--dash-table-row-border)',
   },
   td: {
     padding: '10px 12px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     verticalAlign: 'middle',
   },
   badge: {
@@ -1245,7 +1424,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1253,19 +1431,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '20px',
   },
   modal: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface-raised)',
     borderRadius: '12px',
     padding: '24px',
     maxWidth: '600px',
     width: '100%',
     maxHeight: '90vh',
     overflowY: 'auto',
+    border: '1px solid var(--border)',
+    boxShadow: 'var(--shadow-lg)',
   },
   modalTitle: {
     fontSize: '18px',
     fontWeight: '700',
     marginBottom: '16px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
   },
   formGrid: {
     display: 'grid',
@@ -1280,20 +1460,23 @@ const styles: { [key: string]: React.CSSProperties } = {
   label: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   input: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   select: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   formActions: {
     display: 'flex',
@@ -1301,14 +1484,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '8px',
     marginTop: '16px',
     paddingTop: '16px',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border)',
   },
   totalsBox: {
     marginTop: '16px',
     padding: '12px 16px',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--surface-2)',
     borderRadius: '8px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
+    color: 'var(--text-primary)',
   },
   totalRow: {
     display: 'flex',
