@@ -62,6 +62,20 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
     return Number(result.rows[0].next_num);
   }
 
+  /**
+   * Coerce a numeric that must be finite before it reaches a DECIMAL column.
+   * Postgres numeric silently stores the literal 'NaN' string for JS NaN
+   * (pg serializes NaN as 'NaN'), which then poisons every downstream SUM
+   * and crashes unguarded .toLocaleString() calls in the UI (outage of
+   * 2026-09-16, voucher #17). null/undefined/'' map to null (column default);
+   * any other non-finite value maps to null instead of being sent.
+   */
+  private static finNum(v: unknown): number | null {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
   async getVoucherLines(tenantId: string, voucherId: string): Promise<VoucherLine[]> {
     const result = await query(
       `SELECT id, voucher_id, tenant_id, account_id, description, debit, credit, line_order,
@@ -106,17 +120,17 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
           [
             uuid(), voucherId, tenantId, resolvedAccountId, line.description,
-            line.debit, line.credit, i + 1,
-            line.contraAccountId ? this.resolveAccountId(line.contraAccountId, acctMap) : null, line.quantity ?? null,
+            PostgresVoucherAdapter.finNum(line.debit), PostgresVoucherAdapter.finNum(line.credit), i + 1,
+            line.contraAccountId ? this.resolveAccountId(line.contraAccountId, acctMap) : null, PostgresVoucherAdapter.finNum(line.quantity),
             line.productId ?? null, line.branch ?? null,
-            line.stInvNo ?? null, line.stRate ?? null,
-            line.stAmount ?? null, line.amtExclStd ?? null,
-            line.rate ?? null, line.purchaseRate ?? null, line.retailPrice ?? null,
-            line.marginPercent ?? null, line.tradeDiscountPercent ?? null,
-            line.tradeOfferPercent ?? null, line.specialDiscountPercent ?? null,
-            line.minQuantity ?? null, line.hsCode ?? null, line.gstType ?? null,
-            line.fedPercent ?? null, line.furtherTaxPercent ?? null,
-            line.advanceTaxPercent ?? null,
+            line.stInvNo ?? null, PostgresVoucherAdapter.finNum(line.stRate),
+            PostgresVoucherAdapter.finNum(line.stAmount), PostgresVoucherAdapter.finNum(line.amtExclStd),
+            PostgresVoucherAdapter.finNum(line.rate), PostgresVoucherAdapter.finNum(line.purchaseRate), PostgresVoucherAdapter.finNum(line.retailPrice),
+            PostgresVoucherAdapter.finNum(line.marginPercent), PostgresVoucherAdapter.finNum(line.tradeDiscountPercent),
+            PostgresVoucherAdapter.finNum(line.tradeOfferPercent), PostgresVoucherAdapter.finNum(line.specialDiscountPercent),
+            PostgresVoucherAdapter.finNum(line.minQuantity), line.hsCode ?? null, line.gstType ?? null,
+            PostgresVoucherAdapter.finNum(line.fedPercent), PostgresVoucherAdapter.finNum(line.furtherTaxPercent),
+            PostgresVoucherAdapter.finNum(line.advanceTaxPercent),
           ]
         );
       }
@@ -166,17 +180,17 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
             [
               uuid(), id, tenantId, resolvedAccountId, line.description,
-              line.debit, line.credit, i + 1,
-              line.contraAccountId ? this.resolveAccountId(line.contraAccountId, acctMap) : null, line.quantity ?? null,
+              PostgresVoucherAdapter.finNum(line.debit), PostgresVoucherAdapter.finNum(line.credit), i + 1,
+              line.contraAccountId ? this.resolveAccountId(line.contraAccountId, acctMap) : null, PostgresVoucherAdapter.finNum(line.quantity),
               line.productId ?? null, line.branch ?? null,
-              line.stInvNo ?? null, line.stRate ?? null,
-              line.stAmount ?? null, line.amtExclStd ?? null,
-              line.rate ?? null, line.purchaseRate ?? null, line.retailPrice ?? null,
-              line.marginPercent ?? null, line.tradeDiscountPercent ?? null,
-              line.tradeOfferPercent ?? null, line.specialDiscountPercent ?? null,
-              line.minQuantity ?? null, line.hsCode ?? null, line.gstType ?? null,
-              line.fedPercent ?? null, line.furtherTaxPercent ?? null,
-              line.advanceTaxPercent ?? null,
+              line.stInvNo ?? null, PostgresVoucherAdapter.finNum(line.stRate),
+              PostgresVoucherAdapter.finNum(line.stAmount), PostgresVoucherAdapter.finNum(line.amtExclStd),
+              PostgresVoucherAdapter.finNum(line.rate), PostgresVoucherAdapter.finNum(line.purchaseRate), PostgresVoucherAdapter.finNum(line.retailPrice),
+              PostgresVoucherAdapter.finNum(line.marginPercent), PostgresVoucherAdapter.finNum(line.tradeDiscountPercent),
+              PostgresVoucherAdapter.finNum(line.tradeOfferPercent), PostgresVoucherAdapter.finNum(line.specialDiscountPercent),
+              PostgresVoucherAdapter.finNum(line.minQuantity), line.hsCode ?? null, line.gstType ?? null,
+              PostgresVoucherAdapter.finNum(line.fedPercent), PostgresVoucherAdapter.finNum(line.furtherTaxPercent),
+              PostgresVoucherAdapter.finNum(line.advanceTaxPercent),
             ]
           );
         }
@@ -217,9 +231,11 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
     if (existing.status === 'POSTED') throw new Error('Voucher already posted');
 
     const lines = await this.getVoucherLines(tenantId, id);
-    const totalDebit = lines.reduce((s, l) => s + Number(l.debit), 0);
-    const totalCredit = lines.reduce((s, l) => s + Number(l.credit), 0);
-    if (Math.abs(totalDebit - totalCredit) > 0.005) {
+    // NaN-proof balance check: a NaN debit/credit would make the difference NaN,
+    // and `NaN > 0.005` is false — NaN vouchers would silently "balance" and post.
+    const totalDebit = lines.reduce((s, l) => s + (Number.isFinite(l.debit) ? l.debit : 0), 0);
+    const totalCredit = lines.reduce((s, l) => s + (Number.isFinite(l.credit) ? l.credit : 0), 0);
+    if (!Number.isFinite(totalDebit) || !Number.isFinite(totalCredit) || Math.abs(totalDebit - totalCredit) > 0.005) {
       throw new Error(`Voucher does not balance: debit=${totalDebit}, credit=${totalCredit}`);
     }
 
@@ -363,8 +379,10 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
       tenantId: r.tenant_id,
       accountId: r.account_id,
       description: r.description || '',
-      debit: Number(r.debit),
-      credit: Number(r.credit),
+      // Read-side guard: legacy/poisoned rows storing numeric 'NaN' must never
+      // leak NaN into aggregates or JSON responses (serializes as null).
+      debit: Number.isFinite(Number(r.debit)) ? Number(r.debit) : 0,
+      credit: Number.isFinite(Number(r.credit)) ? Number(r.credit) : 0,
       lineOrder: r.line_order,
       contraAccountId: r.contra_account_id,
       quantity: r.quantity != null ? Number(r.quantity) : undefined,

@@ -413,7 +413,7 @@ export const BillDetailPage: React.FC = () => {
                         <td style={styles.td}>{im.productName}</td>
                         <td style={styles.td}>{im.productSku || '—'}</td>
                         <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                          {im.quantity.toLocaleString()}
+                          {((im.quantity ?? 0) as number).toLocaleString()}
                         </td>
                         <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
                           {fmt(im.unitCost)}

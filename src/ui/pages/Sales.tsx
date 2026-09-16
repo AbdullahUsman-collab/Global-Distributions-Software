@@ -56,6 +56,17 @@ const TABS: { key: SalesTab; label: string }[] = [
 
 const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/**
+ * Numeric-input parser: '' / '-' / '1.' / garbage → 0 instead of NaN.
+ * A transient NaN (e.g. gstPercent while clearing the field) once flowed through
+ * calculateBillLineTax into voucher_lines.debit as Postgres numeric 'NaN'
+ * (voucher #17), crashing every page that formatted the resulting null.
+ */
+const num = (raw: string): number => {
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+};
+
 const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
   DRAFT:  { bg: '#fef3c7', fg: '#92400e' },
   POSTED: { bg: '#dcfce7', fg: '#166534' },
@@ -793,7 +804,7 @@ const SaleBillForm: React.FC<{
                             <input
                               type="number"
                               value={line.cartons}
-                              onChange={e => updateLine(idx, { cartons: Number(e.target.value) })}
+                              onChange={e => updateLine(idx, { cartons: num(e.target.value) })}
                               style={{ ...styles.input, width: '60px' }}
                               min={0}
                             />
@@ -802,7 +813,7 @@ const SaleBillForm: React.FC<{
                             <input
                               type="number"
                               value={line.packs}
-                              onChange={e => updateLine(idx, { packs: Number(e.target.value) })}
+                              onChange={e => updateLine(idx, { packs: num(e.target.value) })}
                               style={{ ...styles.input, width: '60px' }}
                               min={0}
                             />
@@ -811,7 +822,7 @@ const SaleBillForm: React.FC<{
                             <input
                               type="number"
                               value={line.rate}
-                              onChange={e => updateLine(idx, { rate: Number(e.target.value) })}
+                              onChange={e => updateLine(idx, { rate: num(e.target.value) })}
                               style={{ ...styles.input, width: '80px' }}
                               min={0}
                               step={0.01}
@@ -821,7 +832,7 @@ const SaleBillForm: React.FC<{
                             <input
                               type="number"
                               value={line.tradeDiscountPercent}
-                              onChange={e => updateLine(idx, { tradeDiscountPercent: Number(e.target.value) })}
+                              onChange={e => updateLine(idx, { tradeDiscountPercent: num(e.target.value) })}
                               style={{ ...styles.input, width: '50px' }}
                               min={0}
                               step={0.1}
@@ -831,7 +842,7 @@ const SaleBillForm: React.FC<{
                             <input
                               type="number"
                               value={line.gstPercent}
-                              onChange={e => updateLine(idx, { gstPercent: Number(e.target.value) })}
+                              onChange={e => updateLine(idx, { gstPercent: num(e.target.value) })}
                               style={{ ...styles.input, width: '50px' }}
                               min={0}
                               step={0.1}
@@ -856,37 +867,37 @@ const SaleBillForm: React.FC<{
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Purchase Rate</label>
                                     <input type="number" value={line.purchaseRate ?? 0}
-                                      onChange={e => updateLine(idx, { purchaseRate: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { purchaseRate: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.01} />
                                   </div>
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Retail Price</label>
                                     <input type="number" value={line.retailPrice ?? 0}
-                                      onChange={e => updateLine(idx, { retailPrice: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { retailPrice: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.01} />
                                   </div>
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Margin %</label>
                                     <input type="number" value={line.marginPercent ?? 0}
-                                      onChange={e => updateLine(idx, { marginPercent: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { marginPercent: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.01} />
                                   </div>
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Trade Offer %</label>
                                     <input type="number" value={line.tradeOfferPercent ?? 0}
-                                      onChange={e => updateLine(idx, { tradeOfferPercent: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { tradeOfferPercent: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.1} />
                                   </div>
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Special Disc %</label>
                                     <input type="number" value={line.specialDiscountPercent ?? 0}
-                                      onChange={e => updateLine(idx, { specialDiscountPercent: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { specialDiscountPercent: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.1} />
                                   </div>
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Min Qty</label>
                                     <input type="number" value={line.minQuantity ?? 0}
-                                      onChange={e => updateLine(idx, { minQuantity: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { minQuantity: num(e.target.value) })}
                                       style={styles.input} min={0} />
                                   </div>
                                   <div style={styles.formGroup}>
@@ -908,19 +919,19 @@ const SaleBillForm: React.FC<{
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>FED %</label>
                                     <input type="number" value={line.fedPercent ?? 0}
-                                      onChange={e => updateLine(idx, { fedPercent: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { fedPercent: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.1} />
                                   </div>
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Further Tax %</label>
                                     <input type="number" value={line.furtherTaxPercent ?? 0}
-                                      onChange={e => updateLine(idx, { furtherTaxPercent: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { furtherTaxPercent: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.1} />
                                   </div>
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Advance Tax %</label>
                                     <input type="number" value={line.advanceTaxPercent ?? 0}
-                                      onChange={e => updateLine(idx, { advanceTaxPercent: Number(e.target.value) })}
+                                      onChange={e => updateLine(idx, { advanceTaxPercent: num(e.target.value) })}
                                       style={styles.input} min={0} step={0.1} />
                                   </div>
                                   <div style={styles.formGroup}>
@@ -1242,9 +1253,9 @@ const SaleReturnForm: React.FC<{
                 <option value="">-- Product --</option>
                 {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <input type="number" placeholder="Packs" value={line.packs || ''} onChange={e => updateLine(idx, 'packs', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
-              <input type="number" placeholder="Rate" value={line.rate || ''} onChange={e => updateLine(idx, 'rate', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} step={0.01} />
-              <input type="number" placeholder="GST %" value={line.gstPercent || ''} onChange={e => updateLine(idx, 'gstPercent', Number(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <input type="number" placeholder="Packs" value={line.packs || ''} onChange={e => updateLine(idx, 'packs', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
+              <input type="number" placeholder="Rate" value={line.rate || ''} onChange={e => updateLine(idx, 'rate', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} step={0.01} />
+              <input type="number" placeholder="GST %" value={line.gstPercent || ''} onChange={e => updateLine(idx, 'gstPercent', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
               <button onClick={() => removeLine(idx)} style={styles.dangerBtn}>✕</button>
             </div>
           ))}
