@@ -716,9 +716,9 @@ const SaleBillForm: React.FC<{
             <h3 style={{ fontSize: '14px', fontWeight: '600' }}>Bill Lines</h3>
           </div>
 
-          {lines.filter(l => l.productId).length === 0 && lines.every(l => !l.productId) ? (
-            <p style={{ color: '#94a3b8', fontSize: '13px' }}>Select a product on the line below to start.</p>
-          ) : (
+          {lines.every(l => !l.productId) && (
+            <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '8px' }}>Select a product below to start adding items.</p>
+          )}
             <div className="table-wrap sale-lines-wrap">
               <table style={styles.table}>
                 <thead>
@@ -924,32 +924,68 @@ const SaleBillForm: React.FC<{
                 </tbody>
               </table>
             </div>
-          )}
         </div>
 
         {/* Totals */}
-        {lines.length > 0 && (
+        {lines.length > 0 && (() => {
+          const hasProduct = lines.some(l => l.productId);
+          const totalTradeDiscount = lines.reduce((s, l) => s + (l.packs * l.rate * (l.tradeDiscountPercent || 0) / 100), 0);
+          const totalTradeOffer = lines.reduce((s, l) => s + (l.packs * l.rate * (l.tradeOfferPercent || 0) / 100), 0);
+          const totalSpecialDiscount = lines.reduce((s, l) => s + (l.packs * l.rate * (l.specialDiscountPercent || 0) / 100), 0);
+          return hasProduct ? (
           <div style={styles.totalsBox}>
             <div style={styles.totalRow}>
               <span>Total Amount:</span><span>{fmt(calculation.totalAmount)}</span>
             </div>
+            {totalTradeDiscount > 0 && (
+              <div style={styles.totalRow}>
+                <span>Trade Discount:</span><span>{fmt(totalTradeDiscount)}</span>
+              </div>
+            )}
+            {totalTradeOffer > 0 && (
+              <div style={styles.totalRow}>
+                <span>Trade Offer:</span><span>{fmt(totalTradeOffer)}</span>
+              </div>
+            )}
+            {totalSpecialDiscount > 0 && (
+              <div style={styles.totalRow}>
+                <span>Special Discount:</span><span>{fmt(totalSpecialDiscount)}</span>
+              </div>
+            )}
+            {calculation.totalDiscount > 0 && (
+              <div style={styles.totalRow}>
+                <span>Total Discount:</span><span>{fmt(calculation.totalDiscount)}</span>
+              </div>
+            )}
             <div style={styles.totalRow}>
-              <span>Discount:</span><span>{fmt(calculation.totalDiscount)}</span>
+              <span>After Discount (Value Excl Tax):</span><span>{fmt(calculation.totalToAmount)}</span>
             </div>
-            <div style={styles.totalRow}>
-              <span>After Discount (To.Amt):</span><span>{fmt(calculation.totalToAmount)}</span>
-            </div>
-            <div style={styles.totalRow}>
-              <span>GST:</span><span>{fmt(calculation.totalGst)}</span>
-            </div>
-            <div style={styles.totalRow}>
-              <span>FED:</span><span>{fmt(calculation.totalFed)}</span>
-            </div>
+            {calculation.totalGst > 0 && (
+              <div style={styles.totalRow}>
+                <span>GST:</span><span>{fmt(calculation.totalGst)}</span>
+              </div>
+            )}
+            {calculation.totalFurtherTax > 0 && (
+              <div style={styles.totalRow}>
+                <span>Further Tax:</span><span>{fmt(calculation.totalFurtherTax)}</span>
+              </div>
+            )}
+            {calculation.totalFed > 0 && (
+              <div style={styles.totalRow}>
+                <span>FED:</span><span>{fmt(calculation.totalFed)}</span>
+              </div>
+            )}
+            {calculation.totalAdvanceTax > 0 && (
+              <div style={styles.totalRow}>
+                <span>Advance Tax:</span><span>{fmt(calculation.totalAdvanceTax)}</span>
+              </div>
+            )}
             <div style={{ ...styles.totalRow, fontWeight: '700', fontSize: '15px', borderTop: '2px solid #e2e8f0', paddingTop: '8px' }}>
               <span>Net Amount:</span><span>{fmt(calculation.totalNetAmount)}</span>
             </div>
           </div>
-        )}
+          ) : null;
+        })()}
 
         {/* Actions */}
         <div style={styles.formActions}>

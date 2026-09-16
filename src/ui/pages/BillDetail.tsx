@@ -114,8 +114,15 @@ export const BillDetailPage: React.FC = () => {
     ]);
     // Add totals
     rows.push([]);
-    rows.push(['', '', '', '', '', '', 'Subtotal', detail.taxSummary.subtotal.toFixed(2)]);
+    rows.push(['', '', '', '', '', '', 'Subtotal (Value Excl Tax)', detail.taxSummary.subtotal.toFixed(2)]);
+    if (detail.taxSummary.totalTradeDiscount > 0) rows.push(['', '', '', '', '', '', 'Trade Discount', detail.taxSummary.totalTradeDiscount.toFixed(2)]);
+    if (detail.taxSummary.totalTradeOffer > 0) rows.push(['', '', '', '', '', '', 'Trade Offer', detail.taxSummary.totalTradeOffer.toFixed(2)]);
+    if (detail.taxSummary.totalSpecialDiscount > 0) rows.push(['', '', '', '', '', '', 'Special Discount', detail.taxSummary.totalSpecialDiscount.toFixed(2)]);
+    if (detail.taxSummary.totalDiscount > 0) rows.push(['', '', '', '', '', '', 'Total Discount', detail.taxSummary.totalDiscount.toFixed(2)]);
     if (detail.taxSummary.gst > 0) rows.push(['', '', '', '', '', '', 'GST', detail.taxSummary.gst.toFixed(2)]);
+    if (detail.taxSummary.furtherTax > 0) rows.push(['', '', '', '', '', '', 'Further Tax', detail.taxSummary.furtherTax.toFixed(2)]);
+    if (detail.taxSummary.fed > 0) rows.push(['', '', '', '', '', '', 'FED', detail.taxSummary.fed.toFixed(2)]);
+    if (detail.taxSummary.advanceTax > 0) rows.push(['', '', '', '', '', '', 'Advance Tax', detail.taxSummary.advanceTax.toFixed(2)]);
     if (detail.taxSummary.totalTax > 0) rows.push(['', '', '', '', '', '', 'Total Tax', detail.taxSummary.totalTax.toFixed(2)]);
     rows.push(['', '', '', '', '', '', 'Grand Total', detail.taxSummary.grandTotal.toFixed(2)]);
 
@@ -283,15 +290,27 @@ export const BillDetailPage: React.FC = () => {
           <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Summary</h2>
             <div style={styles.summaryGrid}>
-              <SummaryLine label="Subtotal" amount={detail.taxSummary.subtotal} />
+              <SummaryLine label="Subtotal (Value Excl Tax)" amount={detail.taxSummary.subtotal} />
+              {detail.taxSummary.totalTradeDiscount > 0 && <SummaryLine label="Trade Discount" amount={detail.taxSummary.totalTradeDiscount} />}
+              {detail.taxSummary.totalTradeOffer > 0 && <SummaryLine label="Trade Offer" amount={detail.taxSummary.totalTradeOffer} />}
+              {detail.taxSummary.totalSpecialDiscount > 0 && <SummaryLine label="Special Discount" amount={detail.taxSummary.totalSpecialDiscount} />}
+              {detail.taxSummary.totalDiscount > 0 && (
+                <>
+                  <div style={styles.summaryDivider} />
+                  <SummaryLine label="Total Discount" amount={detail.taxSummary.totalDiscount} bold />
+                </>
+              )}
+              <div style={styles.summaryDivider} />
               {detail.taxSummary.gst > 0 && <SummaryLine label="GST" amount={detail.taxSummary.gst} />}
               {detail.taxSummary.furtherTax > 0 && <SummaryLine label="Further Tax" amount={detail.taxSummary.furtherTax} />}
               {detail.taxSummary.fed > 0 && <SummaryLine label="FED" amount={detail.taxSummary.fed} />}
               {detail.taxSummary.advanceTax > 0 && <SummaryLine label="Advance Tax" amount={detail.taxSummary.advanceTax} />}
               {detail.taxSummary.totalTax > 0 && (
-                <div style={styles.summaryDivider} />
+                <>
+                  <div style={styles.summaryDivider} />
+                  <SummaryLine label="Total Tax" amount={detail.taxSummary.totalTax} bold />
+                </>
               )}
-              {detail.taxSummary.totalTax > 0 && <SummaryLine label="Total Tax" amount={detail.taxSummary.totalTax} bold />}
               <div style={styles.summaryDivider} />
               <SummaryLine label="Grand Total" amount={detail.taxSummary.grandTotal} bold />
             </div>

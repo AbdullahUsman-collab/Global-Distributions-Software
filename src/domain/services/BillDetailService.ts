@@ -27,6 +27,11 @@ export interface BillLineDetail {
   productUnit: string;
   rate: number;
   quantity: number;
+  /** Gross amount = qty × rate (before discount) */
+  grossAmount: number;
+  tradeDiscountAmount: number;
+  tradeOfferAmount: number;
+  specialDiscountAmount: number;
   discount: number;
   amount: number;
   gstAmount: number;
@@ -61,6 +66,10 @@ export interface BillInventoryMovement {
 
 export interface BillTaxSummary {
   subtotal: number;
+  totalTradeDiscount: number;
+  totalTradeOffer: number;
+  totalSpecialDiscount: number;
+  totalDiscount: number;
   gst: number;
   furtherTax: number;
   fed: number;
@@ -173,20 +182,43 @@ export class BillDetailService {
       const amtExclStd = line.amtExclStd || 0;
       const stRate = line.stRate || 0;
       const gstAmount = line.stAmount || (amtExclStd * stRate / 100);
-      const amount = amtExclStd || line.debit || line.credit;
+
+      // Calculate gross amount from stored rate × quantity (migration 013)
+      const rate = line.rate || (amtExclStd > 0 && line.quantity ? amtExclStd / line.quantity : 0);
+      const qty = line.quantity || 0;
+      const grossAmount = rate * qty;
+
+      // Discount breakdown from stored percentages (migration 013)
+      const tradeDiscountPct = line.tradeDiscountPercent || 0;
+      const tradeOfferPct = line.tradeOfferPercent || 0;
+      const specialDiscountPct = line.specialDiscountPercent || 0;
+      const tradeDiscountAmount = grossAmount * (tradeDiscountPct / 100);
+      const tradeOfferAmount = grossAmount * (tradeOfferPct / 100);
+      const specialDiscountAmount = grossAmount * (specialDiscountPct / 100);
+      const discount = tradeDiscountAmount + tradeOfferAmount + specialDiscountAmount;
+
+      // Tax breakdown (taxes apply on amtExclStd = amount after discount)
+      const furtherTaxAmount = amtExclStd * ((line.furtherTaxPercent || 0) / 100);
+      const fedAmount = amtExclStd * ((line.fedPercent || 0) / 100);
+      const advanceTaxAmount = amtExclStd * ((line.advanceTaxPercent || 0) / 100);
+
       return {
         line,
         productName: product?.name ?? (line.productId ? `Product ${line.productId}` : ''),
         productSku: product?.sku ?? '',
         productUnit: product?.unit ?? '',
-        rate: amtExclStd > 0 && line.quantity ? amtExclStd / line.quantity : 0,
-        quantity: line.quantity,
-        discount: 0,
-        amount,
+        rate,
+        quantity: qty,
+        grossAmount,
+        tradeDiscountAmount,
+        tradeOfferAmount,
+        specialDiscountAmount,
+        discount,
+        amount: amtExclStd || line.debit || line.credit,
         gstAmount,
-        furtherTaxAmount: 0,
-        fedAmount: 0,
-        advanceTaxAmount: 0,
+        furtherTaxAmount,
+        fedAmount,
+        advanceTaxAmount,
         netAmount: line.debit || line.credit,
         stockMovement: movement,
       };
@@ -222,24 +254,27 @@ export class BillDetailService {
       };
     });
 
-    // 9. Compute tax summary from ledger entries (authoritative source)
-    const totalTaxFromLedger = voucherLedger.reduce((s, e) => {
-      const acc = accountByCode.get(e.accountId);
-      if (acc && (acc.accountCode === '21201' || acc.accountCode === '21202' || acc.accountCode === '21203' ||
-                  acc.accountCode === '11401' || acc.accountCode === '11402' || acc.accountCode === '11403')) {
-        return s + (e.debit || e.credit);
-      }
-      return s;
-    }, 0);
-
+    // 9. Compute tax summary from bill lines (uses stored line data from migration 013)
     let subtotal = 0;
+    let totalTradeDiscount = 0;
+    let totalTradeOffer = 0;
+    let totalSpecialDiscount = 0;
     let gst = 0;
+    let furtherTax = 0;
+    let fed = 0;
+    let advanceTax = 0;
     for (const bl of billLines) {
       subtotal += bl.amount;
+      totalTradeDiscount += bl.tradeDiscountAmount;
+      totalTradeOffer += bl.tradeOfferAmount;
+      totalSpecialDiscount += bl.specialDiscountAmount;
       gst += bl.gstAmount;
+      furtherTax += bl.furtherTaxAmount;
+      fed += bl.fedAmount;
+      advanceTax += bl.advanceTaxAmount;
     }
-
-    const totalTax = totalTaxFromLedger || gst;
+    const totalDiscount = totalTradeDiscount + totalTradeOffer + totalSpecialDiscount;
+    const totalTax = gst + furtherTax + fed + advanceTax;
     const grandTotal = subtotal + totalTax;
 
     return {
@@ -253,10 +288,14 @@ export class BillDetailService {
       inventoryMovements,
       taxSummary: {
         subtotal,
+        totalTradeDiscount,
+        totalTradeOffer,
+        totalSpecialDiscount,
+        totalDiscount,
         gst,
-        furtherTax: 0,
-        fed: 0,
-        advanceTax: 0,
+        furtherTax,
+        fed,
+        advanceTax,
         totalTax,
         grandTotal,
       },
