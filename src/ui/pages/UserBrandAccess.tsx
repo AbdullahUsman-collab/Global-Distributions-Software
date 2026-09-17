@@ -130,7 +130,7 @@ export const UserBrandAccessPage: React.FC = () => {
   const uniqueUserIds = [...new Set(accessRecords.map(a => a.userId))];
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad tx-page" style={styles.page}>
       <div style={styles.header}>
         <div>
           <h1 style={styles.title}>User Brand Access</h1>
@@ -201,7 +201,7 @@ export const UserBrandAccessPage: React.FC = () => {
                     <td style={styles.td}><code style={styles.code}>{record.userId}</code></td>
                     <td style={styles.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: brand?.primaryColor || '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
+                        <div style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: brand?.primaryColor || 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
                           {brand?.brandName?.charAt(0) || '?'}
                         </div>
                         {brand?.brandName || record.tenantId}
@@ -221,7 +221,7 @@ export const UserBrandAccessPage: React.FC = () => {
                       )}
                     </td>
                     <td style={styles.td}>
-                      <span style={{ ...styles.statusBadge, backgroundColor: record.isActive ? '#dcfce7' : '#fee2e2', color: record.isActive ? '#15803d' : '#dc2626' }}>
+                      <span style={{ ...styles.statusBadge, backgroundColor: record.isActive ? 'var(--success-soft)' : 'var(--danger-soft)', color: record.isActive ? 'var(--success-fg)' : 'var(--danger-fg)' }}>
                         {record.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -258,75 +258,75 @@ export const UserBrandAccessPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   page: { padding: '24px', maxWidth: '1200px', margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
-  title: { fontSize: '24px', fontWeight: '700', color: '#1e293b', margin: 0 },
-  subtitle: { fontSize: '14px', color: '#64748b', margin: '4px 0 0' },
+  title: { fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 },
+  subtitle: { fontSize: '14px', color: 'var(--text-muted)', margin: '4px 0 0' },
   primaryBtn: {
-    padding: '10px 20px', backgroundColor: '#3b82f6', color: '#fff', border: 'none',
+    padding: '10px 20px', backgroundColor: 'var(--accent)', color: 'var(--accent-contrast)', border: 'none',
     borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer',
   },
   error: {
-    padding: '12px 16px', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: 8,
-    fontSize: 14, marginBottom: 16, border: '1px solid #fecaca',
+    padding: '12px 16px', backgroundColor: 'var(--danger-soft)', color: 'var(--danger-fg)', borderRadius: 8,
+    fontSize: 14, marginBottom: 16, border: '1px solid var(--danger)',
   },
   success: {
-    padding: '12px 16px', backgroundColor: '#f0fdf4', color: '#15803d', borderRadius: 8,
-    fontSize: 14, marginBottom: 16, border: '1px solid #bbf7d0',
+    padding: '12px 16px', backgroundColor: 'var(--success-soft)', color: 'var(--success-fg)', borderRadius: 8,
+    fontSize: 14, marginBottom: 16, border: '1px solid var(--success)',
   },
   card: {
-    backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+    backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
     padding: 20, marginBottom: 20,
   },
-  cardTitle: { fontSize: 16, fontWeight: 600, color: '#1e293b', margin: '0 0 16px' },
+  cardTitle: { fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px' },
   formRow: { display: 'flex', gap: 16, flexWrap: 'wrap' },
   field: { flex: '1 1 200px', minWidth: 150 },
-  label: { display: 'block', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 4 },
+  label: { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 },
   input: {
-    width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 6,
-    fontSize: 14, outline: 'none',
+    width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 6,
+    fontSize: 14, outline: 'none', color: 'var(--text-primary)', backgroundColor: 'var(--surface-2)',
   },
   select: {
-    width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 6,
-    fontSize: 14, outline: 'none', backgroundColor: '#fff',
+    width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 6,
+    fontSize: 14, outline: 'none', color: 'var(--text-primary)', backgroundColor: 'var(--surface-2)',
   },
   saveBtn: {
-    padding: '8px 16px', backgroundColor: '#3b82f6', color: '#fff', border: 'none',
+    padding: '8px 16px', backgroundColor: 'var(--accent)', color: 'var(--accent-contrast)', border: 'none',
     borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
   },
   cancelBtn: {
-    padding: '8px 16px', backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0',
+    padding: '8px 16px', backgroundColor: 'var(--surface-2)', color: 'var(--text-muted)', border: '1px solid var(--border)',
     borderRadius: 6, fontSize: 13, cursor: 'pointer',
   },
-  loading: { padding: 40, textAlign: 'center', color: '#64748b', fontSize: 14 },
-  empty: { padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 14 },
+  loading: { padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 },
+  empty: { padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 },
   tableCard: {
-    backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden',
+    backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden',
   },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: {
     padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600,
-    color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em',
-    borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc',
+    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
+    borderBottom: '1px solid var(--border)', backgroundColor: 'var(--surface-2)',
   },
-  tr: { borderBottom: '1px solid #f1f5f9' },
-  td: { padding: '12px 16px', fontSize: 14, color: '#1e293b' },
-  code: { fontSize: 12, backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace' },
+  tr: { borderBottom: '1px solid var(--border)' },
+  td: { padding: '12px 16px', fontSize: 14, color: 'var(--text-primary)' },
+  code: { fontSize: 12, backgroundColor: 'var(--surface-2)', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace' },
   roleBadge: {
-    display: 'inline-block', padding: '3px 10px', backgroundColor: '#eff6ff',
-    color: '#1d4ed8', borderRadius: 12, fontSize: 12, fontWeight: 600,
+    display: 'inline-block', padding: '3px 10px', backgroundColor: 'var(--info-soft)',
+    color: 'var(--info-fg)', borderRadius: 12, fontSize: 12, fontWeight: 600,
   },
   statusBadge: {
     display: 'inline-block', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600,
   },
   actionBtn: {
-    padding: '4px 12px', backgroundColor: '#f8fafc', color: '#3b82f6', border: '1px solid #e2e8f0',
+    padding: '4px 12px', backgroundColor: 'var(--surface-2)', color: 'var(--accent)', border: '1px solid var(--border)',
     borderRadius: 6, fontSize: 12, cursor: 'pointer',
   },
   deactivateBtn: {
-    padding: '4px 12px', backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca',
+    padding: '4px 12px', backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', border: '1px solid var(--danger)',
     borderRadius: 6, fontSize: 12, cursor: 'pointer',
   },
   activateBtn: {
-    padding: '4px 12px', backgroundColor: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0',
+    padding: '4px 12px', backgroundColor: 'var(--success-soft)', color: 'var(--success-fg)', border: '1px solid var(--success)',
     borderRadius: 6, fontSize: 12, cursor: 'pointer',
   },
 };

@@ -70,27 +70,27 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     marginBottom: '8px',
   },
   message: {
     fontSize: '16px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     marginBottom: '16px',
   },
   detail: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
   },
   code: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: 'var(--surface-2)',
     padding: '2px 6px',
     borderRadius: '4px',
     fontSize: '13px',
   },
   role: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     marginTop: '8px',
   },
 };

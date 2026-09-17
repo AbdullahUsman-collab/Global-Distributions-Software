@@ -781,8 +781,8 @@ const PurchaseBillForm: React.FC<{
                                 ...styles.smallBtn,
                                 padding: '2px 6px',
                                 fontSize: '11px',
-                                backgroundColor: isExpanded ? '#dbeafe' : '#f1f5f9',
-                                color: isExpanded ? '#2563eb' : '#64748b',
+                                backgroundColor: isExpanded ? 'var(--accent-soft)' : 'var(--surface-2)',
+                                color: isExpanded ? 'var(--accent)' : 'var(--text-muted)',
                               }}
                             >
                               {isExpanded ? '▼' : '▶'}
@@ -800,7 +800,7 @@ const PurchaseBillForm: React.FC<{
                               const qty = stockMap.get(p.id) ?? 0;
                               const oos = qty === 0;
                               return (
-                                <option key={p.id} value={p.id} style={oos ? { color: '#94a3b8' } : undefined}>
+                                <option key={p.id} value={p.id} style={oos ? { color: 'var(--text-muted)' } : undefined}>
                                   {p.name}{oos ? ' (Out of Stock)' : ''}
                                 </option>
                               );
@@ -866,42 +866,42 @@ const PurchaseBillForm: React.FC<{
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={11} style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                          <td colSpan={11} style={{ padding: '12px 16px', backgroundColor: 'var(--surface-2)', borderTop: '1px solid var(--border)' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Purchase Rate</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Purchase Rate</label>
                                 <input type="number" value={line.rate} onChange={e => updateLine(idx, { rate: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.01} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Retail Price</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Retail Price</label>
                                 <input type="number" value={line.retailPrice ?? 0} onChange={e => updateLine(idx, { retailPrice: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.01} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Margin %</label>
-                                <input type="number" value={(() => { const rp = line.retailPrice ?? 0; const r = line.rate; return rp > 0 ? Number((((rp - r) / rp) * 100).toFixed(1)) : 0; })()} readOnly style={{ ...styles.input, width: '100%', backgroundColor: '#e2e8f0', cursor: 'default' }} />
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Margin %</label>
+                                <input type="number" value={(() => { const rp = line.retailPrice ?? 0; const r = line.rate; return rp > 0 ? Number((((rp - r) / rp) * 100).toFixed(1)) : 0; })()} readOnly style={{ ...styles.input, width: '100%', backgroundColor: 'var(--border)', cursor: 'default' }} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Trade Disc %</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Trade Disc %</label>
                                 <input type="number" value={line.tradeDiscountPercent} onChange={e => updateLine(idx, { tradeDiscountPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Trade Offer %</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Trade Offer %</label>
                                 <input type="number" value={line.tradeOfferPercent ?? 0} onChange={e => updateLine(idx, { tradeOfferPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Special Disc %</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Special Disc %</label>
                                 <input type="number" value={line.specialDiscountPercent ?? 0} onChange={e => updateLine(idx, { specialDiscountPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Min Qty</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Min Qty</label>
                                 <input type="number" value={line.minQuantity ?? 0} onChange={e => updateLine(idx, { minQuantity: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>HS Code</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>HS Code</label>
                                 <input value={line.hsCode ?? ''} onChange={e => updateLine(idx, { hsCode: e.target.value })} style={{ ...styles.input, width: '100%' }} placeholder="e.g. 3305.10" />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>GST Type</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>GST Type</label>
                                 <select value={line.gstType ?? ''} onChange={e => updateLine(idx, { gstType: e.target.value as any })} style={{ ...styles.input, width: '100%' }}>
                                   <option value="">Standard VAT</option>
                                   <option value="VAT">VAT</option>
@@ -910,24 +910,24 @@ const PurchaseBillForm: React.FC<{
                                 </select>
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>GST %</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>GST %</label>
                                 <input type="number" value={line.gstPercent} onChange={e => updateLine(idx, { gstPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>FED %</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>FED %</label>
                                 <input type="number" value={line.fedPercent} onChange={e => updateLine(idx, { fedPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Further Tax %</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Further Tax %</label>
                                 <input type="number" value={line.furtherTaxPercent} onChange={e => updateLine(idx, { furtherTaxPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Adv Tax (Purchase) %</label>
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Adv Tax (Purchase) %</label>
                                 <input type="number" value={line.advanceTaxPercent} onChange={e => updateLine(idx, { advanceTaxPercent: num(e.target.value) })} style={{ ...styles.input, width: '100%' }} min={0} step={0.1} />
                               </div>
                               <div>
-                                <label style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>Cost Rate</label>
-                                <input type="number" value={line.rate} readOnly style={{ ...styles.input, width: '100%', backgroundColor: '#e2e8f0', cursor: 'default' }} />
+                                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>Cost Rate</label>
+                                <input type="number" value={line.rate} readOnly style={{ ...styles.input, width: '100%', backgroundColor: 'var(--border)', cursor: 'default' }} />
                               </div>
                             </div>
                           </td>

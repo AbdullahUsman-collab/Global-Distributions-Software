@@ -35,12 +35,14 @@ interface BrandAccess {
 const ROLES = ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'SALES', 'PURCHASE', 'VIEWER'];
 
 const ROLE_COLORS: Record<string, { bg: string; fg: string }> = {
-  ADMIN:      { bg: '#fee2e2', fg: '#991b1b' },
-  MANAGER:    { bg: '#fef3c7', fg: '#92400e' },
-  ACCOUNTANT: { bg: '#dbeafe', fg: '#1d4ed8' },
-  SALES:      { bg: '#dcfce7', fg: '#166534' },
-  PURCHASE:   { bg: '#f3e8ff', fg: '#7c3aed' },
-  VIEWER:     { bg: '#f1f5f9', fg: '#475569' },
+  // Step 90+: theme-token role badges (light values mirror the legacy hexes;
+  // dark mode resolves via the shared token system).
+  ADMIN:      { bg: 'var(--danger-soft)', fg: 'var(--danger-fg)' },
+  MANAGER:    { bg: 'var(--warning-soft)', fg: 'var(--warning-fg)' },
+  ACCOUNTANT: { bg: 'var(--info-soft)', fg: 'var(--info-fg)' },
+  SALES:      { bg: 'var(--success-soft)', fg: 'var(--success-fg)' },
+  PURCHASE:   { bg: 'var(--purple-soft)', fg: 'var(--purple-fg)' },
+  VIEWER:     { bg: 'var(--accent-soft)', fg: 'var(--accent-soft-contrast)' },
 };
 
 const fmt = (d: string | Date) => {
@@ -97,7 +99,7 @@ export const Users: React.FC = () => {
   });
 
   return (
-    <div className="page-pad" style={styles.page}>
+    <div className="page-pad tx-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -118,7 +120,7 @@ export const Users: React.FC = () => {
           style={styles.searchInput}
         />
         <span style={styles.statChip}>
-          <span style={{ ...styles.statDot, backgroundColor: '#dbeafe', color: '#1d4ed8' }}>{filtered.length}</span>
+          <span style={{ ...styles.statDot, backgroundColor: 'var(--info-soft)', color: 'var(--info-fg)' }}>{filtered.length}</span>
           <span style={styles.statLabel}>Users</span>
         </span>
       </div>
@@ -155,23 +157,23 @@ export const Users: React.FC = () => {
                       {u.role}
                     </span>
                   </span>
-                  <span style={{ ...styles.col, flex: '0 0 140px', fontSize: 12, color: '#64748b' }}>
+                  <span style={{ ...styles.col, flex: '0 0 140px', fontSize: 12, color: 'var(--text-muted)' }}>
                     {activeAccess.length} brand{activeAccess.length !== 1 ? 's' : ''}
                   </span>
                   <span style={{ ...styles.col, flex: '0 0 80px' }}>
                     <span style={{
                       ...styles.typeBadge,
-                      backgroundColor: u.isActive ? '#dcfce7' : '#fee2e2',
-                      color: u.isActive ? '#166534' : '#991b1b',
+                      backgroundColor: u.isActive ? 'var(--success-soft)' : 'var(--danger-soft)',
+                      color: u.isActive ? 'var(--success-fg)' : 'var(--danger-fg)',
                     }}>
                       {u.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </span>
-                  <span style={{ ...styles.col, flex: '0 0 90px', fontSize: 12, color: '#64748b' }}>
+                  <span style={{ ...styles.col, flex: '0 0 90px', fontSize: 12, color: 'var(--text-muted)' }}>
                     {fmt(u.createdAt)}
                   </span>
                   <span style={{ ...styles.col, flex: '0 0 100px', display: 'flex', gap: 4 }}>
-                    <button onClick={() => setEditUser(u)} style={styles.rowBtn} title="Edit">✎</button>
+                    <button onClick={() => setEditUser(u)} className="inv-row-btn" style={styles.rowBtn} title="Edit" aria-label={`Edit user ${u.username}`}>✎</button>
                     <button
                       onClick={async () => {
                         if (u.isActive) {
@@ -181,15 +183,19 @@ export const Users: React.FC = () => {
                         }
                         load();
                       }}
-                      style={{ ...styles.rowBtn, color: u.isActive ? '#dc2626' : '#16a34a' }}
+                      className="inv-row-btn inv-row-btn--danger"
+                      style={{ ...styles.rowBtn, color: u.isActive ? 'var(--danger)' : 'var(--success)' }}
                       title={u.isActive ? 'Deactivate' : 'Activate'}
+                      aria-label={`${u.isActive ? 'Deactivate' : 'Activate'} user ${u.username}`}
                     >
                       {u.isActive ? '✕' : '✓'}
                     </button>
                     <button
                       onClick={() => navigate('/brand-access')}
+                      className="inv-row-btn"
                       style={styles.rowBtn}
                       title="Manage Brand Access"
+                      aria-label={`Manage brand access for ${u.username}`}
                     >
                       ≡
                     </button>
@@ -381,36 +387,36 @@ const EditUserModal: React.FC<{
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
-  title: { fontSize: 26, fontWeight: 700, color: '#1e293b', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#64748b' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
+  title: { fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: 'var(--text-muted)' },
 
   toolbar: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
-  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569' },
+  searchInput: { flex: '1 1 200px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', color: 'var(--text-primary)', backgroundColor: 'var(--surface-2)' },
+  statChip: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' },
   statDot: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 6, fontWeight: 600, fontSize: 12 },
-  statLabel: { fontSize: 13, color: '#475569' },
+  statLabel: { fontSize: 13, color: 'var(--text-secondary)' },
 
-  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)' },
-  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid #f1f5f9', fontSize: 14 },
+  card: { backgroundColor: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)', boxShadow: '0 1px 3px rgb(0 0 0 / 0.06)' },
+  treeHeader: { display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--surface-2)', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  voucherRow: { display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: '1px solid var(--border)', fontSize: 14 },
   col: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
-  rowBtn: { background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+  rowBtn: { background: 'none', border: '1px solid var(--border)', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
 
-  primaryBtn: { padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
-  cancelBtn: { padding: '10px 20px', backgroundColor: '#fff', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
+  primaryBtn: { padding: '10px 20px', backgroundColor: 'var(--accent)', color: 'var(--accent-contrast)', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  cancelBtn: { padding: '10px 20px', backgroundColor: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, cursor: 'pointer' },
 
-  empty: { padding: 40, textAlign: 'center' as const, color: '#94a3b8', fontSize: 14 },
+  empty: { padding: 40, textAlign: 'center' as const, color: 'var(--text-muted)', fontSize: 14 },
 
-  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { backgroundColor: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 480, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgb(0 0 0 / 0.2)' },
-  modalTitle: { fontSize: 20, fontWeight: 700, color: '#1e293b', marginBottom: 16 },
+  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  modal: { backgroundColor: 'var(--surface-raised)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 480, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgb(0 0 0 / 0.2)' },
+  modalTitle: { fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   field: { display: 'flex', flexDirection: 'column', gap: 6, flex: 1 },
-  label: { fontSize: 13, fontWeight: 500, color: '#374151' },
-  input: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' },
-  select: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', backgroundColor: '#fff' },
-  error: { padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: 13 },
+  label: { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' },
+  input: { padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', color: 'var(--text-primary)', backgroundColor: 'var(--surface-2)' },
+  select: { padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, outline: 'none', color: 'var(--text-primary)', backgroundColor: 'var(--surface-2)' },
+  error: { padding: '10px 14px', backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger)', borderRadius: 8, color: 'var(--danger-fg)', fontSize: 13 },
   modalActions: { display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
 };

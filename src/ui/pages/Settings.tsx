@@ -136,7 +136,7 @@ export const Settings: React.FC = () => {
   }
 
   return (
-    <div className="fade-in page-pad" style={styles.container}>
+    <div className="fade-in page-pad tx-page" style={styles.container}>
       <div className="settings-header-responsive" style={styles.header}>
         <div>
           <h1 style={styles.title}>Settings</h1>
@@ -464,7 +464,7 @@ const Toggle: React.FC<{
       onClick={() => !disabled && onChange(!value)}
       style={{
         ...styles.toggle,
-        backgroundColor: value ? '#22c55e' : '#cbd5e1',
+        backgroundColor: value ? 'var(--success)' : 'var(--border-strong)',
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
@@ -485,30 +485,30 @@ const Toggle: React.FC<{
 const styles: { [key: string]: React.CSSProperties } = {
   container: { padding: '32px', maxWidth: '800px', margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' },
-  title: { fontSize: '28px', fontWeight: '700', color: '#1e293b', marginBottom: '4px' },
-  subtitle: { fontSize: '15px', color: '#64748b' },
-  backButton: { padding: '8px 16px', fontSize: '14px', color: '#64748b', background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' },
-  tabBar: { display: 'flex', gap: '4px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px', flexWrap: 'wrap' },
-  tab: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', border: 'none', borderBottom: '2px solid transparent', marginBottom: '-2px', cursor: 'pointer', transition: 'color 0.15s ease, border-color 0.15s ease' },
-  tabActive: { color: '#2563eb', borderBottomColor: '#2563eb', backgroundColor: 'transparent' },
-  tabInactive: { color: '#64748b', backgroundColor: 'transparent' },
-  card: { backgroundColor: '#ffffff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0', marginBottom: '20px' },
+  title: { fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' },
+  subtitle: { fontSize: '15px', color: 'var(--text-muted)' },
+  backButton: { padding: '8px 16px', fontSize: '14px', color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' },
+  tabBar: { display: 'flex', gap: '4px', borderBottom: '1px solid var(--border)', marginBottom: '24px', flexWrap: 'wrap' },
+  tab: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', border: 'none', borderBottom: '2px solid transparent', marginBottom: '-1px', cursor: 'pointer', transition: 'color 0.15s ease, border-color 0.15s ease' },
+  tabActive: { color: 'var(--accent)', borderBottomColor: 'var(--accent)', backgroundColor: 'transparent' },
+  tabInactive: { color: 'var(--text-muted)', backgroundColor: 'transparent' },
+  card: { backgroundColor: 'var(--surface)', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgb(0 0 0 / 0.1)', border: '1px solid var(--border)', marginBottom: '20px' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  sectionTitle: { fontSize: '18px', fontWeight: '600', color: '#1e293b' },
-  sectionDescription: { fontSize: '14px', color: '#64748b', marginTop: '-12px' },
+  sectionTitle: { fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)' },
+  sectionDescription: { fontSize: '14px', color: 'var(--text-muted)', marginTop: '-12px' },
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
   field: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  label: { fontSize: '13px', fontWeight: '500', color: '#374151' },
-  input: { padding: '10px 12px', fontSize: '14px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none', backgroundColor: '#ffffff', color: '#1e293b', transition: 'border-color 0.15s ease' },
-  select: { padding: '10px 12px', fontSize: '14px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none', backgroundColor: '#ffffff', color: '#1e293b', cursor: 'pointer' },
-  textarea: { padding: '10px 12px', fontSize: '14px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none', backgroundColor: '#ffffff', color: '#1e293b', resize: 'vertical', fontFamily: 'inherit' },
+  label: { fontSize: '13px', fontWeight: '500', color: 'var(--text-secondary)' },
+  input: { padding: '10px 12px', fontSize: '14px', border: '1px solid var(--border)', borderRadius: '8px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', transition: 'border-color 0.15s ease' },
+  select: { padding: '10px 12px', fontSize: '14px', border: '1px solid var(--border)', borderRadius: '8px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', cursor: 'pointer' },
+  textarea: { padding: '10px 12px', fontSize: '14px', border: '1px solid var(--border)', borderRadius: '8px', outline: 'none', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', resize: 'vertical', fontFamily: 'inherit' },
   toggleRow: { display: 'flex', alignItems: 'center', gap: '12px' },
   toggle: { width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: 'pointer', position: 'relative', padding: 0, transition: 'background-color 0.2s ease' },
   toggleKnob: { position: 'absolute', top: '2px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#ffffff', boxShadow: '0 1px 3px rgb(0 0 0 / 0.2)', transition: 'transform 0.2s ease' },
-  toggleLabel: { fontSize: '14px', color: '#475569' },
-  successBanner: { padding: '12px 16px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', color: '#166534', fontSize: '14px', fontWeight: '500', marginBottom: '16px' },
-  errorBanner: { padding: '12px 16px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '14px', fontWeight: '500', marginBottom: '16px' },
+  toggleLabel: { fontSize: '14px', color: 'var(--text-secondary)' },
+  successBanner: { padding: '12px 16px', backgroundColor: 'var(--success-soft)', border: '1px solid var(--success)', borderRadius: '8px', color: 'var(--success-fg)', fontSize: '14px', fontWeight: '500', marginBottom: '16px' },
+  errorBanner: { padding: '12px 16px', backgroundColor: 'var(--danger-soft)', border: '1px solid var(--danger)', borderRadius: '8px', color: 'var(--danger-fg)', fontSize: '14px', fontWeight: '500', marginBottom: '16px' },
   actions: { display: 'flex', justifyContent: 'flex-end', gap: '12px' },
-  resetButton: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', color: '#64748b', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer' },
-  saveButton: { padding: '10px 24px', fontSize: '14px', fontWeight: '600', color: '#ffffff', backgroundColor: '#2563eb', border: 'none', borderRadius: '8px', cursor: 'pointer' },
+  resetButton: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', color: 'var(--text-muted)', backgroundColor: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer' },
+  saveButton: { padding: '10px 24px', fontSize: '14px', fontWeight: '600', color: 'var(--accent-contrast)', backgroundColor: 'var(--accent)', border: 'none', borderRadius: '8px', cursor: 'pointer' },
 };

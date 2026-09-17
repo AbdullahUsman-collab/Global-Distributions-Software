@@ -30,6 +30,7 @@ export function getAppMode(): 'demo' | 'production' {
 /**
  * Demo mode banner color.
  */
+/** Demo-mode accent (kept hex — used where CSS vars are unavailable). */
 export const DEMO_MODE_COLOR = '#f59e0b';
 
 /**

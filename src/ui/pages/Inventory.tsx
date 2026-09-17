@@ -237,7 +237,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                 <span style={{ ...styles.col, flex: '0 0 80px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>{fmt(p.purchaseRate)}</span>
                 <span style={{ ...styles.col, flex: '0 0 60px', textAlign: 'right', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
                   {outOfStock ? (
-                    <span style={{ color: '#dc2626', fontSize: 11, fontWeight: 600 }}>0</span>
+                    <span style={{ color: 'var(--danger)', fontSize: 11, fontWeight: 600 }}>0</span>
                   ) : (
                     qty.toLocaleString()
                   )}
@@ -245,7 +245,7 @@ const ItemsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                 <span style={{ ...styles.col, flex: '0 0 50px', fontSize: 13 }}>{p.gstPercent}%</span>
                 <span style={{ ...styles.col, flex: '0 0 50px' }}>
                   {outOfStock ? (
-                    <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 8, fontSize: 10, fontWeight: 600, backgroundColor: '#fef2f2', color: '#dc2626', whiteSpace: 'nowrap' }}>Out of Stock</span>
+                    <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 8, fontSize: 10, fontWeight: 600, backgroundColor: 'var(--danger-soft)', color: 'var(--danger)', whiteSpace: 'nowrap' }}>Out of Stock</span>
                   ) : (
                     <span style={{ ...styles.statusDot, backgroundColor: p.isActive ? 'var(--success)' : 'var(--danger)' }} />
                   )}
@@ -472,11 +472,11 @@ const ProductModal: React.FC<{
             </div>
           </div>
           {isEdit && onUpdateStock && (
-            <div style={{ ...styles.formRow, backgroundColor: '#f8fafc', padding: '12px', borderRadius: 8, border: '1px solid #e2e8f0', marginTop: 8 }}>
+            <div style={{ ...styles.formRow, backgroundColor: 'var(--surface-2)', padding: '12px', borderRadius: 8, border: '1px solid var(--border)', marginTop: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ ...styles.field, marginBottom: 0, minWidth: 120 }}>
                   <label style={styles.label}>Current Stock</label>
-                  <input type="number" value={stockQty} readOnly style={{ ...styles.input, backgroundColor: '#e2e8f0', fontWeight: 600, cursor: 'default' }} />
+                  <input type="number" value={stockQty} readOnly style={{ ...styles.input, backgroundColor: 'var(--border)', fontWeight: 600, cursor: 'default' }} />
                 </div>
                 <div style={{ ...styles.field, marginBottom: 0, minWidth: 120 }}>
                   <label style={styles.label}>New Quantity</label>

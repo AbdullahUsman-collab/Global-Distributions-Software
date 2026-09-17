@@ -132,7 +132,7 @@ export const Login: React.FC = () => {
           <p style={styles.successMessage}>
             You have successfully signed in to {tenant.brandName}.
           </p>
-          <p style={{ ...styles.successSubmessage, color: '#64748b' }}>
+          <p style={{ ...styles.successSubmessage, color: 'var(--text-muted)' }}>
             Dashboard will be available in the next step.
           </p>
         </div>
@@ -194,7 +194,7 @@ export const Login: React.FC = () => {
               placeholder="Enter your username"
               style={{
                 ...styles.input,
-                borderColor: username ? tenant.primaryColor : '#e2e8f0',
+                borderColor: username ? tenant.primaryColor : 'var(--border)',
               }}
             />
           </div>
@@ -217,7 +217,7 @@ export const Login: React.FC = () => {
               placeholder="Enter your password"
               style={{
                 ...styles.input,
-                borderColor: password ? tenant.primaryColor : '#e2e8f0',
+                borderColor: password ? tenant.primaryColor : 'var(--border)',
               }}
             />
           </div>
@@ -277,23 +277,23 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '32px 16px',
-    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+    background: 'linear-gradient(135deg, var(--surface-2) 0%, var(--border) 100%)',
   },
   card: {
     width: '100%',
     maxWidth: '400px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
     borderRadius: '16px',
     padding: '32px',
     boxShadow: '0 10px 40px -10px rgb(0 0 0 / 0.15)',
-    border: '2px solid #e2e8f0',
+    border: '2px solid var(--border)',
     position: 'relative',
   },
   backLinkTop: {
     display: 'inline-block',
     marginBottom: '24px',
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     textDecoration: 'none',
     transition: 'color 0.2s ease',
   },
@@ -324,7 +324,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     marginBottom: '4px',
   },
   subtitle: {
@@ -344,23 +344,24 @@ const styles: { [key: string]: React.CSSProperties } = {
   label: {
     fontSize: '14px',
     fontWeight: '500',
-    color: '#374151',
+    color: 'var(--text-secondary)',
   },
   input: {
     padding: '12px 16px',
     fontSize: '16px',
-    border: '2px solid #e2e8f0',
+    border: '2px solid var(--border)',
     borderRadius: '8px',
     outline: 'none',
     transition: 'border-color 0.2s ease',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface-2)',
+    color: 'var(--text-primary)',
   },
   errorBanner: {
     padding: '12px 16px',
-    backgroundColor: '#fef2f2',
-    border: '1px solid #fecaca',
+    backgroundColor: 'var(--danger-soft)',
+    border: '1px solid var(--danger)',
     borderRadius: '8px',
-    color: '#dc2626',
+    color: 'var(--danger-fg)',
     fontSize: '14px',
   },
   submitButton: {
@@ -393,13 +394,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   successTitle: {
     fontSize: '24px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     textAlign: 'center',
     marginBottom: '8px',
   },
   successMessage: {
     fontSize: '16px',
-    color: '#374151',
+    color: 'var(--text-secondary)',
     textAlign: 'center',
     marginBottom: '8px',
   },
@@ -416,21 +417,21 @@ const styles: { [key: string]: React.CSSProperties } = {
   errorTitle: {
     fontSize: '24px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     textAlign: 'center',
     marginBottom: '8px',
   },
   errorMessage: {
     fontSize: '16px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     textAlign: 'center',
     marginBottom: '24px',
   },
   backLink: {
     display: 'inline-block',
     padding: '12px 24px',
-    backgroundColor: '#3b82f6',
-    color: '#ffffff',
+    backgroundColor: 'var(--accent)',
+    color: 'var(--accent-contrast)',
     textDecoration: 'none',
     borderRadius: '8px',
     fontSize: '16px',
@@ -439,11 +440,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   demoHint: {
     marginTop: '20px',
     padding: '12px 16px',
-    backgroundColor: '#fefce8',
-    border: '1px solid #fde68a',
+    backgroundColor: 'var(--tx-draft-bg, var(--warning-soft))',
+    border: '1px solid var(--warning)',
     borderRadius: '8px',
     fontSize: '12px',
-    color: '#78350f',
+    color: 'var(--tx-draft-strong, var(--warning-fg))',
   },
   demoHintTitle: {
     fontWeight: '600',
@@ -451,21 +452,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '11px',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
-    color: '#92400e',
+    color: 'var(--warning-fg)',
   },
   demoHintRow: {
     lineHeight: '1.8',
   },
   demoHintCode: {
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--surface)',
     padding: '1px 5px',
     borderRadius: '3px',
-    border: '1px solid #e5e7eb',
+    border: '1px solid var(--border)',
     fontFamily: 'monospace',
     fontSize: '12px',
+    color: 'var(--text-primary)',
   },
   demoHintRole: {
-    color: '#92400e',
+    color: 'var(--warning-fg)',
     fontSize: '11px',
     marginLeft: '4px',
   },

@@ -250,7 +250,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   centerSection: { flex: 1, maxWidth: '400px', margin: '0 24px' },
   searchContainer: { position: 'relative' },
-  searchIcon: { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' },
+  searchIcon: { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' },
   searchInput: {
     width: '100%', padding: '10px 12px 10px 36px', fontSize: '14px', border: '1px solid var(--border)',
     borderRadius: '8px', backgroundColor: 'var(--surface-2)', color: 'var(--text-primary)', outline: 'none',
@@ -298,8 +298,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   demoBadge: {
     display: 'inline-flex', alignItems: 'center', padding: '2px 8px',
-    backgroundColor: '#fef3c7', color: '#92400e', fontSize: '10px', fontWeight: '700',
-    borderRadius: '4px', letterSpacing: '0.05em', border: '1px solid #fcd34d', marginLeft: '8px',
+    backgroundColor: 'var(--warning-soft)', color: 'var(--warning-fg)', fontSize: '10px', fontWeight: '700',
+    borderRadius: '4px', letterSpacing: '0.05em', border: '1px solid var(--warning)', marginLeft: '8px',
   },
   brandDropdown: {
     position: 'absolute', top: '100%', left: 0, marginTop: '8px', width: '260px',
@@ -322,5 +322,5 @@ const styles: { [key: string]: React.CSSProperties } = {
   brandOptionName: { fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   activeLabel: { fontSize: '11px', color: 'var(--accent)', fontWeight: '500' },
   checkIcon: { flexShrink: 0 },
-  switchingText: { fontSize: '12px', color: '#64748b', textAlign: 'center', padding: '8px' },
+  switchingText: { fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '8px' },
 };

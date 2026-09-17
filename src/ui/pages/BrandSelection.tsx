@@ -151,7 +151,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '32px 16px',
-    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+    background: 'linear-gradient(135deg, var(--surface-2) 0%, var(--border) 100%)',
   },
   header: {
     textAlign: 'center',
@@ -160,12 +160,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '32px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     marginBottom: '8px',
   },
   subtitle: {
     fontSize: '16px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   grid: {
     display: 'grid',
@@ -177,7 +177,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   errorContainer: {
     textAlign: 'center',
     padding: '40px 24px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
     borderRadius: '16px',
     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
     maxWidth: '400px',
@@ -190,19 +190,19 @@ const styles: { [key: string]: React.CSSProperties } = {
   errorTitle: {
     fontSize: '22px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     marginBottom: '8px',
   },
   errorMessage: {
     fontSize: '15px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     marginBottom: '24px',
     lineHeight: '1.5',
   },
   retryButton: {
     padding: '12px 24px',
-    backgroundColor: '#3b82f6',
-    color: '#ffffff',
+    backgroundColor: 'var(--accent)',
+    color: 'var(--accent-contrast)',
     border: 'none',
     borderRadius: '8px',
     fontSize: '15px',
@@ -213,8 +213,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   setupButton: {
     padding: '12px 24px',
-    backgroundColor: '#6366f1',
-    color: '#ffffff',
+    backgroundColor: 'var(--accent)',
+    color: 'var(--accent-contrast)',
     border: 'none',
     borderRadius: '8px',
     fontSize: '15px',
@@ -226,7 +226,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   helpText: {
     fontSize: '13px',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     marginTop: '12px',
   },
 };

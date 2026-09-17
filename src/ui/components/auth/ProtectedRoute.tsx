@@ -155,7 +155,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+    background: 'linear-gradient(135deg, var(--surface-2) 0%, var(--border) 100%)',
   },
   loadingContent: {
     textAlign: 'center',
@@ -163,12 +163,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   loadingSpinner: {
     width: '40px',
     height: '40px',
-    borderColor: '#3b82f6',
+    borderColor: 'var(--accent)',
     borderTopColor: 'transparent',
     margin: '0 auto 16px',
   },
   loadingText: {
     fontSize: '16px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
 };

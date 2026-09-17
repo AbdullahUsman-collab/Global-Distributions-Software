@@ -49,9 +49,9 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
       className="brand-card-responsive"
       style={{
         width: '100%',
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--surface)',
         borderRadius: '16px',
-        border: `2px solid ${isActive ? tenant.primaryColor : '#e2e8f0'}`,
+        border: `2px solid ${isActive ? tenant.primaryColor : 'var(--border)'}`,
         boxShadow: isActive
           ? `0 20px 40px ${tenant.primaryColor}33`
           : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
@@ -106,7 +106,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
         style={{
           fontSize: '18px',
           fontWeight: '600',
-          color: isActive ? tenant.primaryColor : '#1e293b',
+          color: isActive ? tenant.primaryColor : 'var(--text-primary)',
           textAlign: 'center',
           transition: 'color 0.2s ease',
         }}
@@ -120,7 +120,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
         style={{
           marginTop: '8px',
           fontSize: '12px',
-          color: '#94a3b8',
+          color: 'var(--text-muted)',
           opacity: isActive ? 1 : 0.7,
           transition: 'opacity 0.2s ease',
         }}
