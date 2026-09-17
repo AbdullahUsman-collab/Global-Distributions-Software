@@ -59,7 +59,6 @@ export const BillDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAccounting, setShowAccounting] = useState(false);
   const [showMovements, setShowMovements] = useState(false);
-  const [expandedLines, setExpandedLines] = useState<Set<number>>(new Set());
 
   // Line Items shows only actual product lines. The accounting engine also posts
   // GL aggregate lines (inventory debit, input tax, COGS pairs) without product
@@ -108,14 +107,6 @@ export const BillDetailPage: React.FC = () => {
     navigate('/aging');
   };
 
-  const toggleLineExpand = (idx: number) => {
-    setExpandedLines(prev => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx); else next.add(idx);
-      return next;
-    });
-  };
-
   // Print handler
   const handlePrint = () => {
     printWindow();
@@ -124,31 +115,31 @@ export const BillDetailPage: React.FC = () => {
   // Export CSV handler
   const handleExportCsv = () => {
     if (!detail) return;
-    const headers = ['#', 'Product', 'SKU', 'Qty', 'Rate', 'Amount', 'Margin %', 'Retail Price', 'Trade Disc %', 'Trade Offer %', 'Special Disc %', 'GST Type', 'HS Code', 'Min Qty', 'GST', 'FED', 'Further Tax', 'Adv Tax', 'Total'];
+    const headers = ['#', 'Product', 'Qty', 'Rate', 'Gross Amt', 'Trade Disc %', 'Trade Disc Amt', 'Trade Offer %', 'Trade Offer Amt', 'Special Disc %', 'Special Disc Amt', 'Taxable Amt', 'GST %', 'GST Amt', 'Further Tax', 'FED', 'Adv Tax', 'Margin %', 'Net Amount'];
     const rows = productLines.map((bl, i) => [
       i + 1,
       bl.productName || '',
-      bl.productSku || '',
       bl.quantity || '',
       bl.rate ? bl.rate.toFixed(2) : '',
-      bl.amount.toFixed(2),
-      bl.marginPercent > 0 ? `${bl.marginPercent}%` : '',
-      (bl.line.retailPrice ?? 0) > 0 ? (bl.line.retailPrice ?? 0).toFixed(2) : '',
+      bl.grossAmount > 0 ? bl.grossAmount.toFixed(2) : '',
       (bl.line.tradeDiscountPercent ?? 0) > 0 ? `${bl.line.tradeDiscountPercent}%` : '',
+      bl.tradeDiscountAmount > 0 ? bl.tradeDiscountAmount.toFixed(2) : '',
       (bl.line.tradeOfferPercent ?? 0) > 0 ? `${bl.line.tradeOfferPercent}%` : '',
+      bl.tradeOfferAmount > 0 ? bl.tradeOfferAmount.toFixed(2) : '',
       (bl.line.specialDiscountPercent ?? 0) > 0 ? `${bl.line.specialDiscountPercent}%` : '',
-      bl.line.gstType || '',
-      bl.line.hsCode || '',
-      (bl.line.minQuantity ?? 0) > 0 ? String(bl.line.minQuantity) : '',
+      bl.specialDiscountAmount > 0 ? bl.specialDiscountAmount.toFixed(2) : '',
+      bl.amount > 0 ? bl.amount.toFixed(2) : '',
+      (bl.line.stRate ?? 0) > 0 ? `${bl.line.stRate}%` : '',
       bl.gstAmount > 0 ? bl.gstAmount.toFixed(2) : '',
-      bl.fedAmount > 0 ? bl.fedAmount.toFixed(2) : '',
       bl.furtherTaxAmount > 0 ? bl.furtherTaxAmount.toFixed(2) : '',
+      bl.fedAmount > 0 ? bl.fedAmount.toFixed(2) : '',
       bl.advanceTaxAmount > 0 ? bl.advanceTaxAmount.toFixed(2) : '',
+      bl.marginPercent > 0 ? `${bl.marginPercent}%` : '',
       bl.netAmount.toFixed(2),
     ]);
     // Add totals
     rows.push([]);
-    const pad = Array(7).fill(''); // align label+value under columns 7..18
+    const pad = Array(12).fill(''); // align label+value under columns 12..18
     rows.push([...pad, 'Subtotal (Value Excl Tax)', detail.taxSummary.subtotal.toFixed(2)]);
     if (detail.taxSummary.totalTradeDiscount > 0) rows.push([...pad, 'Trade Discount', detail.taxSummary.totalTradeDiscount.toFixed(2)]);
     if (detail.taxSummary.totalTradeOffer > 0) rows.push([...pad, 'Trade Offer', detail.taxSummary.totalTradeOffer.toFixed(2)]);
@@ -282,96 +273,85 @@ export const BillDetailPage: React.FC = () => {
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      <th style={{ ...styles.th, width: '32px' }}></th>
                       <th style={styles.th}>#</th>
                       <th style={styles.th}>Product</th>
-                      <th style={styles.th}>SKU</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Qty</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Rate</th>
-                      <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Gross Amt</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Trade Disc %</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Trade Disc Amt</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Trade Offer %</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Trade Offer Amt</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Special Disc %</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Special Disc Amt</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Taxable Amt</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>GST %</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>GST Amt</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Further Tax</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>FED</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Adv Tax</th>
                       <th style={{ ...styles.th, textAlign: 'right' }}>Margin %</th>
-                      <th style={{ ...styles.th, textAlign: 'right' }}>Tax</th>
-                      <th style={{ ...styles.th, textAlign: 'right' }}>Total</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Net Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {productLines.map((bl, i) => {
-                      const isExpanded = expandedLines.has(i);
-                      const hasDetails = (bl.line.retailPrice ?? 0) > 0 || (bl.line.minQuantity ?? 0) > 0
-                        || bl.line.hsCode || bl.line.gstType
-                        || (bl.line.tradeOfferPercent ?? 0) > 0 || (bl.line.specialDiscountPercent ?? 0) > 0
-                        || (bl.line.fedPercent ?? 0) > 0 || (bl.line.furtherTaxPercent ?? 0) > 0
-                        || (bl.line.advanceTaxPercent ?? 0) > 0;
-                      return (
-                        <React.Fragment key={bl.line.id}>
-                          <tr style={styles.tr}>
-                            <td style={{ ...styles.td, width: '32px' }}>
-                              {hasDetails && (
-                                <button
-                                  onClick={() => toggleLineExpand(i)}
-                                  title={isExpanded ? 'Collapse details' : 'Expand details'}
-                                  style={{
-                                    background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px',
-                                    fontSize: '11px', borderRadius: '4px',
-                                    backgroundColor: isExpanded ? 'var(--tx-draft-bg, #dbeafe)' : 'var(--surface-3, #f1f5f9)',
-                                    color: isExpanded ? 'var(--accent, #2563eb)' : 'var(--text-muted, #64748b)',
-                                  }}
-                                >
-                                  {isExpanded ? '▼' : '▶'}
-                                </button>
-                              )}
-                            </td>
-                            <td style={styles.td}>{i + 1}</td>
-                            <td style={styles.td}>{bl.productName || '—'}</td>
-                            <td style={styles.td}>{bl.productSku || '—'}</td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                              {bl.quantity > 0 ? bl.quantity.toLocaleString() : '—'}
-                            </td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                              {bl.rate > 0 ? fmt(bl.rate) : '—'}
-                            </td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                              {fmt(bl.amount)}
-                            </td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                              {bl.marginPercent > 0 ? `${bl.marginPercent}%` : '—'}
-                            </td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
-                              {bl.gstAmount > 0 ? fmt(bl.gstAmount) : '—'}
-                            </td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace', fontWeight: '600' }}>
-                              {fmt(bl.netAmount)}
-                            </td>
-                          </tr>
-                          {isExpanded && (
-                            <tr>
-                              <td colSpan={10} style={{ padding: '12px 16px', backgroundColor: 'var(--surface-2, #f8fafc)', borderBottom: '2px solid var(--border)' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
-                                  {[
-                                    { label: 'Retail Price', value: (bl.line.retailPrice ?? 0) > 0 ? fmt(bl.line.retailPrice!) : '—' },
-                                    { label: 'Trade Disc %', value: (bl.line.tradeDiscountPercent ?? 0) > 0 ? `${bl.line.tradeDiscountPercent}%` : '—' },
-                                    { label: 'Trade Offer %', value: (bl.line.tradeOfferPercent ?? 0) > 0 ? `${bl.line.tradeOfferPercent}%` : '—' },
-                                    { label: 'Special Disc %', value: (bl.line.specialDiscountPercent ?? 0) > 0 ? `${bl.line.specialDiscountPercent}%` : '—' },
-                                    { label: 'Min Qty', value: (bl.line.minQuantity ?? 0) > 0 ? String(bl.line.minQuantity) : '—' },
-                                    { label: 'HS Code', value: bl.line.hsCode || '—' },
-                                    { label: 'GST Type', value: bl.line.gstType || '—' },
-                                    { label: 'GST %', value: (bl.line.stRate ?? 0) > 0 ? `${bl.line.stRate}%` : '—' },
-                                    { label: 'FED %', value: (bl.line.fedPercent ?? 0) > 0 ? `${bl.line.fedPercent}%` : '—' },
-                                    { label: 'Further Tax %', value: (bl.line.furtherTaxPercent ?? 0) > 0 ? `${bl.line.furtherTaxPercent}%` : '—' },
-                                    { label: 'Adv Tax %', value: (bl.line.advanceTaxPercent ?? 0) > 0 ? `${bl.line.advanceTaxPercent}%` : '—' },
-                                  ].filter(f => f.value !== '—').map(f => (
-                                    <div key={f.label}>
-                                      <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase' }}>{f.label}</span>
-                                      <p style={{ margin: '2px 0 0', fontSize: '13px', fontFamily: 'monospace', color: 'var(--text-primary)' }}>{f.value}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
+                    {productLines.map((bl, i) => (
+                      <tr key={bl.line.id} style={styles.tr}>
+                        <td style={styles.td}>{i + 1}</td>
+                        <td style={styles.td}>{bl.productName || '—'}</td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.quantity > 0 ? bl.quantity.toLocaleString() : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.rate > 0 ? fmt(bl.rate) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.grossAmount > 0 ? fmt(bl.grossAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {(bl.line.tradeDiscountPercent ?? 0) > 0 ? `${bl.line.tradeDiscountPercent}%` : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.tradeDiscountAmount > 0 ? fmt(bl.tradeDiscountAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {(bl.line.tradeOfferPercent ?? 0) > 0 ? `${bl.line.tradeOfferPercent}%` : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.tradeOfferAmount > 0 ? fmt(bl.tradeOfferAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {(bl.line.specialDiscountPercent ?? 0) > 0 ? `${bl.line.specialDiscountPercent}%` : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.specialDiscountAmount > 0 ? fmt(bl.specialDiscountAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.amount > 0 ? fmt(bl.amount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {(bl.line.stRate ?? 0) > 0 ? `${bl.line.stRate}%` : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.gstAmount > 0 ? fmt(bl.gstAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.furtherTaxAmount > 0 ? fmt(bl.furtherTaxAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.fedAmount > 0 ? fmt(bl.fedAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.advanceTaxAmount > 0 ? fmt(bl.advanceTaxAmount) : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace' }}>
+                          {bl.marginPercent > 0 ? `${bl.marginPercent}%` : '—'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontFamily: 'monospace', fontWeight: '600' }}>
+                          {fmt(bl.netAmount)}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

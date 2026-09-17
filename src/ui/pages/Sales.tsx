@@ -683,7 +683,7 @@ const SaleBillForm: React.FC<{
   // Save
   const handleSave = async () => {
     if (!customerId) { alert('Select a customer'); return; }
-    const validLines = lines.filter(l => l.productId);
+    const validLines = lines.filter(l => l.productId && (l.cartons > 0 || l.packs > 0));
     if (validLines.length === 0) { alert('Add at least one line with a product'); return; }
 
     setSaving(true);

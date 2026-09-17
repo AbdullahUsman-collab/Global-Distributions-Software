@@ -236,8 +236,8 @@ export class PurchaseService {
     if (!supplier) throw new Error('Supplier not found');
     if (!supplier.isActive) throw new Error('Supplier is inactive');
 
-    // Filter out empty lines (no productId)
-    const validLines = dto.lines.filter(l => l.productId);
+    // Filter out empty lines (no productId or zero quantity)
+    const validLines = dto.lines.filter(l => l.productId && (l.cartons > 0 || l.packs > 0));
     if (validLines.length === 0) throw new Error('At least one line with a product is required');
 
     // Validate products exist

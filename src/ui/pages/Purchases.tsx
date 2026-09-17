@@ -664,7 +664,7 @@ const PurchaseBillForm: React.FC<{
   // Save — filter empty lines before submission
   const handleSave = async () => {
     if (!supplierId) { alert('Select a supplier'); return; }
-    const validLines = lines.filter(l => l.productId);
+    const validLines = lines.filter(l => l.productId && (l.cartons > 0 || l.packs > 0));
     if (validLines.length === 0) { alert('Add at least one item'); return; }
 
     setSaving(true);
@@ -1007,7 +1007,7 @@ const PurchaseBillForm: React.FC<{
           <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
           <button
             onClick={handleSave}
-            disabled={saving || !supplierId || lines.filter(l => l.productId).length === 0}
+            disabled={saving || !supplierId || lines.filter(l => l.productId && (l.cartons > 0 || l.packs > 0)).length === 0}
             className="tx-btn tx-btn-primary" style={styles.primaryBtn}
           >
             {saving ? 'Saving...' : 'Save & Post Bill'}

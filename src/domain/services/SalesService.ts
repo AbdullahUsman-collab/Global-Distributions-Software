@@ -245,8 +245,8 @@ export class SalesService {
     const products = await this.inventoryRepo.getProducts(tenantId);
     const productMap = new Map(products.map(p => [p.id, p]));
 
-    // Filter out empty lines (no productId) — supports dynamic line-addition UI
-    const validLines = dto.lines.filter(line => line.productId);
+    // Filter out empty lines (no productId or zero quantity) — supports dynamic line-addition UI
+    const validLines = dto.lines.filter(line => line.productId && (line.cartons > 0 || line.packs > 0));
 
     for (const line of validLines) {
       const product = productMap.get(line.productId);
