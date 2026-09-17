@@ -12,6 +12,7 @@
 
 import React from 'react';
 import { TenantPublicConfig } from '../../domain/types/tenant';
+import { BrandLogo } from './BrandLogo';
 
 interface BrandCardProps {
   tenant: TenantPublicConfig;
@@ -81,23 +82,14 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
           transform: isActive ? 'scale(1.05)' : 'scale(1)',
         }}
       >
-        <div
-          className="brand-inner-logo"
-          style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '12px',
-            backgroundColor: tenant.primaryColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffffff',
-            fontSize: '20px',
-            fontWeight: 'bold',
-          }}
-        >
-          {tenant.brandName.charAt(0)}
-        </div>
+        <BrandLogo
+          logoUrl={tenant.logoUrl}
+          brandName={tenant.brandName}
+          color={tenant.primaryColor}
+          size={48}
+          radius={12}
+          fontSize={20}
+        />
       </div>
 
       {/* Brand Name */}

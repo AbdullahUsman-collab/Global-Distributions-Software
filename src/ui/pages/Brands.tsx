@@ -14,6 +14,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getBrands, createBrand, updateBrand, deactivateBrand } from '../lib/api';
+import { BrandLogo } from '../components/BrandLogo';
+import { BrandThemeStudio } from '../components/branding/BrandThemeStudio';
 
 interface Brand {
   id: string;
@@ -30,7 +32,7 @@ const fmt = (d: string | Date) => {
 };
 
 export const Brands: React.FC = () => {
-  const { tenant } = useAuth();
+  const { tenant, refreshAuth } = useAuth();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -117,14 +119,14 @@ export const Brands: React.FC = () => {
             {filtered.map(b => (
               <div key={b.id} style={{ ...styles.voucherRow, minWidth: 700 }}>
                 <span style={{ ...styles.col, flex: '0 0 40px' }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 6,
-                    backgroundColor: b.primaryColor || '#3b82f6',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {b.brandName?.charAt(0) || '?'}
-                  </div>
+                  <BrandLogo
+                    logoUrl={b.logoUrl}
+                    brandName={b.brandName}
+                    color={b.primaryColor || '#3b82f6'}
+                    size={28}
+                    radius={6}
+                    fontSize={12}
+                  />
                 </span>
                 <span style={{ ...styles.col, flex: '1', fontWeight: 500 }}>{b.brandName}</span>
                 <span style={{ ...styles.col, flex: '0 0 120px', fontSize: 13, color: 'var(--text-muted)', fontFamily: 'ui-monospace, monospace' }}>{b.slug}</span>
@@ -148,11 +150,21 @@ export const Brands: React.FC = () => {
         />
       )}
 
+      {/* Step 91 — Brand Logo + Automatic Theme Studio for the active brand. */}
+      <div style={styles.card} >
+        <div style={{ padding: 24 }}>
+          <BrandThemeStudio
+            tenant={tenant}
+            onBrandUpdated={refreshAuth}
+          />
+        </div>
+      </div>
+
       {editBrand && (
         <EditBrandModal
           brand={editBrand}
           onClose={() => setEditBrand(null)}
-          onUpdated={() => { setEditBrand(null); load(); }}
+          onUpdated={async () => { setEditBrand(null); await load(); if (editBrand.id === tenant.id) await refreshAuth(); }}
         />
       )}
     </div>
@@ -273,6 +285,7 @@ const EditBrandModal: React.FC<{
   onUpdated: () => void;
 }> = ({ brand, onClose, onUpdated }) => {
   const [brandName, setBrandName] = useState(brand.brandName);
+  const [logoUrl, setLogoUrl] = useState(brand.logoUrl || '');
   const [primaryColor, setPrimaryColor] = useState(brand.primaryColor);
   const [accentColor, setAccentColor] = useState(brand.primaryColor === '#3b82f6' ? '#1e40af' : brand.primaryColor);
   const [error, setError] = useState('');
@@ -283,7 +296,7 @@ const EditBrandModal: React.FC<{
     setError('');
     setSaving(true);
     try {
-      await updateBrand(brand.id, { brandName, primaryColor, accentColor });
+      await updateBrand(brand.id, { brandName, logoUrl: logoUrl.trim(), primaryColor, accentColor });
       onUpdated();
     } catch (err: any) {
       setError(err?.error || err?.message || 'Failed to update brand');
@@ -307,6 +320,17 @@ const EditBrandModal: React.FC<{
               style={styles.input}
               required
               maxLength={256}
+            />
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Logo URL (optional)</label>
+            <input
+              type="url"
+              value={logoUrl}
+              onChange={e => setLogoUrl(e.target.value)}
+              style={styles.input}
+              placeholder="https://example.com/logo.png"
+              maxLength={2048}
             />
           </div>
           <div style={{ display: 'flex', gap: 12 }}>

@@ -16,6 +16,7 @@ import { switchTenant } from '../../lib/api';
 import { useNavigate } from 'react-router-dom';
 import { isDemoMode } from '../../lib/config';
 import { useThemeMode, ThemeMode } from '../../lib/theme';
+import { BrandLogo } from '../BrandLogo';
 import { TenantPublicConfig } from '../../../domain/types/tenant';
 
 interface HeaderProps {
@@ -77,9 +78,14 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
             style={styles.brandContainer}
             disabled={switching}
           >
-            <div style={{ ...styles.logo, backgroundColor: tenant.primaryColor }}>
-              {tenant.brandName.charAt(0)}
-            </div>
+            <BrandLogo
+              logoUrl={tenant.logoUrl}
+              brandName={tenant.brandName}
+              color={tenant.primaryColor}
+              size={32}
+              radius={8}
+              fontSize={14}
+            />
             <span className="brand-name" style={styles.brandName}>{tenant.brandName}</span>
             {authorizedBrands.length > 1 && (
               <svg style={styles.chevron} width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -108,9 +114,14 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                       }}
                       disabled={isActive || switching}
                     >
-                      <div style={{ ...styles.brandLogo, backgroundColor: brand.primaryColor }}>
-                        {brand.brandName.charAt(0)}
-                      </div>
+                      <BrandLogo
+                        logoUrl={brand.logoUrl}
+                        brandName={brand.brandName}
+                        color={brand.primaryColor}
+                        size={28}
+                        radius={6}
+                        fontSize={12}
+                      />
                       <div style={styles.brandInfo}>
                         <span style={styles.brandOptionName}>{brand.brandName}</span>
                         {isActive && <span style={styles.activeLabel}>Current</span>}
@@ -240,10 +251,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: '1px solid transparent', borderRadius: '8px', padding: '4px 8px', cursor: 'pointer',
     transition: 'border-color 0.15s ease',
   },
-  logo: {
-    width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', color: '#ffffff', fontSize: '14px', fontWeight: 'bold', flexShrink: 0,
-  },
+  /* logo + brandLogo styles removed — replaced by shared BrandLogo component (Step 91). */
   brandName: {
     fontSize: '16px', fontWeight: '600', color: 'var(--text-primary)', overflow: 'hidden',
     textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -314,10 +322,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px',
     border: 'none', borderRadius: '8px', textAlign: 'left', transition: 'background-color 0.15s ease',
   },
-  brandLogo: {
-    width: '28px', height: '28px', borderRadius: '6px', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', color: '#ffffff', fontSize: '12px', fontWeight: 'bold', flexShrink: 0,
-  },
+  /* (brandLogo removed — shared BrandLogo component, Step 91) */
   brandInfo: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '1px' },
   brandOptionName: { fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   activeLabel: { fontSize: '11px', color: 'var(--accent)', fontWeight: '500' },
