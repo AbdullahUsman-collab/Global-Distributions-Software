@@ -1565,7 +1565,7 @@ const styles: Record<string, React.CSSProperties> = {
   leafDot: { color: 'var(--fin-num-muted)', fontSize: 10 },
   typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 },
   statusDot: { display: 'inline-block', width: 8, height: 8, borderRadius: '50%' },
-  rowBtn: { background: 'none', border: '1px solid var(--border)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+  rowBtn: { background: 'none', border: '1px solid var(--border)', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
 
   primaryBtn: { padding: '10px 20px', backgroundColor: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
   cancelBtn: { padding: '10px 20px', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, cursor: 'pointer' },

@@ -113,13 +113,13 @@
   --border-strong: #475569;
   --border-subtle: #293545;
 
-  /* Accent: lighter for contrast on dark */
+  /* Accent: softer, less saturated — tinted surfaces stay neutral-first */
   --accent: #3b82f6;
   --accent-strong: #60a5fa;
-  --accent-soft: #1e3a5f;
-  --accent-softer: #172b4a;
+  --accent-soft: #1e293b;
+  --accent-softer: #243447;
   --accent-contrast: #ffffff;
-  --accent-soft-contrast: #93c5fd;
+  --accent-soft-contrast: #cbd5e1;
 
   /* Status: brighter on dark surfaces */
   --success: #4ade80;
@@ -349,8 +349,8 @@
 }
 
 .fin-expand {
-  min-width: 28px;
-  min-height: 28px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 6px;
   transition: background-color var(--motion-fast), color var(--motion-fast);
 }
@@ -457,8 +457,8 @@
 }
 
 .inv-expand {
-  min-width: 28px;
-  min-height: 28px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 6px;
   transition: background-color var(--motion-fast), color var(--motion-fast);
 }
@@ -1279,5 +1279,292 @@
 
 @media (max-width: 480px) {
   .sale-line-details-grid { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* 8. Transactions shared components (Step 89) — consumed by Sales,        */
+/*    Purchases, BillsList, BillDetail, AgingReport, CustomerReceipts,     */
+/*    and CashBook. Tokens only: pages keep their geometry inline; these   */
+/*    variables provide the single light/dark + brand-aware color system.  */
+/*    Light values equal the pages' original hexes (visual identity        */
+/*    unchanged); dark values are the shared designed dark palette.        */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Badge pairs shared by status/type indicators across transaction pages */
+  --tx-draft-bg: #fef3c7;  --tx-draft-fg: #92400e;
+  --tx-posted-bg: #dcfce7; --tx-posted-fg: #166534;
+  --tx-active-bg: #dcfce7; --tx-active-fg: #166534;
+  --tx-inactive-bg: #fee2e2; --tx-inactive-fg: #991b1b;
+  --tx-neutral-bg: #f1f5f9; --tx-neutral-fg: #475569;
+
+  /* Party-balance semantics (receivable red / settled green) */
+  --tx-owes: #dc2626;
+  --tx-clear: #16a34a;
+
+  /* Monetary direction semantics (Cash Book + aging) */
+  --tx-money-in: #15803d;
+  --tx-money-out: #dc2626;
+
+  /* Tinted panels (totals box, notice cards, draft banner, export card) */
+  --tx-tint-amber: #fef3c7;      --tx-tint-amber-fg: #92400e;  --tx-tint-amber-border: #fcd34d;
+  --tx-tint-red: #fef2f2;        --tx-tint-red-border: #fecaca;
+  --tx-tint-green: #f0fdf4;      --tx-tint-green-border: #bbf7d0;
+  --tx-tint-green-strong: #16a34a;
+  --tx-tint-blue: #eff6ff;       --tx-tint-blue-border: #bfdbfe; --tx-tint-blue-fg: #1e40af;
+  --tx-tint-sky: #f0f9ff;
+
+  /* Bill/voucher type badge tones (mirror domain BILL_TYPE_COLORS identity) */
+  --tx-type-sv-bg: #dbeafe;  --tx-type-sv-fg: #1e40af;
+  --tx-type-pv-bg: #fef3c7;  --tx-type-pv-fg: #92400e;
+  --tx-type-srv-bg: #fce7f3; --tx-type-srv-fg: #9d174d;
+  --tx-type-prv-bg: #d1fae5; --tx-type-prv-fg: #065f46;
+
+  /* In/Out movement chip (BillDetail stock movements) */
+  --tx-dir-in-bg: #dcfce7;  --tx-dir-in-fg: #166534;
+  --tx-dir-out-bg: #fef3c7; --tx-dir-out-fg: #92400e;
+
+  /* Danger emphasis (delete/confirm buttons on transaction pages) */
+  --tx-danger-bg: #fef2f2;
+  --tx-danger-border: #fecaca;
+  --tx-danger-strong: #dc2626;
+
+  /* Cash Book misc */
+  --cb-input-border: #d1d5db;
+}
+
+[data-theme='dark'] {
+  --tx-draft-bg: #451a03;  --tx-draft-fg: #fbbf24;
+  --tx-posted-bg: #052e16; --tx-posted-fg: #4ade80;
+  --tx-active-bg: #052e16; --tx-active-fg: #4ade80;
+  --tx-inactive-bg: #450a0a; --tx-inactive-fg: #fca5a5;
+  --tx-neutral-bg: #273549; --tx-neutral-fg: #cbd5e1;
+
+  --tx-owes: #f87171;
+  --tx-clear: #4ade80;
+
+  --tx-money-in: #4ade80;
+  --tx-money-out: #f87171;
+
+  --tx-tint-amber: #451a03;      --tx-tint-amber-fg: #fbbf24;  --tx-tint-amber-border: #78350f;
+  --tx-tint-red: #450a0a;        --tx-tint-red-border: #7f1d1d;
+  --tx-tint-green: #06281c;      --tx-tint-green-border: #14532d;
+  --tx-tint-green-strong: #4ade80;
+  --tx-tint-blue: #172b4a;       --tx-tint-blue-border: #1e3a5f; --tx-tint-blue-fg: #93c5fd;
+  --tx-tint-sky: #172b4a;
+
+  --tx-type-sv-bg: #172b4a;  --tx-type-sv-fg: #93c5fd;
+  --tx-type-pv-bg: #451a03;  --tx-type-pv-fg: #fbbf24;
+  --tx-type-srv-bg: #500724; --tx-type-srv-fg: #f9a8d4;
+  --tx-type-prv-bg: #06281c; --tx-type-prv-fg: #6ee7b7;
+
+  --tx-dir-in-bg: #052e16;  --tx-dir-in-fg: #4ade80;
+  --tx-dir-out-bg: #451a03; --tx-dir-out-fg: #fbbf24;
+
+  --tx-danger-bg: #450a0a;
+  --tx-danger-border: #7f1d1d;
+  --tx-danger-strong: #f87171;
+
+  --cb-input-border: #334155;
+}
+
+/* ── Unified interaction states (all transaction pages) ── */
+
+.tx-btn {
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast), filter var(--motion-fast), transform var(--motion-fast);
+}
+.tx-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tx-btn-primary {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+}
+.tx-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.tx-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.tx-btn-secondary {
+  background-color: var(--surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.tx-btn-secondary:hover:not(:disabled) {
+  background-color: var(--dash-table-row-hover);
+  border-color: var(--border-strong);
+}
+
+.tx-btn-tool {
+  background-color: var(--surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--cb-input-border);
+}
+.tx-btn-tool:hover:not(:disabled) {
+  background-color: var(--dash-table-row-hover);
+  border-color: var(--border-strong);
+}
+
+.tx-btn-danger {
+  background: none;
+  border: none;
+  color: var(--danger);
+}
+.tx-btn-danger:hover:not(:disabled) {
+  background-color: var(--danger-soft);
+}
+
+.tx-btn-danger-boxed {
+  background-color: var(--tx-danger-bg);
+  color: var(--tx-danger-strong);
+  border: 1px solid var(--tx-danger-border);
+}
+.tx-btn-danger-boxed:hover:not(:disabled) {
+  border-color: var(--danger);
+  filter: brightness(1.05);
+}
+
+.tx-btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+}
+.tx-btn-link:hover:not(:disabled) {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+/* Step 90: desktop floor for text-size row actions — inline paddings otherwise
+   shrink them to ~20px. Keeps row actions comfortably tappable without
+   enlarging primary/secondary controls. */
+.tx-page .tx-btn-link,
+.tx-page .tx-btn-danger {
+  min-height: 32px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.tx-page .tx-btn {
+  min-height: 32px;
+}
+
+.tx-btn-success {
+  background-color: var(--tx-tint-green-strong);
+  color: #ffffff;
+  border: none;
+}
+.tx-btn-success:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* Row hover for all transaction tables */
+.tx-tr {
+  transition: background-color var(--motion-fast);
+}
+.tx-tr:hover {
+  background-color: var(--dash-table-row-hover);
+}
+
+/* Tab underline (matches fin-/inv- treatment) */
+.tx-tab {
+  position: relative;
+  transition: color var(--motion-fast);
+}
+.tx-tab::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--motion);
+}
+.tx-tab:hover {
+  color: var(--text-primary) !important;
+}
+.tx-tab:hover::after,
+.tx-tab-active::after {
+  transform: scaleX(1);
+}
+.tx-tab-active {
+  color: var(--accent) !important;
+}
+
+/* Expand toggles inside bill-entry line tables */
+.tx-expand {
+  min-width: 26px;
+  min-height: 26px;
+  border-radius: 6px;
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+.tx-expand-active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
+.tx-expand:hover {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Focus affordance for inline inputs/selects on transaction pages.
+   Geometry (padding/width/borderRadius) stays inline in the components. */
+.tx-page input:focus-visible,
+.tx-page select:focus-visible,
+.tx-page textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+/* Native pickers (date inputs) must render readable in dark mode */
+.tx-page input[type='date'] {
+  color-scheme: inherit;
+}
+[data-theme='dark'] .tx-page input[type='date'] {
+  color-scheme: dark;
+}
+
+/* Modal overlay: shared dark-aware treatment. Surface color comes from the
+   component token --surface-raised via inline styles. */
+.tx-modal-overlay {
+  background-color: rgb(15 23 42 / 0.45);
+}
+[data-theme='dark'] .tx-modal-overlay {
+  background-color: rgb(0 0 0 / 0.6);
+}
+
+/* Cash Book account dropdown: hover for pointer + keyboard highlight rows */
+.cb-dd-item {
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+.cb-dd-item:hover,
+.cb-dd-item[data-active='true'] {
+  background-color: var(--accent-soft);
+}
+
+/* Mobile touch targets (transaction pages keep inline geometry otherwise) */
+@media (max-width: 640px) {
+  .tx-page .tx-btn-primary,
+  .tx-page .tx-btn-secondary,
+  .tx-page .tx-btn-tool,
+  .tx-page .tx-tab {
+    min-height: 44px;
+  }
+  .tx-page .tx-btn-link,
+  .tx-page .tx-btn-danger {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
 }
 

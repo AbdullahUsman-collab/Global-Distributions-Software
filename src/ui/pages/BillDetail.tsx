@@ -175,7 +175,7 @@ export const BillDetailPage: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div>
-          <button onClick={() => navigate('/bills')} style={styles.backBtn}>← Bills List</button>
+          <button onClick={() => navigate('/bills')} className="tx-btn tx-btn-link" style={styles.backBtn}>← Bills List</button>
           <h1 style={styles.title}>Bill Detail</h1>
         </div>
         {detail && (
@@ -417,8 +417,8 @@ export const BillDetailPage: React.FC = () => {
           {detail.accountingEntries.length > 0 && (
             <div style={styles.card}>
               <button
-                onClick={() => setShowAccounting(!showAccounting)}
-                style={{
+                onClick={() => setShowAccounting(!showAccounting)}                  className="tx-btn"
+                  style={{
                   background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
                 }}
@@ -476,8 +476,8 @@ export const BillDetailPage: React.FC = () => {
           {detail.inventoryMovements.length > 0 && (
             <div style={styles.card}>
               <button
-                onClick={() => setShowMovements(!showMovements)}
-                style={{
+                onClick={() => setShowMovements(!showMovements)}                  className="tx-btn"
+                  style={{
                   background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
                 }}

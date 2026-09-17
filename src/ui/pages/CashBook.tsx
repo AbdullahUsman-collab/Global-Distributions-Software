@@ -112,7 +112,7 @@ const AccountSelector: React.FC<AccountSelectorProps> = ({ accounts, value, onCh
     <div ref={ref} style={{ position: 'relative' }}>
       {selected && !open ? (
         <div
-          style={styles.accountSelected}
+          className="tx-btn" style={styles.accountSelected}
           onClick={() => { setOpen(true); setQuery(''); inputRef.current?.focus(); }}
         >
           <span style={styles.accountCode}>{selected.accountCode}</span>
@@ -136,10 +136,9 @@ const AccountSelector: React.FC<AccountSelectorProps> = ({ accounts, value, onCh
           {filtered.slice(0, 20).map((a, i) => (
             <div
               key={a.id}
-              style={{
-                ...styles.dropdownItem,
-                backgroundColor: i === highlightIdx ? '#f1f5f9' : '#fff',
-              }}
+              className="cb-dd-item"
+              data-active={i === highlightIdx || undefined}
+              style={styles.dropdownItem}
               onClick={() => select(a.id)}
               onMouseEnter={() => setHighlightIdx(i)}
             >
@@ -388,7 +387,7 @@ export const CashBook: React.FC = () => {
   /* ─── Render ─────────────────────────────────────────────── */
 
   return (
-    <div className="page-pad" style={styles.page}>
+    <div className="page-pad tx-page" style={styles.page}>
       {/* ── Header ── */}
       <div style={styles.header}>
         <div>
@@ -398,8 +397,8 @@ export const CashBook: React.FC = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handlePrint} style={styles.actionBtn} title="Print Cash Book">Print</button>
-          <button onClick={handleExport} style={styles.actionBtn} title="Export Cash Book">Export</button>
+          <button onClick={handlePrint} className="tx-btn tx-btn-tool" style={styles.actionBtn} title="Print Cash Book">Print</button>
+          <button onClick={handleExport} className="tx-btn tx-btn-tool" style={styles.actionBtn} title="Export Cash Book">Export</button>
         </div>
       </div>
 
@@ -439,7 +438,7 @@ export const CashBook: React.FC = () => {
           <label style={styles.filterLabel}>&nbsp;</label>
           <button
             onClick={() => { setStartDate(firstOfMonth()); setEndDate(today()); setSearchQuery(''); }}
-            style={styles.clearBtn}
+            className="tx-btn tx-btn-tool" style={styles.clearBtn}
           >
             Reset
           </button>
@@ -451,21 +450,21 @@ export const CashBook: React.FC = () => {
         <div style={styles.summaryRow}>
           <div style={styles.summaryCard}>
             <div style={styles.summaryLabel}>Opening Balance</div>
-            <div style={{ ...styles.summaryValue, color: summary.openingBalance >= 0 ? '#15803d' : '#dc2626' }}>
+            <div style={{ ...styles.summaryValue, color: summary.openingBalance >= 0 ? 'var(--tx-money-in)' : 'var(--tx-money-out)' }}>
               {fmtPKR(summary.openingBalance)}
             </div>
           </div>
           <div style={styles.summaryCard}>
             <div style={styles.summaryLabel}>Total Debit</div>
-            <div style={{ ...styles.summaryValue, color: '#15803d' }}>+{fmtPKR(summary.totalReceipts)}</div>
+            <div style={{ ...styles.summaryValue, color: 'var(--tx-money-in)' }}>+{fmtPKR(summary.totalReceipts)}</div>
           </div>
           <div style={styles.summaryCard}>
             <div style={styles.summaryLabel}>Total Credit</div>
-            <div style={{ ...styles.summaryValue, color: '#dc2626' }}>-{fmtPKR(summary.totalPayments)}</div>
+            <div style={{ ...styles.summaryValue, color: 'var(--tx-money-out)' }}>-{fmtPKR(summary.totalPayments)}</div>
           </div>
           <div style={styles.summaryCard}>
             <div style={styles.summaryLabel}>Closing Balance</div>
-            <div style={{ ...styles.summaryValue, color: summary.closingBalance >= 0 ? '#15803d' : '#dc2626', fontWeight: 700 }}>
+            <div style={{ ...styles.summaryValue, color: summary.closingBalance >= 0 ? 'var(--tx-money-in)' : 'var(--tx-money-out)', fontWeight: 700 }}>
               {fmtPKR(summary.closingBalance)}
             </div>
           </div>
@@ -545,7 +544,7 @@ export const CashBook: React.FC = () => {
           <div style={styles.entryActions}>
             <button
               type="submit"
-              style={styles.saveBtn}
+              className="tx-btn tx-btn-success" style={styles.saveBtn}
               disabled={saving || !selectedAccountId}
             >
               {saving ? 'Saving...' : '+ Save Transaction'}
@@ -556,8 +555,8 @@ export const CashBook: React.FC = () => {
 
       {/* ── Draft Vouchers Pending Posting ── */}
       {summary && summary.draftVouchers && summary.draftVouchers.length > 0 && (
-        <div style={{ ...styles.tableCard, borderLeft: '3px solid #f59e0b', marginBottom: 16 }}>
-          <h2 style={{ ...styles.tableTitle, color: '#92400e' }}>
+        <div style={{ ...styles.tableCard, borderLeft: '3px solid var(--tx-tint-amber-border)', marginBottom: 16 }}>
+          <h2 style={{ ...styles.tableTitle, color: 'var(--tx-tint-amber-fg)' }}>
             Pending Drafts ({summary.draftVouchers.length})
           </h2>
           <div style={styles.tableWrap}>
@@ -584,12 +583,12 @@ export const CashBook: React.FC = () => {
                     </td>
                     <td style={styles.td}>{dv.narration || '—'}</td>
                     <td style={styles.td}>
-                      <span style={{ ...styles.statusBadge, backgroundColor: '#fef3c7', color: '#92400e' }}>Draft</span>
+                      <span style={{ ...styles.statusBadge, backgroundColor: 'var(--tx-draft-bg)', color: 'var(--tx-draft-fg)' }}>Draft</span>
                     </td>
                     <td style={styles.td}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => handlePost(dv.id)} style={styles.postBtn} title="Post voucher">Post</button>
-                        <button onClick={() => handleDelete(dv.id)} style={styles.deleteBtn} title="Delete draft">Delete</button>
+                        <button onClick={() => handlePost(dv.id)} className="tx-btn" style={styles.postBtn} title="Post voucher">Post</button>
+                        <button onClick={() => handleDelete(dv.id)} className="tx-btn" style={styles.deleteBtn} title="Delete draft">Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -630,10 +629,10 @@ export const CashBook: React.FC = () => {
                     <td style={styles.td}>{startDate}</td>
                     <td style={styles.td}></td>
                     <td style={styles.td}></td>
-                    <td style={{ ...styles.td, fontStyle: 'italic', color: '#64748b' }}>Opening Balance</td>
+                    <td style={{ ...styles.td, fontStyle: 'italic', color: 'var(--text-muted)' }}>Opening Balance</td>
                     <td style={{ ...styles.td, textAlign: 'right' }}></td>
                     <td style={{ ...styles.td, textAlign: 'right' }}></td>
-                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: summary.openingBalance >= 0 ? '#15803d' : '#dc2626' }}>
+                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: summary.openingBalance >= 0 ? 'var(--tx-money-in)' : 'var(--tx-money-out)' }}>
                       {fmtPKR(summary.openingBalance)}
                     </td>
                     <td style={styles.td}></td>
@@ -649,7 +648,7 @@ export const CashBook: React.FC = () => {
                         <td style={styles.td}>
                           <button
                             onClick={() => navigate(`/bills/${tx.ledgerEntry.voucherId}`)}
-                            style={styles.voucherLink}
+                            className="tx-btn tx-btn-link" style={styles.voucherLink}
                             title="View detail"
                           >
                             #{tx.ledgerEntry.voucherNumber}
@@ -661,20 +660,20 @@ export const CashBook: React.FC = () => {
                           </span>
                         </td>
                         <td style={styles.td}>{tx.ledgerEntry.narration || '—'}</td>
-                        <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.debit > 0 ? '#15803d' : '#94a3b8', fontFamily: 'monospace' }}>
+                        <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.debit > 0 ? 'var(--tx-money-in)' : 'var(--text-disabled)', fontFamily: 'monospace' }}>
                           {tx.ledgerEntry.debit > 0 ? fmtPKR(tx.ledgerEntry.debit) : '—'}
                         </td>
-                        <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.credit > 0 ? '#dc2626' : '#94a3b8', fontFamily: 'monospace' }}>
+                        <td style={{ ...styles.td, textAlign: 'right', color: tx.ledgerEntry.credit > 0 ? 'var(--tx-money-out)' : 'var(--text-disabled)', fontFamily: 'monospace' }}>
                           {tx.ledgerEntry.credit > 0 ? fmtPKR(tx.ledgerEntry.credit) : '—'}
                         </td>
-                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: tx.runningBalance >= 0 ? '#15803d' : '#dc2626', fontFamily: 'monospace' }}>
+                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: tx.runningBalance >= 0 ? 'var(--tx-money-in)' : 'var(--tx-money-out)', fontFamily: 'monospace' }}>
                           {fmtPKR(tx.runningBalance)}
                         </td>
                         <td style={styles.td}>
                           <span style={{
                             ...styles.statusBadge,
-                            backgroundColor: isDraft ? '#fef3c7' : '#dcfce7',
-                            color: isDraft ? '#92400e' : '#15803d',
+                            backgroundColor: isDraft ? 'var(--tx-draft-bg)' : 'var(--tx-posted-bg)',
+                            color: isDraft ? 'var(--tx-draft-fg)' : 'var(--tx-posted-fg)',
                           }}>
                             {isDraft ? 'Draft' : 'Posted'}
                           </span>
@@ -682,8 +681,8 @@ export const CashBook: React.FC = () => {
                         <td style={styles.td}>
                           {isDraft && (
                             <div style={{ display: 'flex', gap: 4 }}>
-                              <button onClick={() => handlePost(tx.ledgerEntry.voucherId)} style={styles.postBtn} title="Post voucher">Post</button>
-                              <button onClick={() => handleDelete(tx.ledgerEntry.voucherId)} style={styles.deleteBtn} title="Delete draft">Delete</button>
+                              <button onClick={() => handlePost(tx.ledgerEntry.voucherId)} className="tx-btn" style={styles.postBtn} title="Post voucher">Post</button>
+                              <button onClick={() => handleDelete(tx.ledgerEntry.voucherId)} className="tx-btn" style={styles.deleteBtn} title="Delete draft">Delete</button>
                             </div>
                           )}
                         </td>
@@ -695,10 +694,10 @@ export const CashBook: React.FC = () => {
                     <td style={styles.td}>{endDate}</td>
                     <td style={styles.td}></td>
                     <td style={styles.td}></td>
-                    <td style={{ ...styles.td, fontStyle: 'italic', fontWeight: 700, color: '#1e293b' }}>Closing Balance</td>
-                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: '#15803d', fontFamily: 'monospace' }}>{fmtPKR(summary.totalReceipts)}</td>
-                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: '#dc2626', fontFamily: 'monospace' }}>{fmtPKR(summary.totalPayments)}</td>
-                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 700, color: summary.closingBalance >= 0 ? '#15803d' : '#dc2626', fontFamily: 'monospace' }}>
+                    <td style={{ ...styles.td, fontStyle: 'italic', fontWeight: 700, color: 'var(--text-primary)' }}>Closing Balance</td>
+                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: 'var(--tx-money-in)', fontFamily: 'monospace' }}>{fmtPKR(summary.totalReceipts)}</td>
+                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600, color: 'var(--tx-money-out)', fontFamily: 'monospace' }}>{fmtPKR(summary.totalPayments)}</td>
+                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 700, color: summary.closingBalance >= 0 ? 'var(--tx-money-in)' : 'var(--tx-money-out)', fontFamily: 'monospace' }}>
                       {fmtPKR(summary.closingBalance)}
                     </td>
                     <td style={styles.td}></td>
@@ -731,72 +730,72 @@ export const CashBook: React.FC = () => {
 
 const styles: { [key: string]: React.CSSProperties } = {
   page: { padding: 24, maxWidth: 1400, margin: '0 auto' },
-  loading: { padding: 40, textAlign: 'center', color: '#64748b', fontSize: 14 },
+  loading: { padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 20, flexWrap: 'wrap' },
-  title: { fontSize: 24, fontWeight: 700, color: '#1e293b', margin: 0 },
-  subtitle: { fontSize: 14, color: '#64748b', margin: 0 },
-  actionBtn: { padding: '8px 16px', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer' },
+  title: { fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 },
+  subtitle: { fontSize: 14, color: 'var(--text-muted)', margin: 0 },
+  actionBtn: { padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer' },
 
   // Filters
   filters: { display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' },
   filterField: { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 120 },
-  filterLabel: { fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
-  filterInput: { padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#1e293b', backgroundColor: '#fff' },
-  filterSelect: { padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#1e293b', backgroundColor: '#fff', minWidth: 200 },
-  clearBtn: { padding: '7px 12px', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer' },
+  filterLabel: { fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
+  filterInput: { padding: '7px 10px', border: '1px solid var(--cb-input-border)', borderRadius: 6, fontSize: 13, color: 'var(--text-primary)', backgroundColor: 'var(--surface)' },
+  filterSelect: { padding: '7px 10px', border: '1px solid var(--cb-input-border)', borderRadius: 6, fontSize: 13, color: 'var(--text-primary)', backgroundColor: 'var(--surface)', minWidth: 200 },
+  clearBtn: { padding: '7px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer' },
 
   // Summary
   summaryRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 },
-  summaryCard: { backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 14 },
-  summaryLabel: { fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
+  summaryCard: { backgroundColor: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 14 },
+  summaryLabel: { fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
   summaryValue: { fontSize: 17, fontWeight: 700, fontFamily: 'monospace' },
 
   // Entry Card
-  entryCard: { backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20, marginBottom: 20 },
-  entryTitle: { fontSize: 16, fontWeight: 700, color: '#1e293b', margin: '0 0 16px 0' },
+  entryCard: { backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 20, marginBottom: 20 },
+  entryTitle: { fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px 0' },
   entryForm: { display: 'flex', flexDirection: 'column', gap: 12 },
   entryRow: { display: 'flex', gap: 12, flexWrap: 'wrap' },
   entryField: { display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 140 },
-  entryLabel: { fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
-  entryInput: { padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, color: '#1e293b', backgroundColor: '#fff' },
+  entryLabel: { fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
+  entryInput: { padding: '8px 12px', border: '1px solid var(--cb-input-border)', borderRadius: 6, fontSize: 14, color: 'var(--text-primary)', backgroundColor: 'var(--surface)' },
   entryActions: { display: 'flex', justifyContent: 'flex-end', marginTop: 4 },
-  saveBtn: { padding: '10px 24px', backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  saveBtn: { padding: '10px 24px', border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
 
   // Account selector
-  accountSelected: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, backgroundColor: '#fff', cursor: 'pointer', minHeight: 36 },
-  accountCode: { fontWeight: 700, color: '#1e293b', fontSize: 14 },
-  accountName: { color: '#475569', fontSize: 13 },
-  accountChange: { marginLeft: 'auto', color: '#2563eb', fontSize: 11, fontWeight: 600 },
-  accountInput: { padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, color: '#1e293b', backgroundColor: '#fff', width: '100%', boxSizing: 'border-box' as const },
-  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderRadius: 6, maxHeight: 200, overflowY: 'auto', zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
-  dropdownItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' },
-  dropdownCode: { fontWeight: 700, color: '#1e293b', fontSize: 13, minWidth: 40 },
-  dropdownName: { color: '#475569', fontSize: 13 },
+  accountSelected: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: '1px solid var(--cb-input-border)', borderRadius: 6, backgroundColor: 'var(--surface)', cursor: 'pointer', minHeight: 36 },
+  accountCode: { fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 },
+  accountName: { color: 'var(--text-secondary)', fontSize: 13 },
+  accountChange: { marginLeft: 'auto', color: 'var(--accent)', fontSize: 11, fontWeight: 600 },
+  accountInput: { padding: '8px 12px', border: '1px solid var(--cb-input-border)', borderRadius: 6, fontSize: 14, color: 'var(--text-primary)', backgroundColor: 'var(--surface)', width: '100%', boxSizing: 'border-box' as const },
+  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'var(--surface)', border: '1px solid var(--cb-input-border)', borderRadius: 6, maxHeight: 200, overflowY: 'auto', zIndex: 100, boxShadow: 'var(--shadow-md)' },
+  dropdownItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--dash-table-row-border)' },
+  dropdownCode: { fontWeight: 700, color: 'var(--text-primary)', fontSize: 13, minWidth: 40 },
+  dropdownName: { color: 'var(--text-secondary)', fontSize: 13 },
 
   // Account display
-  accountDisplay: { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', backgroundColor: '#f0f9ff', borderRadius: 6, fontSize: 13 },
-  accountDisplayLabel: { color: '#64748b', fontWeight: 500 },
-  accountDisplayCode: { fontWeight: 700, color: '#1e293b' },
-  accountDisplayName: { color: '#475569' },
+  accountDisplay: { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', backgroundColor: 'var(--tx-tint-sky)', borderRadius: 6, fontSize: 13 },
+  accountDisplayLabel: { color: 'var(--text-muted)', fontWeight: 500 },
+  accountDisplayCode: { fontWeight: 700, color: 'var(--text-primary)' },
+  accountDisplayName: { color: 'var(--text-secondary)' },
 
   // Error/Success
-  error: { padding: '8px 12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, color: '#dc2626', fontSize: 13 },
-  success: { padding: '8px 12px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, color: '#15803d', fontSize: 13 },
+  error: { padding: '8px 12px', backgroundColor: 'var(--tx-tint-red)', border: '1px solid var(--tx-tint-red-border)', borderRadius: 6, color: 'var(--danger)', fontSize: 13 },
+  success: { padding: '8px 12px', backgroundColor: 'var(--tx-tint-green)', border: '1px solid var(--tx-tint-green-border)', borderRadius: 6, color: 'var(--tx-money-in)', fontSize: 13 },
 
   // Table
-  tableCard: { backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20 },
-  tableTitle: { fontSize: 16, fontWeight: 700, color: '#1e293b', margin: '0 0 16px 0' },
+  tableCard: { backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 20 },
+  tableTitle: { fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px 0' },
   tableWrap: { overflowX: 'auto' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
-  th: { padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#475569', backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
-  td: { padding: '8px 12px', borderBottom: '1px solid #f1f5f9', color: '#334155', whiteSpace: 'nowrap' },
+  th: { padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: 'var(--surface-2)', borderBottom: '2px solid var(--border)', whiteSpace: 'nowrap', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
+  td: { padding: '8px 12px', borderBottom: '1px solid var(--dash-table-row-border)', color: 'var(--text-primary)', whiteSpace: 'nowrap' },
   tr: { transition: 'background-color 0.15s' },
-  typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, backgroundColor: '#f1f5f9', color: '#475569' },
+  typeBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, backgroundColor: 'var(--tx-neutral-bg)', color: 'var(--tx-neutral-fg)' },
   statusBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 },
-  openingRow: { backgroundColor: '#f0f9ff' },
-  closingRow: { backgroundColor: '#f8fafc', borderTop: '2px solid #e2e8f0' },
-  empty: { padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 14 },
-  postBtn: { padding: '4px 8px', backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' },
-  deleteBtn: { padding: '4px 8px', backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' },
-  voucherLink: { background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: 0, textDecoration: 'none' },
+  openingRow: { backgroundColor: 'var(--tx-tint-sky)' },
+  closingRow: { backgroundColor: 'var(--surface-2)', borderTop: '2px solid var(--border)' },
+  empty: { padding: 40, textAlign: 'center', color: 'var(--text-disabled)', fontSize: 14 },
+  postBtn: { padding: '4px 8px', backgroundColor: 'var(--tx-posted-bg)', color: 'var(--tx-posted-fg)', border: '1px solid var(--tint-ok-border)', borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' },
+  deleteBtn: { padding: '4px 8px', backgroundColor: 'var(--tx-danger-bg)', color: 'var(--tx-danger-strong)', border: '1px solid var(--tx-danger-border)', borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' },
+  voucherLink: { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: 0, textDecoration: 'none' },
 };

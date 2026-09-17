@@ -68,8 +68,8 @@ const num = (raw: string): number => {
 };
 
 const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
-  DRAFT:  { bg: '#fef3c7', fg: '#92400e' },
-  POSTED: { bg: '#dcfce7', fg: '#166534' },
+  DRAFT:  { bg: 'var(--tx-draft-bg)', fg: 'var(--tx-draft-fg)' },
+  POSTED: { bg: 'var(--tx-posted-bg)', fg: 'var(--tx-posted-fg)' },
 };
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -82,7 +82,7 @@ export const Sales: React.FC = () => {
   const [tab, setTab] = useState<SalesTab>('customers');
 
   return (
-    <div className="page-pad" style={styles.page}>
+    <div className="page-pad tx-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -98,6 +98,8 @@ export const Sales: React.FC = () => {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
+            className={`tx-tab${tab === t.key ? ' tx-tab-active' : ''}`}
+            aria-pressed={tab === t.key}
             style={{ ...styles.tab, ...(tab === t.key ? styles.tabActive : {}) }}
           >
             {t.label}
@@ -225,9 +227,10 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
           placeholder="Search customers..."
           value={searchPrefix}
           onChange={e => setSearchPrefix(e.target.value)}
+          className="tx-input"
           style={styles.searchInput}
         />
-        <button onClick={handleCreate} style={styles.primaryBtn}>+ New Customer</button>
+        <button onClick={handleCreate} className="tx-btn tx-btn-primary" style={styles.primaryBtn}>+ New Customer</button>
       </div>
 
       {/* Customer Form Modal */}
@@ -264,7 +267,7 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
               {filteredCustomers.map(c => {
                 const bal = balanceMap.get(c.id);
                 return (
-                <tr key={c.id} style={styles.tr}>
+                <tr key={c.id} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>{c.name}</td>
                   <td style={styles.td}>{c.ownerName}</td>
                   <td style={styles.td} className="sales-hide-mobile">{c.phone}</td>
@@ -283,25 +286,25 @@ const CustomersTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: c.isActive ? '#dcfce7' : '#fee2e2',
-                      color: c.isActive ? '#166534' : '#991b1b',
+                      backgroundColor: c.isActive ? 'var(--tx-active-bg)' : 'var(--tx-inactive-bg)',
+                      color: c.isActive ? 'var(--tx-active-fg)' : 'var(--tx-inactive-fg)',
                     }}>
                       {c.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <button onClick={() => handleEdit(c)} style={styles.linkBtn}>Edit</button>
+                    <button onClick={() => handleEdit(c)} className="tx-btn tx-btn-link" style={styles.linkBtn}>Edit</button>
                     <button
                       onClick={() => {
                         const code = accountCodeMap.get(c.accountHeadId);
                         if (code) navigate('/finance', { state: { tab: 'ledger', accountId: code } });
                       }}
-                      style={styles.linkBtn}
+                      className="tx-btn tx-btn-link" style={styles.linkBtn}
                     >
                       Ledger
                     </button>
                     {c.isActive && (
-                      <button onClick={() => handleDeactivate(c.id)} style={styles.dangerBtn}>Deactivate</button>
+                      <button onClick={() => handleDeactivate(c.id)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>Deactivate</button>
                     )}
                   </td>
                 </tr>
@@ -340,7 +343,7 @@ const CustomerForm: React.FC<{
   };
 
   return (
-    <div style={styles.modalOverlay}>
+    <div className="tx-modal-overlay" style={styles.modalOverlay}>
       <div style={styles.modal}>
         <h2 style={styles.modalTitle}>{customer ? 'Edit Customer' : 'New Customer'}</h2>
         <form onSubmit={handleSubmit}>
@@ -375,8 +378,8 @@ const CustomerForm: React.FC<{
             </div>
           </div>
           <div style={styles.formActions}>
-            <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
-            <button type="submit" style={styles.primaryBtn}>{customer ? 'Update' : 'Create'}</button>
+            <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
+            <button type="submit" className="tx-btn tx-btn-primary" style={styles.primaryBtn}>{customer ? 'Update' : 'Create'}</button>
           </div>
         </form>
       </div>
@@ -439,7 +442,7 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <h2 style={styles.sectionTitle}>Sale Bills</h2>
-        <button onClick={() => setShowForm(true)} style={styles.primaryBtn}>+ New Sale Bill</button>
+        <button onClick={() => setShowForm(true)} className="tx-btn tx-btn-primary" style={styles.primaryBtn}>+ New Sale Bill</button>
       </div>
 
       {/* Bill Form Modal */}
@@ -470,25 +473,25 @@ const SaleBillsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             </thead>
             <tbody>
               {bills.map(b => (
-                <tr key={b.voucher.id} style={styles.tr}>
+                <tr key={b.voucher.id} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>{b.voucher.voucherNumber}</td>
                   <td style={styles.td}>{b.voucher.date}</td>
                   <td style={styles.td}>{b.voucher.narration}</td>
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[b.voucher.status]?.bg ?? '#f1f5f9',
-                      color: STATUS_COLORS[b.voucher.status]?.fg ?? '#475569',
+                      backgroundColor: STATUS_COLORS[b.voucher.status]?.bg ?? 'var(--tx-neutral-bg)',
+                      color: STATUS_COLORS[b.voucher.status]?.fg ?? 'var(--tx-neutral-fg)',
                     }}>
                       {VOUCHER_STATUS_LABELS[b.voucher.status]}
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <button onClick={() => navigate('/bills/' + b.voucher.id)} style={styles.linkBtn}>View</button>
+                    <button onClick={() => navigate('/bills/' + b.voucher.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>View</button>
                     {b.voucher.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => handlePost(b.voucher.id)} style={styles.linkBtn}>Post</button>
-                        <button onClick={() => handleDelete(b.voucher.id)} style={styles.dangerBtn}>Delete</button>
+                        <button onClick={() => handlePost(b.voucher.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>Post</button>
+                        <button onClick={() => handleDelete(b.voucher.id)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>Delete</button>
                       </>
                     )}
                   </td>
@@ -706,7 +709,7 @@ const SaleBillForm: React.FC<{
   };
 
   return (
-    <div style={styles.modalOverlay}>
+    <div className="tx-modal-overlay" style={styles.modalOverlay}>
       <div style={{ ...styles.modal, maxWidth: '900px' }}>
         <h2 style={styles.modalTitle}>New Sale Bill</h2>
 
@@ -738,7 +741,7 @@ const SaleBillForm: React.FC<{
           </div>
 
           {lines.every(l => !l.productId) && (
-            <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '8px' }}>Select a product below to start adding items.</p>
+            <p style={{ color: 'var(--text-disabled)', fontSize: '13px', marginBottom: '8px' }}>Select a product below to start adding items.</p>
           )}
             <div className="table-wrap sale-lines-wrap">
               <table style={styles.table}>
@@ -764,18 +767,18 @@ const SaleBillForm: React.FC<{
                     const hasProduct = !!line.productId;
                     return (
                       <React.Fragment key={idx}>
-                        <tr style={styles.tr}>
+                        <tr className="tx-tr" style={styles.tr}>
                           <td style={{ ...styles.td, width: '32px' }}>
                             {hasProduct && (
                               <button
                                 onClick={() => toggleExpand(idx)}
                                 title={isExpanded ? 'Collapse details' : 'Expand details'}
+                                aria-expanded={isExpanded}
+                                className={`tx-expand${isExpanded ? ' tx-expand-active' : ''}`}
                                 style={{
                                   ...styles.smallBtn,
                                   padding: '2px 6px',
                                   fontSize: '11px',
-                                  backgroundColor: isExpanded ? '#dbeafe' : '#f1f5f9',
-                                  color: isExpanded ? '#2563eb' : '#64748b',
                                 }}
                               >
                                 {isExpanded ? '▼' : '▶'}
@@ -793,7 +796,7 @@ const SaleBillForm: React.FC<{
                                 const qty = stockMap.get(p.id) ?? 0;
                                 const oos = qty === 0;
                                 return (
-                                  <option key={p.id} value={p.id} style={oos ? { color: '#94a3b8' } : undefined}>
+                                  <option key={p.id} value={p.id} style={oos ? { color: 'var(--text-disabled)' } : undefined}>
                                     {p.name}{oos ? ' (Out of Stock)' : ''}
                                   </option>
                                 );
@@ -855,13 +858,13 @@ const SaleBillForm: React.FC<{
                             <button onClick={() => {
                               setLines(prev => prev.filter((_, i) => i !== idx));
                               setExpandedLines(prev => { const n = new Set(prev); n.delete(idx); return n; });
-                            }} style={styles.dangerBtn}>×</button>
+                            }} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>×</button>
                           </td>
                         </tr>
                         {/* Expanded secondary fields panel */}
                         {isExpanded && hasProduct && (
-                          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                            <td colSpan={11} style={{ padding: '12px 16px', backgroundColor: '#f8fafc' }}>
+                          <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                            <td colSpan={11} style={{ padding: '12px 16px', backgroundColor: 'var(--surface-2)' }}>
                               <div className="sale-line-details">
                                 <div className="sale-line-details-grid">
                                   <div style={styles.formGroup}>
@@ -937,7 +940,7 @@ const SaleBillForm: React.FC<{
                                   <div style={styles.formGroup}>
                                     <label style={styles.label}>Cost Rate</label>
                                     <input type="number" value={productMap.get(line.productId)?.costRate ?? 0}
-                                      style={{ ...styles.input, backgroundColor: '#f1f5f9', color: '#64748b' }}
+                                      style={{ ...styles.input, backgroundColor: 'var(--surface-3)', color: 'var(--text-muted)' }}
                                       readOnly tabIndex={-1} />
                                   </div>
                                 </div>
@@ -1007,7 +1010,7 @@ const SaleBillForm: React.FC<{
                 <span>Advance Tax:</span><span>{fmt(calculation.totalAdvanceTax)}</span>
               </div>
             )}
-            <div style={{ ...styles.totalRow, fontWeight: '700', fontSize: '15px', borderTop: '2px solid #e2e8f0', paddingTop: '8px' }}>
+            <div style={{ ...styles.totalRow, fontWeight: '700', fontSize: '15px', borderTop: '2px solid var(--border)', paddingTop: '8px' }}>
               <span>Net Amount:</span><span>{fmt(calculation.totalNetAmount)}</span>
             </div>
           </div>
@@ -1016,11 +1019,11 @@ const SaleBillForm: React.FC<{
 
         {/* Actions */}
         <div style={styles.formActions}>
-          <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
+          <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
           <button
             onClick={handleSave}
             disabled={saving || lines.length === 0 || !customerId}
-            style={styles.primaryBtn}
+            className="tx-btn tx-btn-primary" style={styles.primaryBtn}
           >
             {saving ? 'Saving...' : 'Save & Post Bill'}
           </button>
@@ -1082,7 +1085,7 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
     <div>
       <div style={styles.toolbar}>
         <h2 style={styles.sectionTitle}>Sale Returns (SRV)</h2>
-        <button onClick={() => setShowForm(true)} style={styles.primaryBtn}>+ New Sale Return</button>
+        <button onClick={() => setShowForm(true)} className="tx-btn tx-btn-primary" style={styles.primaryBtn}>+ New Sale Return</button>
       </div>
 
       {showForm && (
@@ -1111,25 +1114,25 @@ const SaleReturnsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
             </thead>
             <tbody>
               {returns.map(r => (
-                <tr key={r.id} style={styles.tr}>
+                <tr key={r.id} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>{r.voucherNumber}</td>
                   <td style={styles.td}>{r.date}</td>
                   <td style={styles.td}>{r.narration}</td>
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? '#f1f5f9',
-                      color: STATUS_COLORS[r.status]?.fg ?? '#475569',
+                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? 'var(--tx-neutral-bg)',
+                      color: STATUS_COLORS[r.status]?.fg ?? 'var(--tx-neutral-fg)',
                     }}>
                       {VOUCHER_STATUS_LABELS[r.status]}
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <button onClick={() => navigate('/bills/' + r.id)} style={styles.linkBtn}>View</button>
+                    <button onClick={() => navigate('/bills/' + r.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>View</button>
                     {r.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => handlePost(r.id)} style={styles.linkBtn}>Post</button>
-                        <button onClick={() => handleDelete(r.id)} style={styles.dangerBtn}>Delete</button>
+                        <button onClick={() => handlePost(r.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>Post</button>
+                        <button onClick={() => handleDelete(r.id)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>Delete</button>
                       </>
                     )}
                   </td>
@@ -1220,7 +1223,7 @@ const SaleReturnForm: React.FC<{
   };
 
   return (
-    <div style={styles.modalOverlay}>
+    <div className="tx-modal-overlay" style={styles.modalOverlay}>
       <div style={{ ...styles.modal, maxWidth: '900px' }}>
         <h2 style={styles.modalTitle}>New Sale Return</h2>
 
@@ -1245,7 +1248,7 @@ const SaleReturnForm: React.FC<{
         <div style={{ marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600' }}>Return Lines</h3>
-            <button onClick={addLine} style={styles.secondaryBtn}>+ Add Line</button>
+            <button onClick={addLine} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>+ Add Line</button>
           </div>
           {lines.map((line, idx) => (
             <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
@@ -1256,14 +1259,14 @@ const SaleReturnForm: React.FC<{
               <input type="number" placeholder="Packs" value={line.packs || ''} onChange={e => updateLine(idx, 'packs', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
               <input type="number" placeholder="Rate" value={line.rate || ''} onChange={e => updateLine(idx, 'rate', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} step={0.01} />
               <input type="number" placeholder="GST %" value={line.gstPercent || ''} onChange={e => updateLine(idx, 'gstPercent', num(e.target.value))} style={{ ...styles.input, flex: 1 }} min={0} />
-              <button onClick={() => removeLine(idx)} style={styles.dangerBtn}>✕</button>
+              <button onClick={() => removeLine(idx)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>✕</button>
             </div>
           ))}
         </div>
 
         <div style={styles.formActions}>
-          <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
-          <button type="button" onClick={handleSave} style={styles.primaryBtn} disabled={saving}>
+          <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
+          <button type="button" onClick={handleSave} className="tx-btn tx-btn-primary" style={styles.primaryBtn} disabled={saving}>
             {saving ? 'Saving...' : 'Create Return'}
           </button>
         </div>
@@ -1288,7 +1291,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
     fontSize: '13px',
     padding: 0,
@@ -1298,18 +1301,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     margin: 0,
   },
   subtitle: {
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     margin: '4px 0 0',
   },
   tabBar: {
     display: 'flex',
     gap: '4px',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid var(--border)',
     marginBottom: '20px',
     overflowX: 'auto',
   },
@@ -1318,15 +1321,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     background: 'none',
     border: 'none',
     borderBottom: '2px solid transparent',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   },
   tabActive: {
-    color: '#2563eb',
-    borderBottomColor: '#2563eb',
+    color: 'var(--accent)',
+    borderBottomColor: 'var(--accent)',
   },
   toolbar: {
     display: 'flex',
@@ -1343,15 +1346,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   searchInput: {
     padding: '8px 12px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
     minWidth: '200px',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   primaryBtn: {
     padding: '8px 16px',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '14px',
@@ -1360,18 +1363,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   secondaryBtn: {
     padding: '8px 16px',
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
     cursor: 'pointer',
   },
   smallBtn: {
     padding: '4px 10px',
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '4px',
     fontSize: '12px',
     cursor: 'pointer',
@@ -1379,7 +1378,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   linkBtn: {
     background: 'none',
     border: 'none',
-    color: '#2563eb',
     cursor: 'pointer',
     fontSize: '13px',
     padding: '2px 6px',
@@ -1387,19 +1385,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   dangerBtn: {
     background: 'none',
     border: 'none',
-    color: '#dc2626',
     cursor: 'pointer',
     fontSize: '13px',
     padding: '2px 6px',
   },
   loading: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
     textAlign: 'center',
     padding: '32px',
   },
   empty: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
     textAlign: 'center',
     padding: '32px',
@@ -1412,8 +1409,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   th: {
     textAlign: 'left',
     padding: '10px 12px',
-    borderBottom: '2px solid #e2e8f0',
-    color: '#64748b',
+    borderBottom: '2px solid var(--border)',
+    color: 'var(--text-muted)',
     fontWeight: '600',
     fontSize: '12px',
     textTransform: 'uppercase' as const,
@@ -1421,11 +1418,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     whiteSpace: 'nowrap',
   },
   tr: {
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--dash-table-row-border)',
   },
   td: {
     padding: '10px 12px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     verticalAlign: 'middle',
   },
   badge: {
@@ -1441,7 +1438,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1449,19 +1445,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '20px',
   },
   modal: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface-raised)',
     borderRadius: '12px',
     padding: '24px',
     maxWidth: '600px',
     width: '100%',
     maxHeight: '90vh',
     overflowY: 'auto',
+    border: '1px solid var(--border)',
+    boxShadow: 'var(--shadow-lg)',
   },
   modalTitle: {
     fontSize: '18px',
     fontWeight: '700',
     marginBottom: '16px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
   },
   formGrid: {
     display: 'grid',
@@ -1476,20 +1474,23 @@ const styles: { [key: string]: React.CSSProperties } = {
   label: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   input: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   select: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   formActions: {
     display: 'flex',
@@ -1497,14 +1498,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '8px',
     marginTop: '16px',
     paddingTop: '16px',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border)',
   },
   totalsBox: {
     marginTop: '16px',
     padding: '12px 16px',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--surface-2)',
     borderRadius: '8px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
+    color: 'var(--text-primary)',
   },
   totalRow: {
     display: 'flex',

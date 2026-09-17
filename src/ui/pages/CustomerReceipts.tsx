@@ -31,8 +31,8 @@ import {
 const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
-  DRAFT:  { bg: '#fef3c7', fg: '#92400e' },
-  POSTED: { bg: '#dcfce7', fg: '#166534' },
+  DRAFT:  { bg: 'var(--tx-draft-bg)', fg: 'var(--tx-draft-fg)' },
+  POSTED: { bg: 'var(--tx-posted-bg)', fg: 'var(--tx-posted-fg)' },
 };
 
 /** Accepted cash/bank account codes */
@@ -47,7 +47,7 @@ export const CustomerReceipts: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="page-pad" style={styles.page}>
+    <div className="page-pad tx-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -174,7 +174,7 @@ const ReceiptsTab: React.FC<{ tenantId: string }> = ({ tenantId }) => {
       {/* Toolbar */}
       <div style={styles.toolbar}>
         <h2 style={styles.sectionTitle}>Receipts</h2>
-        <button onClick={() => setShowForm(true)} style={styles.primaryBtn}>+ New Receipt</button>
+        <button onClick={() => setShowForm(true)} className="tx-btn tx-btn-primary" style={styles.primaryBtn}>+ New Receipt</button>
       </div>
 
       {/* Receipt Form Modal */}
@@ -256,6 +256,7 @@ const ReceiptList: React.FC<{
             return (
               <React.Fragment key={r.id}>
                 <tr
+                  className="tx-tr"
                   style={{ ...styles.tr, cursor: 'pointer' }}
                   onClick={() => toggleExpand(r.id)}
                 >
@@ -268,8 +269,8 @@ const ReceiptList: React.FC<{
                   <td style={styles.td}>
                     <span style={{
                       ...styles.badge,
-                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? '#f1f5f9',
-                      color: STATUS_COLORS[r.status]?.fg ?? '#475569',
+                      backgroundColor: STATUS_COLORS[r.status]?.bg ?? 'var(--tx-neutral-bg)',
+                      color: STATUS_COLORS[r.status]?.fg ?? 'var(--tx-neutral-fg)',
                     }}>
                       {VOUCHER_STATUS_LABELS[r.status]}
                     </span>
@@ -277,15 +278,15 @@ const ReceiptList: React.FC<{
                   <td style={styles.td} onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => navigate(`/bills/${r.id}`)}
-                      style={styles.linkBtn}
+                      className="tx-btn tx-btn-link" style={styles.linkBtn}
                       title="View bill detail"
                     >
                       View
                     </button>
                     {r.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => onPost(r.id)} style={styles.linkBtn}>Post</button>
-                        <button onClick={() => onDelete(r.id)} style={styles.dangerBtn}>Delete</button>
+                        <button onClick={() => onPost(r.id)} className="tx-btn tx-btn-link" style={styles.linkBtn}>Post</button>
+                        <button onClick={() => onDelete(r.id)} className="tx-btn tx-btn-danger" style={styles.dangerBtn}>Delete</button>
                       </>
                     )}
                   </td>
@@ -417,7 +418,7 @@ const ReceiptForm: React.FC<{
   const canSave = !saving && missingFields.length === 0;
 
   return (
-    <div style={styles.modalOverlay}>
+    <div className="tx-modal-overlay" style={styles.modalOverlay}>
       <div style={styles.modal}>
         <h2 style={styles.modalTitle}>New Customer Receipt</h2>
         <form onSubmit={handleSubmit}>
@@ -485,7 +486,7 @@ const ReceiptForm: React.FC<{
               <span style={styles.balanceLabel}>Current AR Balance ({selectedCustomer.name}):</span>
               <span style={{
                 ...styles.balanceValue,
-                color: (customerBalance ?? 0) > 0 ? '#dc2626' : '#16a34a',
+                color: (customerBalance ?? 0) > 0 ? 'var(--tx-owes)' : 'var(--tx-clear)',
               }}>
                 {customerBalance !== null ? fmt(customerBalance) : 'Loading...'}
               </span>
@@ -509,7 +510,7 @@ const ReceiptForm: React.FC<{
           )}
 
           <div style={styles.formActions}>
-            <button type="button" onClick={onCancel} style={styles.secondaryBtn}>Cancel</button>
+            <button type="button" onClick={onCancel} className="tx-btn tx-btn-secondary" style={styles.secondaryBtn}>Cancel</button>
             <button
               type="submit"
               disabled={!canSave}
@@ -545,7 +546,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
     fontSize: '13px',
     padding: 0,
@@ -555,12 +556,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     margin: 0,
   },
   subtitle: {
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     margin: '4px 0 0',
   },
   toolbar: {
@@ -578,8 +579,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   primaryBtn: {
     padding: '8px 16px',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '14px',
@@ -587,20 +586,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   disabledBtn: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: 'var(--accent-softer)',
+    color: 'var(--accent-soft-contrast)',
     cursor: 'not-allowed',
   },
   disabledHint: {
     marginTop: '6px',
     fontSize: '12px',
-    color: '#b45309',
+    color: 'var(--tx-tint-amber-fg)',
     textAlign: 'right',
   },
   secondaryBtn: {
     padding: '8px 16px',
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
     cursor: 'pointer',
@@ -608,7 +606,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   linkBtn: {
     background: 'none',
     border: 'none',
-    color: '#2563eb',
     cursor: 'pointer',
     fontSize: '13px',
     padding: '2px 6px',
@@ -616,19 +613,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   dangerBtn: {
     background: 'none',
     border: 'none',
-    color: '#dc2626',
     cursor: 'pointer',
     fontSize: '13px',
     padding: '2px 6px',
   },
   loading: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
     textAlign: 'center',
     padding: '32px',
   },
   empty: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
     textAlign: 'center',
     padding: '32px',
@@ -641,8 +637,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   th: {
     textAlign: 'left',
     padding: '10px 12px',
-    borderBottom: '2px solid #e2e8f0',
-    color: '#64748b',
+    borderBottom: '2px solid var(--border)',
+    color: 'var(--text-muted)',
     fontWeight: '600',
     fontSize: '12px',
     textTransform: 'uppercase' as const,
@@ -650,11 +646,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     whiteSpace: 'nowrap',
   },
   tr: {
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--dash-table-row-border)',
   },
   td: {
     padding: '10px 12px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     verticalAlign: 'middle',
   },
   badge: {
@@ -665,18 +661,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: '500',
   },
   detailRow: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--surface-2)',
     padding: '12px',
   },
   detailBox: {
     padding: '8px 12px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
     borderRadius: '6px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
   },
   detailText: {
     fontSize: '12px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     margin: '2px 0',
   },
   modalOverlay: {
@@ -685,7 +681,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -693,19 +688,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '20px',
   },
   modal: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface-raised)',
     borderRadius: '12px',
     padding: '24px',
     maxWidth: '600px',
     width: '100%',
     maxHeight: '90vh',
     overflowY: 'auto',
+    border: '1px solid var(--border)',
+    boxShadow: 'var(--shadow-lg)',
   },
   modalTitle: {
     fontSize: '18px',
     fontWeight: '700',
     marginBottom: '16px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
   },
   formGrid: {
     display: 'grid',
@@ -720,20 +717,23 @@ const styles: { [key: string]: React.CSSProperties } = {
   label: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   input: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   select: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   formActions: {
     display: 'flex',
@@ -741,14 +741,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '8px',
     marginTop: '16px',
     paddingTop: '16px',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border)',
   },
   balanceBox: {
     marginTop: '12px',
     padding: '10px 14px',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--surface-2)',
     borderRadius: '8px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -756,7 +756,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   balanceLabel: {
     fontSize: '13px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   balanceValue: {
     fontSize: '14px',
@@ -765,25 +765,25 @@ const styles: { [key: string]: React.CSSProperties } = {
   previewBox: {
     marginTop: '12px',
     padding: '10px 14px',
-    backgroundColor: '#eff6ff',
+    backgroundColor: 'var(--tx-tint-blue)',
     borderRadius: '8px',
-    border: '1px solid #bfdbfe',
+    border: '1px solid var(--tx-tint-blue-border)',
   },
   previewTitle: {
     fontSize: '12px',
     fontWeight: '600',
-    color: '#1e40af',
+    color: 'var(--tx-tint-blue-fg)',
     margin: '0 0 4px 0',
   },
   previewLine: {
     fontSize: '12px',
-    color: '#1e40af',
+    color: 'var(--tx-tint-blue-fg)',
     margin: '2px 0',
     fontFamily: 'monospace',
   },
   previewDiff: {
     fontSize: '12px',
-    color: '#16a34a',
+    color: 'var(--tx-clear)',
     margin: '4px 0 0 0',
     fontWeight: '600',
     fontFamily: 'monospace',

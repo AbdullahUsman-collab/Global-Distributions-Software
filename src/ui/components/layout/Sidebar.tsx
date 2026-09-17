@@ -185,8 +185,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             onClick={onClose}
             style={{
               ...styles.navItem,
-              backgroundColor: isActive(item.path) ? 'var(--accent-soft)' : 'transparent',
-              color: isActive(item.path) ? 'var(--accent-soft-contrast)' : 'var(--text-muted)',
+              backgroundColor: isActive(item.path) ? 'var(--surface-2)' : 'transparent',
+              color: isActive(item.path) ? 'var(--accent)' : 'var(--text-muted)',
+              boxShadow: isActive(item.path) ? 'inset 3px 0 0 var(--accent)' : 'none',
             }}
           >
             <span style={styles.navIcon}>{item.icon}</span>

@@ -175,7 +175,7 @@ export const AgingReport: React.FC = () => {
   }, [filteredRows, filteredTotals, filteredGrandTotal, mode, asOfDate]);
 
   return (
-    <div className="page-pad aging-page" style={styles.page}>
+    <div className="page-pad tx-page aging-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -184,10 +184,10 @@ export const AgingReport: React.FC = () => {
           <p style={styles.subtitle}>{tenant.brandName} — Accounts receivable / payable aging</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }} className="aging-hide-print">
-          <button onClick={handleExportCsv} style={styles.exportBtn} disabled={filteredRows.length === 0}>
+          <button onClick={handleExportCsv} className="tx-btn tx-btn-secondary" style={styles.exportBtn} disabled={filteredRows.length === 0}>
             Export CSV
           </button>
-          <button onClick={handlePrint} style={styles.printBtn}>
+          <button onClick={handlePrint} className="tx-btn tx-btn-primary" style={styles.printBtn}>
             Print
           </button>
         </div>
@@ -202,6 +202,8 @@ export const AgingReport: React.FC = () => {
             <div style={styles.modeToggle}>
               <button
                 onClick={() => { setMode('customer'); setPartyId(''); }}
+                className={mode === 'customer' ? 'tx-btn tx-btn-primary' : 'tx-btn tx-btn-secondary'}
+                aria-pressed={mode === 'customer'}
                 style={{
                   ...styles.modeBtn,
                   ...(mode === 'customer' ? styles.modeBtnActive : {}),
@@ -211,6 +213,8 @@ export const AgingReport: React.FC = () => {
               </button>
               <button
                 onClick={() => { setMode('supplier'); setPartyId(''); }}
+                className={mode === 'supplier' ? 'tx-btn tx-btn-primary' : 'tx-btn tx-btn-secondary'}
+                aria-pressed={mode === 'supplier'}
                 style={{
                   ...styles.modeBtn,
                   ...(mode === 'supplier' ? styles.modeBtnActive : {}),
@@ -255,6 +259,7 @@ export const AgingReport: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Name or account #..."
+              className="tx-input"
               style={styles.filterInput}
             />
           </div>
@@ -270,9 +275,9 @@ export const AgingReport: React.FC = () => {
               <span style={styles.chipValue}>{fmt(filteredTotals[key])}</span>
             </div>
           ))}
-          <div style={{ ...styles.summaryChip, backgroundColor: '#eff6ff' }}>
+          <div style={{ ...styles.summaryChip, backgroundColor: 'var(--tx-tint-blue)' }}>
             <span style={{ ...styles.chipLabel, fontWeight: '700' }}>Total</span>
-            <span style={{ ...styles.chipValue, color: '#1e40af', fontWeight: '700' }}>{fmt(filteredGrandTotal)}</span>
+            <span style={{ ...styles.chipValue, color: 'var(--tx-tint-blue-fg)', fontWeight: '700' }}>{fmt(filteredGrandTotal)}</span>
           </div>
         </div>
       )}
@@ -313,7 +318,7 @@ export const AgingReport: React.FC = () => {
             </thead>
             <tbody>
               {filteredRows.map(row => (
-                <tr key={row.partyId} style={styles.tr}>
+                <tr key={row.partyId} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>
                     <span style={styles.partyName}>{row.partyName}</span>
                   </td>
@@ -401,7 +406,7 @@ export const AgingReport: React.FC = () => {
           .aging-page { padding: 0 !important; max-width: none !important; }
           .aging-table-wrap { overflow: visible !important; margin: 0 !important; padding: 0 !important; }
           .aging-hide-mobile { display: table-cell !important; }
-          .aging-print-footer { display: block !important; margin-top: 24px; font-size: 12px; color: #64748b; }
+          .aging-print-footer { display: block !important; margin-top: 24px; font-size: 12px; color: var(--text-muted); }
           .aging-summary { flex-wrap: wrap; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
@@ -429,7 +434,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#2563eb',
+    color: 'var(--accent)',
     cursor: 'pointer',
     fontSize: '13px',
     padding: 0,
@@ -439,18 +444,16 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     margin: 0,
   },
   subtitle: {
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     marginTop: '4px',
   },
   printBtn: {
     padding: '8px 16px',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '13px',
@@ -459,17 +462,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   exportBtn: {
     padding: '8px 16px',
-    backgroundColor: '#ffffff',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
     fontWeight: '500',
   },
   filterBar: {
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    backgroundColor: 'var(--surface-2)',
+    border: '1px solid var(--border)',
     borderRadius: '12px',
     padding: '16px',
     marginBottom: '16px',
@@ -490,41 +491,41 @@ const styles: { [key: string]: React.CSSProperties } = {
   filterLabel: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   filterInput: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   filterSelect: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   modeToggle: {
     display: 'flex',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     overflow: 'hidden',
   },
   modeBtn: {
     padding: '8px 16px',
     border: 'none',
-    backgroundColor: '#ffffff',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
   modeBtnActive: {
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
+    color: 'var(--accent-contrast)',
   },
   summaryBar: {
     display: 'flex',
@@ -537,22 +538,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: 'column',
     gap: '2px',
     padding: '8px 12px',
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    backgroundColor: 'var(--surface-2)',
+    border: '1px solid var(--border)',
     borderRadius: '8px',
     minWidth: '100px',
   },
   chipLabel: {
     fontSize: '11px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
   },
   chipValue: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     fontFamily: 'monospace',
   },
   loadingBox: {
@@ -560,25 +561,25 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '48px 24px',
   },
   loadingText: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
   },
   emptyBox: {
     textAlign: 'center',
     padding: '48px 24px',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--surface-2)',
     borderRadius: '12px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
   },
   emptyTitle: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#475569',
+    color: 'var(--text-secondary)',
     marginBottom: '8px',
   },
   emptyText: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
   },
   table: {
     width: '100%',
@@ -588,8 +589,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   th: {
     textAlign: 'left',
     padding: '10px 12px',
-    borderBottom: '2px solid #e2e8f0',
-    color: '#64748b',
+    borderBottom: '2px solid var(--border)',
+    color: 'var(--text-muted)',
     fontWeight: '600',
     fontSize: '12px',
     textTransform: 'uppercase' as const,
@@ -597,11 +598,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     whiteSpace: 'nowrap',
   },
   tr: {
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--dash-table-row-border)',
   },
   td: {
     padding: '10px 12px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     verticalAlign: 'middle',
   },
   partyName: {
@@ -610,30 +611,30 @@ const styles: { [key: string]: React.CSSProperties } = {
   accountCode: {
     fontFamily: 'monospace',
     fontSize: '12px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   ledgerBtn: {
     background: 'none',
-    border: '1px solid #e2e8f0',
-    color: '#2563eb',
+    border: '1px solid var(--border)',
+    color: 'var(--accent)',
     cursor: 'pointer',
     fontSize: '12px',
     padding: '4px 10px',
     borderRadius: '4px',
   },
   totalRow: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--surface-2)',
   },
   totalTd: {
     padding: '10px 12px',
-    borderTop: '2px solid #e2e8f0',
+    borderTop: '2px solid var(--border)',
     fontSize: '13px',
   },
   printFooter: {
     marginTop: '24px',
     paddingTop: '16px',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border)',
     fontSize: '12px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
 };

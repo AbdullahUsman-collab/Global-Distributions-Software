@@ -16,7 +16,6 @@ import {
   BillRecord,
   BILL_VOUCHER_TYPES,
   BILL_TYPE_LABELS,
-  BILL_TYPE_COLORS,
 } from '../lib/billLabels';
 import { VoucherType } from '../../domain/types/voucher';
 import {
@@ -33,8 +32,16 @@ import { printWindow, generateCsv, downloadFile, generateExportFilename } from '
 const fmt = (n: number) => n.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const STATUS_COLORS: Record<VoucherStatus, { bg: string; fg: string }> = {
-  DRAFT:  { bg: '#fef3c7', fg: '#92400e' },
-  POSTED: { bg: '#dcfce7', fg: '#166534' },
+  DRAFT:  { bg: 'var(--tx-draft-bg)', fg: 'var(--tx-draft-fg)' },
+  POSTED: { bg: 'var(--tx-posted-bg)', fg: 'var(--tx-posted-fg)' },
+};
+
+/** UI-bound token map mirroring domain BILL_TYPE_COLORS identity (presentation only). */
+const TYPE_TOKENS: Record<string, { bg: string; fg: string }> = {
+  SV:  { bg: 'var(--tx-type-sv-bg)',  fg: 'var(--tx-type-sv-fg)' },
+  PV:  { bg: 'var(--tx-type-pv-bg)',  fg: 'var(--tx-type-pv-fg)' },
+  SRV: { bg: 'var(--tx-type-srv-bg)', fg: 'var(--tx-type-srv-fg)' },
+  PRV: { bg: 'var(--tx-type-prv-bg)', fg: 'var(--tx-type-prv-fg)' },
 };
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -234,7 +241,7 @@ export const BillsList: React.FC = () => {
   }, []);
 
   return (
-    <div className="page-pad" style={styles.page}>
+    <div className="page-pad tx-page" style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
         <div>
@@ -243,10 +250,10 @@ export const BillsList: React.FC = () => {
           <p style={styles.subtitle}>{tenant.brandName} — All transactions</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }} className="no-print">
-          <button onClick={handleExportCsv} style={styles.exportBtn} disabled={filteredBills.length === 0}>
+          <button onClick={handleExportCsv} className="tx-btn tx-btn-secondary" style={styles.exportBtn} disabled={filteredBills.length === 0}>
             Export CSV
           </button>
-          <button onClick={handlePrint} style={styles.printBtn} disabled={filteredBills.length === 0}>
+          <button onClick={handlePrint} className="tx-btn tx-btn-primary" style={styles.printBtn} disabled={filteredBills.length === 0}>
             Print
           </button>
         </div>
@@ -282,7 +289,7 @@ export const BillsList: React.FC = () => {
           </div>
 
           {activeFilterCount > 0 && (
-            <button onClick={resetFilters} style={styles.resetBtn}>
+            <button onClick={resetFilters} className="tx-btn tx-btn-tool" style={styles.resetBtn}>
               Reset Filters ({activeFilterCount})
             </button>
           )}
@@ -351,7 +358,7 @@ export const BillsList: React.FC = () => {
       {error && (
         <div style={styles.errorBox}>
           <p style={styles.errorText}>{error}</p>
-          <button onClick={loadBills} style={styles.retryBtn}>Retry</button>
+          <button onClick={loadBills} className="tx-btn" style={styles.retryBtn}>Retry</button>
         </div>
       )}
 
@@ -392,7 +399,7 @@ export const BillsList: React.FC = () => {
             </thead>
             <tbody>
               {filteredBills.map(b => (
-                <tr key={b.voucher.id} style={styles.tr}>
+                <tr key={b.voucher.id} className="tx-tr" style={styles.tr}>
                   <td style={styles.td}>
                     <span style={styles.voucherNum}>{b.voucher.voucherNumber}</span>
                   </td>
@@ -400,8 +407,8 @@ export const BillsList: React.FC = () => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.typeBadge,
-                      backgroundColor: (BILL_TYPE_COLORS[b.voucher.voucherType] ?? {}).bg ?? '#f1f5f9',
-                      color: (BILL_TYPE_COLORS[b.voucher.voucherType] ?? {}).fg ?? '#475569',
+                      backgroundColor: (TYPE_TOKENS[b.voucher.voucherType] ?? {}).bg ?? 'var(--tx-neutral-bg)',
+                      color: (TYPE_TOKENS[b.voucher.voucherType] ?? {}).fg ?? 'var(--tx-neutral-fg)',
                     }}>
                       {BILL_TYPE_LABELS[b.voucher.voucherType]}
                     </span>
@@ -418,8 +425,8 @@ export const BillsList: React.FC = () => {
                   <td style={styles.td}>
                     <span style={{
                       ...styles.statusBadge,
-                      backgroundColor: (STATUS_COLORS[b.voucher.status] ?? {}).bg ?? '#f1f5f9',
-                      color: (STATUS_COLORS[b.voucher.status] ?? {}).fg ?? '#475569',
+                      backgroundColor: (STATUS_COLORS[b.voucher.status] ?? {}).bg ?? 'var(--tx-neutral-bg)',
+                      color: (STATUS_COLORS[b.voucher.status] ?? {}).fg ?? 'var(--tx-neutral-fg)',
                     }}>
                       {VOUCHER_STATUS_LABELS[b.voucher.status]}
                     </span>
@@ -428,6 +435,7 @@ export const BillsList: React.FC = () => {
                     <div style={styles.actions}>
                       <button
                         onClick={() => handleOpen(b)}
+                        className="tx-btn"
                         style={styles.viewBtn}
                         title="Open in module"
                       >
@@ -436,6 +444,7 @@ export const BillsList: React.FC = () => {
                       {b.voucher.status === 'DRAFT' && (
                         <button
                           onClick={() => handleDelete(b.voucher.id)}
+                          className="tx-btn"
                           style={styles.deleteBtn}
                           title="Delete draft"
                         >
@@ -489,7 +498,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#2563eb',
+    color: 'var(--accent)',
     cursor: 'pointer',
     fontSize: '13px',
     padding: 0,
@@ -499,17 +508,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     margin: 0,
   },
   subtitle: {
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     marginTop: '4px',
   },
   filterBar: {
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    backgroundColor: 'var(--surface-2)',
+    border: '1px solid var(--border)',
     borderRadius: '12px',
     padding: '16px',
     marginBottom: '16px',
@@ -530,27 +539,27 @@ const styles: { [key: string]: React.CSSProperties } = {
   filterLabel: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   filterInput: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   filterSelect: {
     padding: '8px 10px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '14px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--surface)',
+    color: 'var(--text-primary)',
   },
   resetBtn: {
     padding: '8px 16px',
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
@@ -562,24 +571,24 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   resultsText: {
     fontSize: '13px',
-    color: '#64748b',
+    color: 'var(--text-muted)',
   },
   errorBox: {
     padding: '16px',
-    backgroundColor: '#fef2f2',
-    border: '1px solid #fecaca',
+    backgroundColor: 'var(--tx-tint-red)',
+    border: '1px solid var(--tx-tint-red-border)',
     borderRadius: '8px',
     textAlign: 'center',
   },
   errorText: {
-    color: '#991b1b',
+    color: 'var(--danger-fg)',
     fontSize: '14px',
     marginBottom: '8px',
   },
   retryBtn: {
     padding: '6px 16px',
-    backgroundColor: '#dc2626',
-    color: '#ffffff',
+    backgroundColor: 'var(--danger)',
+    color: '#fff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '13px',
@@ -590,25 +599,25 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '48px 24px',
   },
   loadingText: {
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
     fontSize: '14px',
   },
   emptyBox: {
     textAlign: 'center',
     padding: '48px 24px',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--surface-2)',
     borderRadius: '12px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
   },
   emptyTitle: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#475569',
+    color: 'var(--text-secondary)',
     marginBottom: '8px',
   },
   emptyText: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--text-disabled)',
   },
   table: {
     width: '100%',
@@ -618,8 +627,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   th: {
     textAlign: 'left',
     padding: '10px 12px',
-    borderBottom: '2px solid #e2e8f0',
-    color: '#64748b',
+    borderBottom: '2px solid var(--border)',
+    color: 'var(--text-muted)',
     fontWeight: '600',
     fontSize: '12px',
     textTransform: 'uppercase' as const,
@@ -627,16 +636,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     whiteSpace: 'nowrap',
   },
   tr: {
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--dash-table-row-border)',
   },
   td: {
     padding: '10px 12px',
-    color: '#1e293b',
+    color: 'var(--text-primary)',
     verticalAlign: 'middle',
   },
   voucherNum: {
     fontWeight: '600',
-    color: '#2563eb',
+    color: 'var(--accent)',
   },
   typeBadge: {
     display: 'inline-block',
@@ -650,7 +659,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: '500',
   },
   itemCount: {
-    color: '#64748b',
+    color: 'var(--text-muted)',
     fontSize: '12px',
   },
   statusBadge: {
@@ -667,8 +676,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   viewBtn: {
     background: 'none',
-    border: '1px solid #e2e8f0',
-    color: '#2563eb',
+    border: '1px solid var(--border)',
+    color: 'var(--accent)',
     cursor: 'pointer',
     fontSize: '12px',
     padding: '4px 10px',
@@ -676,8 +685,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   deleteBtn: {
     background: 'none',
-    border: '1px solid #fecaca',
-    color: '#dc2626',
+    border: '1px solid var(--tx-tint-red-border)',
+    color: 'var(--danger)',
     cursor: 'pointer',
     fontSize: '12px',
     padding: '4px 10px',
@@ -685,8 +694,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   printBtn: {
     padding: '8px 16px',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
     fontSize: '13px',
@@ -695,9 +702,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   exportBtn: {
     padding: '8px 16px',
-    backgroundColor: '#ffffff',
-    color: '#475569',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
