@@ -16,6 +16,7 @@ import { useAuth } from '../components/auth/ProtectedRoute';
 import { getBrands, createBrand, updateBrand, deactivateBrand } from '../lib/api';
 import { BrandLogo } from '../components/BrandLogo';
 import { BrandThemeStudio } from '../components/branding/BrandThemeStudio';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Brand {
   id: string;
@@ -177,6 +178,7 @@ const CreateBrandModal: React.FC<{
   onClose: () => void;
   onCreated: () => void;
 }> = ({ onClose, onCreated }) => {
+  useEscapeKey(onClose);
   const [slug, setSlug] = useState('');
   const [brandName, setBrandName] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#3b82f6');
@@ -199,7 +201,7 @@ const CreateBrandModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Create New Brand</h2>
         {error && <div style={styles.error}>{error}</div>}
@@ -284,6 +286,7 @@ const EditBrandModal: React.FC<{
   onClose: () => void;
   onUpdated: () => void;
 }> = ({ brand, onClose, onUpdated }) => {
+  useEscapeKey(onClose);
   const [brandName, setBrandName] = useState(brand.brandName);
   const [logoUrl, setLogoUrl] = useState(brand.logoUrl || '');
   const [primaryColor, setPrimaryColor] = useState(brand.primaryColor);
@@ -306,7 +309,7 @@ const EditBrandModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Edit Brand — {brand.brandName}</h2>
         {error && <div style={styles.error}>{error}</div>}
@@ -386,7 +389,7 @@ const EditBrandModal: React.FC<{
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none', display: 'inline-block', paddingTop: 10, paddingBottom: 10, paddingRight: 12, marginTop: -10 },
   title: { fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
   subtitle: { fontSize: 14, color: 'var(--text-muted)' },
 

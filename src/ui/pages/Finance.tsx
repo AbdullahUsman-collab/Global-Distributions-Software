@@ -42,6 +42,7 @@ import {
   BillLineTaxResult,
 } from '../../domain/types/inventory';
 import { FinancialReportsView } from '../components/finance/FinancialReportsView';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
@@ -657,6 +658,7 @@ const VoucherModal: React.FC<{
   onClose: () => void;
   onSave: (dto: CreateVoucherDTO) => void;
 }> = ({ tenantId, postingAccounts, voucher, onClose, onSave }) => {
+  useEscapeKey(onClose);
   const isEdit = !!voucher;
   const [vType, setVType] = useState<VoucherType>(voucher?.voucherType ?? 'JV');
   const [date, setDate] = useState(voucher?.date ?? new Date().toISOString().slice(0, 10));
@@ -745,7 +747,7 @@ const VoucherModal: React.FC<{
 
   if (loading) {
     return (
-      <div style={styles.overlay} onClick={onClose}>
+      <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
         <div style={styles.modal} onClick={e => e.stopPropagation()}>
           <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>
         </div>
@@ -754,7 +756,7 @@ const VoucherModal: React.FC<{
   }
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className="responsive-modal" style={{ ...styles.modal, maxWidth: 800 }} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>{isEdit ? 'Edit Draft' : 'New Journal Voucher'}</h2>
 
@@ -1262,6 +1264,7 @@ const CreateAccountModal: React.FC<{
   onClose: () => void;
   onCreate: (dto: CreateAccountHeadDTO) => void;
 }> = ({ parent, allAccounts, onClose, onCreate }) => {
+  useEscapeKey(onClose);
   const level: AccountLevel = parent ? (parent.level + 1) as AccountLevel : 1;
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -1308,7 +1311,7 @@ const CreateAccountModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className="responsive-modal" style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Create Account — Level {level}</h2>
         {parent && <p style={styles.modalParent}>Parent: {parent.accountCode} {parent.accountName}</p>}
@@ -1408,6 +1411,7 @@ const EditAccountModal: React.FC<{
   onSave: (id: string, dto: UpdateAccountDTO) => void;
   onDeactivate: (id: string) => void;
 }> = ({ account, onClose, onSave, onDeactivate }) => {
+  useEscapeKey(onClose);
   const [name, setName] = useState(account.accountName);
   const [isActive, setIsActive] = useState(account.isActive);
   const [controlCategory, setControlCategory] = useState<ControlCategory | ''>(account.controlCategory ?? '');
@@ -1440,7 +1444,7 @@ const EditAccountModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className="responsive-modal" style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Edit Account</h2>
         <p style={styles.modalParent}>{account.accountCode} — Level {account.level} — {ACCOUNT_TYPE_LABELS[account.accountType]}</p>
@@ -1535,7 +1539,7 @@ function deriveNormalBalanceLabel(type: AccountType): string {
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none', display: 'inline-block', paddingTop: 10, paddingBottom: 10, paddingRight: 12, marginTop: -10 },
   title: { fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
   subtitle: { fontSize: 14, color: 'var(--text-muted)' },
 

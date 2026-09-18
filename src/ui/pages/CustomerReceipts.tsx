@@ -552,6 +552,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: 0,
     marginBottom: '4px',
     textDecoration: 'none',
+    display: 'inline-block',
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingRight: 12,
+    marginTop: -10,
   },
   title: {
     fontSize: '24px',

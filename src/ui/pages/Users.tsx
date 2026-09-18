@@ -10,6 +10,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/ProtectedRoute';
 import { getUsers, createUser, updateUser, deactivateUser, activateUser, getUserBrandAccess } from '../lib/api';
 import { useRefreshOnMount } from '../utils/useRefreshOnEvent';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 /* ─── Types ────────────────────────────────────────────────── */
 
@@ -235,6 +236,7 @@ const CreateUserModal: React.FC<{
   onClose: () => void;
   onCreated: () => void;
 }> = ({ onClose, onCreated }) => {
+  useEscapeKey(onClose);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
@@ -257,7 +259,7 @@ const CreateUserModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Create New User</h2>
         {error && <div style={styles.error}>{error}</div>}
@@ -323,6 +325,7 @@ const EditUserModal: React.FC<{
   onClose: () => void;
   onUpdated: () => void;
 }> = ({ user, onClose, onUpdated }) => {
+  useEscapeKey(onClose);
   const [displayName, setDisplayName] = useState(user.displayName);
   const [isActive, setIsActive] = useState(user.isActive);
   const [error, setError] = useState('');
@@ -343,7 +346,7 @@ const EditUserModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>Edit User — {user.username}</h2>
         {error && <div style={styles.error}>{error}</div>}
@@ -387,7 +390,7 @@ const EditUserModal: React.FC<{
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none', display: 'inline-block', paddingTop: 10, paddingBottom: 10, paddingRight: 12, marginTop: -10 },
   title: { fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
   subtitle: { fontSize: 14, color: 'var(--text-muted)' },
 

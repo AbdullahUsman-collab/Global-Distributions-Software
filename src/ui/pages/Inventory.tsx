@@ -26,6 +26,7 @@ import {
   StockBWARow,
 } from '../../domain/types/inventory';
 import { GST_TYPE_LABELS } from '../../domain/types/settings';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 /* ─── Tab Definition ───────────────────────────────────────── */
 
@@ -293,6 +294,7 @@ const ProductModal: React.FC<{
   onDeactivate?: () => void;
   onUpdateStock?: (newQty: number) => Promise<void>;
 }> = ({ product, currentStock, onClose, onSave, onDeactivate, onUpdateStock }) => {
+  useEscapeKey(onClose);
   const isEdit = !!product;
   const [sku, setSku] = useState(product?.sku ?? '');
   const [name, setName] = useState(product?.name ?? '');
@@ -362,7 +364,7 @@ const ProductModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className="responsive-modal" style={{ ...styles.modal, maxWidth: 700 }} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>{isEdit ? 'Edit' : 'Create'} Item</h2>
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -1145,6 +1147,7 @@ const CreateMovementModal: React.FC<{
   onClose: () => void;
   onCreated: () => void;
 }> = ({ tenantId, products, onClose, onCreated }) => {
+  useEscapeKey(onClose);
   const [movementType, setMovementType] = useState<StockMovementType>('GRN');
   const [movementDate, setMovementDate] = useState(new Date().toISOString().split('T')[0]);
   const [productId, setProductId] = useState('');
@@ -1193,7 +1196,7 @@ const CreateMovementModal: React.FC<{
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className="responsive-modal" style={{ ...styles.modal, maxWidth: 600 }} onClick={e => e.stopPropagation()}>
         <h2 style={styles.modalTitle}>New Stock Movement</h2>
 
@@ -1289,7 +1292,7 @@ const CreateMovementModal: React.FC<{
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: 32, maxWidth: 1200, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', marginBottom: 4, padding: 0, textDecoration: 'none', display: 'inline-block', paddingTop: 10, paddingBottom: 10, paddingRight: 12, marginTop: -10 },
   title: { fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
   subtitle: { fontSize: 14, color: 'var(--text-muted)' },
 

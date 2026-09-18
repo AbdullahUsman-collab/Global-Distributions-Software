@@ -25,6 +25,7 @@ import { UserBrandAccessPage } from './pages/UserBrandAccess';
 import { Brands } from './pages/Brands';
 import { Layout } from './components/layout/Layout';
 import { SystemSetup } from './pages/SystemSetup';
+import { NotFound } from './pages/NotFound';
 
 export const App: React.FC = () => {
   return (
@@ -35,6 +36,8 @@ export const App: React.FC = () => {
           <Route path="/" element={<ErrorBoundary><BrandSelection /></ErrorBoundary>} />
           <Route path="/login/:brandSlug" element={<ErrorBoundary><Login /></ErrorBoundary>} />
           <Route path="/setup" element={<ErrorBoundary><SystemSetup /></ErrorBoundary>} />
+          {/* Catch-all (Step 92): unknown URLs previously rendered a blank page. */}
+          <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>

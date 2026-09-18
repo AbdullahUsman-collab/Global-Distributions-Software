@@ -440,6 +440,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: 0,
     marginBottom: '8px',
     textDecoration: 'none',
+    display: 'inline-block',
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingRight: 12,
+    marginTop: -10,
   },
   title: {
     fontSize: '24px',
@@ -619,7 +624,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'var(--accent)',
     cursor: 'pointer',
     fontSize: '12px',
-    padding: '4px 10px',
+    padding: '6px 12px',
+    minHeight: '32px',
     borderRadius: '4px',
   },
   totalRow: {
