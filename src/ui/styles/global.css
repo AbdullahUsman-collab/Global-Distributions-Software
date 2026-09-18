@@ -368,6 +368,9 @@ input {
     height: 32px !important;
     font-size: 16px !important;
   }
+  .brand-card-responsive .brand-card-watermark-letter {
+    font-size: 64px !important;
+  }
   .brand-card-responsive .brand-title {
     font-size: 14px !important;
   }
