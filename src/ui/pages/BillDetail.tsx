@@ -363,7 +363,7 @@ export const BillDetailPage: React.FC = () => {
             <h2 style={styles.sectionTitle}>Summary</h2>
             <div style={styles.summaryGrid}>
               <SummaryLine label="Subtotal (Value Excl Tax)" amount={detail.taxSummary.subtotal} />
-              {!hasOverrideColumns && detail.taxSummary.totalDiscount === 0 && detail.taxSummary.totalTax === 0 && (
+              {!hasOverrideColumns && (
                 <p style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '13px', fontStyle: 'italic', margin: '4px 0 8px' }}>
                   Detailed tax/discount breakdown not available for this bill.
                 </p>
