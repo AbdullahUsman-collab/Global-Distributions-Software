@@ -357,19 +357,20 @@ input {
   .brand-card-responsive {
     padding: 16px !important;
     aspect-ratio: auto !important;
-    min-height: 120px !important;
+    min-height: 150px !important;
+  }
+  .brand-card-responsive .brand-card-logo-tile {
+    height: 76px !important;
+    margin-bottom: 10px !important;
   }
   .brand-card-responsive .brand-logo {
     width: 48px !important;
     height: 48px !important;
   }
   .brand-card-responsive .brand-inner-logo {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 16px !important;
-  }
-  .brand-card-responsive .brand-card-watermark-letter {
-    font-size: 64px !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 20px !important;
   }
   .brand-card-responsive .brand-title {
     font-size: 14px !important;

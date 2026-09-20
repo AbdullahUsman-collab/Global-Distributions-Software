@@ -2,13 +2,16 @@
  * Brand Card Component
  * Displays a single brand/tenant as a clickable card for selection.
  *
- * Step 91A — full-card brand identity:
- * The ENTIRE card is the brand's visual surface — a subtle brand-color
- * gradient wash, a large non-distorting logo watermark (object-fit: contain),
- * and a contrast overlay that keeps the brand name and "Click to sign in"
- * fully readable in light AND dark mode. No small standalone logo box when a
- * logo exists; brands without a logo keep the Step-91 letter-chip fallback
- * plus a faint oversized letter watermark so every card still feels branded.
+ * Step 91A — full-card brand identity: the card carries a subtle brand-color
+ * gradient wash derived from tenant data, so the whole surface belongs to the
+ * brand (light AND dark mode).
+ *
+ * Step 91B — prominent foreground logo: the logo is no longer a faint
+ * background watermark. It sits in the content flow ABOVE the brand name as a
+ * large, centered, full-opacity presentation tile (the existing studio
+ * `logoBox` checkerboard pattern) so white, dark, transparent and colorful
+ * logos all stay clearly visible. Brands without a logo keep the Step-91
+ * `BrandLogo` letter-chip fallback, enlarged to the same prominent scale.
  *
  * Interaction, keyboard activation, aria semantics and hover/focus behavior
  * are unchanged. Colors derive per-brand from tenant data (no hardcoding).
@@ -32,13 +35,13 @@ function safeBrandColor(raw: string | undefined): string {
 export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
-  /** Watermark hides itself gracefully if the logo URL fails to load. */
-  const [watermarkFailed, setWatermarkFailed] = React.useState(false);
+  /** Foreground logo hides itself gracefully if the logo URL fails to load. */
+  const [logoFailed, setLogoFailed] = React.useState(false);
 
   const isActive = isHovered || isFocused;
   const brand = safeBrandColor(tenant.primaryColor);
   const hasLogo = !!(tenant.logoUrl || '').trim();
-  const showWatermarkImage = hasLogo && !watermarkFailed;
+  const showLogoImage = hasLogo && !logoFailed;
 
   const handleClick = () => {
     onClick(tenant);
@@ -67,7 +70,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
         position: 'relative',
         overflow: 'hidden',
         width: '100%',
-        minHeight: '210px',
+        minHeight: '250px',
         backgroundColor: 'var(--surface)',
         background: brand
           ? `linear-gradient(160deg, ${brand}24 0%, ${brand}0D 48%, var(--surface) 100%)`
@@ -81,38 +84,47 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'center',
         padding: '24px',
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         transform: isActive ? 'scale(1.02)' : 'scale(1)',
       }}
     >
-      {/* Full-card brand watermark — large, contained, never distorted. */}
+      {/* Prominent foreground logo — full opacity, centered, never distorted.
+          The premium presentation tile guarantees contrast for every logo
+          polarity (white / dark / transparent / colorful) in both themes,
+          reusing the existing studio logoBox checkerboard pattern. */}
       <div
-        aria-hidden="true"
-        className="brand-card-watermark"
+        className="brand-card-logo-tile"
         style={{
-          position: 'absolute',
-          top: '7%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '62%',
-          height: '56%',
+          position: 'relative',
+          zIndex: 2,
+          width: 'min(72%, 240px)',
+          height: '108px',
+          marginBottom: '16px',
+          backgroundColor: 'var(--surface)',
+          backgroundImage:
+            'linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%), linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%)',
+          backgroundSize: '16px 16px',
+          backgroundPosition: '0 0, 8px 8px',
+          border: `1px solid ${isActive ? (brand || 'var(--accent)') : 'var(--border)'}`,
+          borderRadius: '14px',
+          boxShadow: '0 6px 16px rgb(0 0 0 / 0.10)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: 0.14,
-          pointerEvents: 'none',
+          overflow: 'hidden',
+          transition: 'border-color 0.2s ease',
         }}
       >
-        {showWatermarkImage ? (
+        {showLogoImage ? (
           <img
             src={tenant.logoUrl}
             alt=""
-            onError={() => setWatermarkFailed(true)}
+            onError={() => setLogoFailed(true)}
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
+              maxWidth: 'calc(100% - 16px)',
+              maxHeight: 'calc(100% - 16px)',
               width: 'auto',
               height: 'auto',
               objectFit: 'contain' as const,
@@ -120,53 +132,18 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
             }}
           />
         ) : (
-          <span
-            className="brand-card-watermark-letter"
-            style={{
-              fontSize: '96px',
-              fontWeight: 800,
-              lineHeight: 1,
-              color: brand || 'var(--accent)',
-              userSelect: 'none',
-            }}
-          >
-            {tenant.brandName?.charAt(0) || '?'}
-          </span>
-        )}
-      </div>
-
-      {/* Contrast overlay: clean surface behind the text zone so the name and
-          hint stay readable over the brand wash in light and dark mode. */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(to top, var(--surface) 0%, var(--surface) 38%, transparent 72%)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Letter-chip fallback keeps the pre-Step-91 identity for logo-less brands. */}
-      {!hasLogo && (
-        <div
-          className="brand-logo"
-          style={{
-            position: 'relative',
-            zIndex: 2,
-            marginBottom: '12px',
-          }}
-        >
+          /* Letter-chip fallback keeps the Step-91 identity for logo-less
+             brands (or broken URLs) at the same prominent scale. */
           <BrandLogo
             logoUrl={tenant.logoUrl}
             brandName={tenant.brandName}
             color={brand || 'var(--accent)'}
-            size={48}
-            radius={12}
-            fontSize={20}
+            size={64}
+            radius={16}
+            fontSize={28}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Foreground content */}
       <div
