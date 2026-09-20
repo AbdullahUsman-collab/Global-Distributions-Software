@@ -2,16 +2,16 @@
  * Brand Card Component
  * Displays a single brand/tenant as a clickable card for selection.
  *
- * Step 91A — full-card brand identity: the card carries a subtle brand-color
- * gradient wash derived from tenant data, so the whole surface belongs to the
- * brand (light AND dark mode).
+ * Step 91A — full-card brand identity: the card carries a brand-color
+ * gradient wash derived from tenant data, so the whole surface belongs to
+ * the brand (light AND dark mode).
  *
- * Step 91B — prominent foreground logo: the logo is no longer a faint
- * background watermark. It sits in the content flow ABOVE the brand name as a
- * large, centered, full-opacity presentation tile (the existing studio
- * `logoBox` checkerboard pattern) so white, dark, transparent and colorful
- * logos all stay clearly visible. Brands without a logo keep the Step-91
- * `BrandLogo` letter-chip fallback, enlarged to the same prominent scale.
+ * Step 91B/91C — the logo IS the card content: a large, centered,
+ * full-opacity logo rendered DIRECTLY on the brand surface — no tile, no
+ * checkerboard, no frame, no avatar chip, no watermark. Transparent logo
+ * areas stay transparent so the brand surface shows through. Brands
+ * without a logo keep the Step-91 letter-chip fallback, scaled to match
+ * the logo's visual weight.
  *
  * Interaction, keyboard activation, aria semantics and hover/focus behavior
  * are unchanged. Colors derive per-brand from tenant data (no hardcoding).
@@ -35,7 +35,7 @@ function safeBrandColor(raw: string | undefined): string {
 export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
-  /** Foreground logo hides itself gracefully if the logo URL fails to load. */
+  /** Logo layer hides itself gracefully if the logo URL fails to load. */
   const [logoFailed, setLogoFailed] = React.useState(false);
 
   const isActive = isHovered || isFocused;
@@ -73,7 +73,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
         minHeight: '250px',
         backgroundColor: 'var(--surface)',
         background: brand
-          ? `linear-gradient(160deg, ${brand}24 0%, ${brand}0D 48%, var(--surface) 100%)`
+          ? `linear-gradient(160deg, ${brand}2E 0%, ${brand}14 48%, var(--surface) 100%)`
           : undefined,
         borderRadius: '16px',
         border: `2px solid ${isActive ? (brand || 'var(--accent)') : 'var(--border)'}`,
@@ -90,60 +90,46 @@ export const BrandCard: React.FC<BrandCardProps> = ({ tenant, onClick }) => {
         transform: isActive ? 'scale(1.02)' : 'scale(1)',
       }}
     >
-      {/* Prominent foreground logo — full opacity, centered, never distorted.
-          The premium presentation tile guarantees contrast for every logo
-          polarity (white / dark / transparent / colorful) in both themes,
-          reusing the existing studio logoBox checkerboard pattern. */}
-      <div
-        className="brand-card-logo-tile"
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          width: 'min(72%, 240px)',
-          height: '108px',
-          marginBottom: '16px',
-          backgroundColor: 'var(--surface)',
-          backgroundImage:
-            'linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%), linear-gradient(45deg, var(--border) 25%, transparent 25%, transparent 75%, var(--border) 75%)',
-          backgroundSize: '16px 16px',
-          backgroundPosition: '0 0, 8px 8px',
-          border: `1px solid ${isActive ? (brand || 'var(--accent)') : 'var(--border)'}`,
-          borderRadius: '14px',
-          boxShadow: '0 6px 16px rgb(0 0 0 / 0.10)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          transition: 'border-color 0.2s ease',
-        }}
-      >
-        {showLogoImage ? (
-          <img
-            src={tenant.logoUrl}
-            alt=""
-            onError={() => setLogoFailed(true)}
-            style={{
-              maxWidth: 'calc(100% - 16px)',
-              maxHeight: 'calc(100% - 16px)',
-              width: 'auto',
-              height: 'auto',
-              objectFit: 'contain' as const,
-              display: 'block',
-            }}
-          />
-        ) : (
-          /* Letter-chip fallback keeps the Step-91 identity for logo-less
-             brands (or broken URLs) at the same prominent scale. */
+      {/* Large brand logo directly on the card surface — full opacity,
+          centered, contain-fit, transparent areas stay transparent. No
+          tile, no checkerboard, no frame, no background box. */}
+      {showLogoImage ? (
+        <img
+          src={tenant.logoUrl}
+          alt=""
+          onError={() => setLogoFailed(true)}
+          className="brand-card-logo"
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            width: 'min(80%, 260px)',
+            height: 'auto',
+            maxHeight: '118px',
+            objectFit: 'contain' as const,
+            display: 'block',
+            marginBottom: '14px',
+          }}
+        />
+      ) : (
+        /* Letter-chip fallback keeps the Step-91 identity for logo-less
+           brands (or broken URLs), scaled to the logo's visual weight. */
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            marginBottom: '14px',
+          }}
+        >
           <BrandLogo
             logoUrl={tenant.logoUrl}
             brandName={tenant.brandName}
             color={brand || 'var(--accent)'}
-            size={64}
-            radius={16}
-            fontSize={28}
+            size={72}
+            radius={18}
+            fontSize={32}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Foreground content */}
       <div
