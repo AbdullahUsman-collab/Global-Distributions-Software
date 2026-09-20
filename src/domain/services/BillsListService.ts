@@ -88,27 +88,37 @@ export class BillsListService {
   ) {}
 
   /**
-   * Fetch all bill vouchers (SV, PV, SRV, PRV) and enrich with party/item data.
+   * Fetch bill vouchers (SV, PV, SRV, PRV) and enrich with party/item data.
+   * Uses a single batch query for all voucher lines (no N+1).
+   * Optionally filter by voucher types to avoid fetching unused types.
    */
-  async getAllBills(tenantId: string): Promise<BillRecord[]> {
-    // Fetch all bill types in parallel
-    const [svBills, pvBills, srvBills, prvBills] = await Promise.all([
-      this.voucherRepo.getVouchersByTenantId(tenantId, { voucherType: 'SV' }),
-      this.voucherRepo.getVouchersByTenantId(tenantId, { voucherType: 'PV' }),
-      this.voucherRepo.getVouchersByTenantId(tenantId, { voucherType: 'SRV' }),
-      this.voucherRepo.getVouchersByTenantId(tenantId, { voucherType: 'PRV' }),
-    ]);
+  async getAllBills(tenantId: string, voucherTypes?: VoucherType[]): Promise<BillRecord[]> {
+    const types = voucherTypes ?? BILL_VOUCHER_TYPES;
 
-    // Merge and sort by date descending
-    const allHeaders = [...svBills, ...pvBills, ...srvBills, ...prvBills]
-      .sort((a, b) => b.date.localeCompare(a.date));
+    // Fetch all requested voucher types in parallel
+    const headerResults = await Promise.all(
+      types.map(t => this.voucherRepo.getVouchersByTenantId(tenantId, { voucherType: t }))
+    );
+    const allHeaders = headerResults.flat().sort((a, b) => b.date.localeCompare(a.date));
 
-    // Fetch lookup data
-    const [customers, suppliers, products] = await Promise.all([
+    if (allHeaders.length === 0) return [];
+
+    // Fetch lookup data + ALL voucher lines in parallel (single batch query)
+    const voucherIds = allHeaders.map(v => v.id);
+    const [customers, suppliers, products, allLines] = await Promise.all([
       this.customerRepo.getCustomersByTenantId(tenantId),
       this.supplierRepo.getSuppliers(tenantId),
       this.inventoryRepo.getProducts(tenantId),
+      this.voucherRepo.getVoucherLinesByVoucherIds(tenantId, voucherIds),
     ]);
+
+    // Group lines by voucherId in memory
+    const linesByVoucher = new Map<string, VoucherLine[]>();
+    for (const line of allLines) {
+      const list = linesByVoucher.get(line.voucherId) ?? [];
+      list.push(line);
+      linesByVoucher.set(line.voucherId, list);
+    }
 
     // Build COA id→code map if coaRepo available
     let accountCodeById = new Map<string, string>();
@@ -138,15 +148,11 @@ export class BillsListService {
       productById.set(p.id, p.name);
     }
 
-    // Enrich each voucher with party, items, total
-    const records: BillRecord[] = [];
-    for (const voucher of allHeaders) {
-      const lines = await this.voucherRepo.getVoucherLines(tenantId, voucher.id);
-      const enriched = this.enrichBill(voucher, lines, customerByAccount, supplierByAccount, productById);
-      records.push(enriched);
-    }
-
-    return records;
+    // Enrich each voucher — lines already fetched in batch, no per-voucher query
+    return allHeaders.map(voucher => {
+      const lines = linesByVoucher.get(voucher.id) ?? [];
+      return this.enrichBill(voucher, lines, customerByAccount, supplierByAccount, productById);
+    });
   }
 
   /**

@@ -37,6 +37,9 @@ export interface IVoucherRepository {
   /** Get all line items for a specific voucher */
   getVoucherLines(tenantId: string, voucherId: string): Promise<VoucherLine[]>;
 
+  /** Get all line items for multiple vouchers in a single query (batch) */
+  getVoucherLinesByVoucherIds(tenantId: string, voucherIds: string[]): Promise<VoucherLine[]>;
+
   /* ─── Mutations ────────────────────────────────────────── */
 
   /** Create a new voucher in DRAFT status with the given lines */

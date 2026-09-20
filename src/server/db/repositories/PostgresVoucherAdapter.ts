@@ -91,6 +91,22 @@ export class PostgresVoucherAdapter implements IVoucherRepository {
     return result.rows.map(r => this.mapLineRow(r));
   }
 
+  async getVoucherLinesByVoucherIds(tenantId: string, voucherIds: string[]): Promise<VoucherLine[]> {
+    if (voucherIds.length === 0) return [];
+    const result = await query(
+      `SELECT id, voucher_id, tenant_id, account_id, description, debit, credit, line_order,
+              contra_account_id, quantity, product_id, branch, st_inv_no, st_rate, st_amount, amt_excl_std,
+              rate, purchase_rate, retail_price, margin_percent, trade_discount_percent, trade_offer_percent,
+              special_discount_percent, min_quantity, hs_code, gst_type, fed_percent, further_tax_percent,
+              advance_tax_percent
+       FROM voucher_lines
+       WHERE tenant_id = $1 AND voucher_id = ANY($2)
+       ORDER BY voucher_id, line_order`,
+      [tenantId, voucherIds]
+    );
+    return result.rows.map(r => this.mapLineRow(r));
+  }
+
   async createVoucher(tenantId: string, dto: CreateVoucherDTO, createdBy: string): Promise<VoucherHeader> {
     const client = await getClient();
     try {

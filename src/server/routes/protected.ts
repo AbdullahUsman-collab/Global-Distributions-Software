@@ -1272,8 +1272,7 @@ export function createProtectedRoutes(
     async (req: Request, res: Response) => {
       try {
         const tenantId = req.user!.tenantId;
-        const allBills = await billsListService.getAllBills(tenantId);
-        const sales = allBills.filter((b) => b.voucher.voucherType === 'SV');
+        const sales = await billsListService.getAllBills(tenantId, ['SV']);
         res.json(sales);
       } catch (error) {
         console.error('List sales error:', error);
@@ -1293,8 +1292,7 @@ export function createProtectedRoutes(
     async (req: Request, res: Response) => {
       try {
         const tenantId = req.user!.tenantId;
-        const allBills = await billsListService.getAllBills(tenantId);
-        const purchases = allBills.filter((b) => b.voucher.voucherType === 'PV');
+        const purchases = await billsListService.getAllBills(tenantId, ['PV']);
         res.json(purchases);
       } catch (error) {
         console.error('List purchases error:', error);

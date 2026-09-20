@@ -403,6 +403,15 @@ export class MockVoucherAdapter implements IVoucherRepository {
       .map(l => ({ ...l }));
   }
 
+  async getVoucherLinesByVoucherIds(tenantId: string, voucherIds: string[]): Promise<VoucherLine[]> {
+    const allLines = linesStore.get(tenantId) ?? [];
+    const idSet = new Set(voucherIds);
+    return allLines
+      .filter(l => idSet.has(l.voucherId))
+      .sort((a, b) => a.lineOrder - b.lineOrder)
+      .map(l => ({ ...l }));
+  }
+
   /* ─── Mutations ────────────────────────────────────────── */
 
   async createVoucher(tenantId: string, dto: CreateVoucherDTO, createdBy: string): Promise<VoucherHeader> {

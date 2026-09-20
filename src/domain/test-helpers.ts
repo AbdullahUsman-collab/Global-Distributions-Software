@@ -164,6 +164,14 @@ export function createMockVoucherRepo(): IVoucherRepository {
     getVoucherById: async (_t: string, id: string) => vouchers.find(v => v.id === id) ?? null,
     getNextVoucherNumber: async (_t: string) => vouchers.length + 1,
     getVoucherLines: async (_t: string, voucherId: string) => lines.get(voucherId) ?? [],
+    getVoucherLinesByVoucherIds: async (_t: string, voucherIds: string[]) => {
+      const idSet = new Set(voucherIds);
+      const result: VoucherLine[] = [];
+      for (const [vid, vlines] of lines.entries()) {
+        if (idSet.has(vid)) result.push(...vlines);
+      }
+      return result;
+    },
     createVoucher: async (_t: string, dto: CreateVoucherDTO, createdBy: string) => {
       const id = `voucher-${++voucherIdCounter}`;
       const voucherLines: VoucherLine[] = dto.lines.map((l, i) => ({
